@@ -18,7 +18,7 @@ class _TranslationPageState extends State<TranslationPage> {
   final LLMConfigService _llmConfigService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
   final AutoConfigService _autoConfigService = AutoConfigService();
-  
+
   LLMConfig _llmConfig = const LLMConfig(
     provider: 'ollama',
     serverUrl: 'http://localhost:11434',
@@ -68,10 +68,10 @@ class _TranslationPageState extends State<TranslationPage> {
             // 配置状态指示器
             _buildConfigStatus(),
             const SizedBox(height: 2),
-            
+
             // 翻译输入区域
             Expanded(
-              flex: 4,
+              flex: 2,
               child: TranslationInputWidget(
                 textController: _textController,
                 selectedLanguages: _selectedLanguages,
@@ -86,12 +86,12 @@ class _TranslationPageState extends State<TranslationPage> {
                 isConfigured: _isConfigured,
               ),
             ),
-            
-            const SizedBox(height: 2),
-            
+
+            const SizedBox(height: 8),
+
             // 翻译结果区域
             Expanded(
-              flex: 1,
+              flex: 3,
               child: TranslationResultWidget(
                 translationService: _translationService,
               ),
@@ -116,13 +116,17 @@ class _TranslationPageState extends State<TranslationPage> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.blue.shade600,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  _autoConfigStatus.isEmpty ? 'Auto-configuring LLM connection...' : _autoConfigStatus,
+                  _autoConfigStatus.isEmpty
+                      ? 'Auto-configuring LLM connection...'
+                      : _autoConfigStatus,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: Colors.blue.shade800,
@@ -184,7 +188,9 @@ class _TranslationPageState extends State<TranslationPage> {
             Icon(Icons.warning, color: Colors.orange.shade600),
             const SizedBox(width: 8),
             const Expanded(
-              child: Text('Auto-configuration failed. Click the settings button to configure manually.'),
+              child: Text(
+                'Auto-configuration failed. Click the settings button to configure manually.',
+              ),
             ),
             TextButton(
               onPressed: _showConfigDialog,
@@ -264,7 +270,7 @@ class _TranslationPageState extends State<TranslationPage> {
     try {
       // 尝试自动配置
       final autoConfig = await _autoConfigService.autoConfigureLLM();
-      
+
       if (autoConfig != null) {
         setState(() {
           _llmConfig = autoConfig;
@@ -272,12 +278,14 @@ class _TranslationPageState extends State<TranslationPage> {
           _isAutoConfiguring = false;
           _autoConfigStatus = '';
         });
-        
+
         // 显示成功消息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Auto-connected to Ollama with model: ${autoConfig.selectedModel}'),
+              content: Text(
+                'Auto-connected to Ollama with model: ${autoConfig.selectedModel}',
+              ),
               backgroundColor: Colors.green.shade600,
               duration: const Duration(seconds: 3),
             ),
@@ -288,12 +296,14 @@ class _TranslationPageState extends State<TranslationPage> {
           _isAutoConfiguring = false;
           _autoConfigStatus = '';
         });
-        
+
         // 显示需要手动配置的消息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Auto-configuration failed. Please configure manually.'),
+              content: Text(
+                'Auto-configuration failed. Please configure manually.',
+              ),
               backgroundColor: Colors.orange,
               duration: Duration(seconds: 4),
             ),
@@ -305,7 +315,7 @@ class _TranslationPageState extends State<TranslationPage> {
         _isAutoConfiguring = false;
         _autoConfigStatus = '';
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
+import '../services/translation_service.dart';
+
 class TranslationInputWidget extends StatefulWidget {
   final TextEditingController textController;
   final List<String> selectedLanguages;
   final VoidCallback onTranslate;
-  final bool isTranslating;
+  final TranslationService translationService;
   final void Function(String language, bool selected) onLanguageToggle;
   final VoidCallback onReset;
   final VoidCallback onSelectAll;
@@ -15,7 +17,7 @@ class TranslationInputWidget extends StatefulWidget {
     required this.textController,
     required this.selectedLanguages,
     required this.onTranslate,
-    required this.isTranslating,
+    required this.translationService,
     required this.onLanguageToggle,
     required this.onReset,
     required this.onSelectAll,
@@ -87,22 +89,28 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
             // 翻译按钮
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: widget.isTranslating ? null : widget.onTranslate,
-                icon: widget.isTranslating
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.translate, size: 16),
-                label: Text(
-                  widget.isTranslating ? 'Translating...' : 'Translate',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                ),
+              child: ValueListenableBuilder<bool>(
+                valueListenable:
+                    widget.translationService.isTranslatingNotifier,
+                builder: (context, isTranslating, child) {
+                  return ElevatedButton.icon(
+                    onPressed: isTranslating ? null : widget.onTranslate,
+                    icon: isTranslating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.translate, size: 16),
+                    label: Text(
+                      isTranslating ? 'Translating...' : 'Translate',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                  );
+                },
               ),
             ),
           ],

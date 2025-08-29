@@ -7,7 +7,7 @@ import '../constants/app_constants.dart';
 
 class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
-  final AlouetteTTSService? ttsService;
+  final TTSService? ttsService;
 
   const TranslationResultWidget({
     super.key,
@@ -104,85 +104,31 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     });
 
     try {
-      // 获取当前TTS配置
-      final currentConfig = widget.ttsService!.currentConfig;
-
-      // 获取语言代码并直接播放
+      // Get language code and find matching voice
       final languageCode = _getLanguageCode(language);
       if (languageCode == null) return;
 
-      // Normalize language code to hyphen form and format to BCP-47 (xx-YY)
-      String toBCP47(String raw) {
-        final parts = raw.replaceAll('_', '-').split('-');
-        if (parts.isEmpty) return raw;
-        final lang = parts[0].toLowerCase();
-        if (parts.length == 1) return lang;
-        final region = parts[1].toUpperCase();
-        return '$lang-$region';
+      final voices = await widget.ttsService!.getVoices();
+      final availableVoices = voices
+          .where(
+            (voice) => voice.languageCode.toLowerCase().startsWith(
+                  languageCode.toLowerCase().split('-')[0],
+                ),
+          )
+          .toList();
+
+      if (availableVoices.isNotEmpty) {
+        // Prefer exact match for language code, fallback to first available
+        final matchingVoice = availableVoices.firstWhere(
+          (voice) =>
+              voice.languageCode.toLowerCase() == languageCode.toLowerCase(),
+          orElse: () => availableVoices.first,
+        );
+
+        await widget.ttsService!.setVoice(matchingVoice.id);
       }
 
-      final normalizedLang = languageCode.replaceAll('_', '-');
-      final bcp47Lang = toBCP47(normalizedLang);
-      final normalizedLangLower = bcp47Lang.toLowerCase();
-
-      // Determine default voice name consistent with alouette-tts mapping
-      String? defaultVoice;
-      switch (normalizedLangLower) {
-        case 'zh-cn':
-          defaultVoice = 'zh-CN-XiaoxiaoNeural';
-          break;
-        case 'en-us':
-          defaultVoice = 'en-US-AriaNeural';
-          break;
-        case 'de-de':
-          defaultVoice = 'de-DE-KatjaNeural';
-          break;
-        case 'fr-fr':
-          defaultVoice = 'fr-FR-DeniseNeural';
-          break;
-        case 'es-es':
-          defaultVoice = 'es-ES-ElviraNeural';
-          break;
-        case 'it-it':
-          defaultVoice = 'it-IT-ElsaNeural';
-          break;
-        case 'ru-ru':
-          defaultVoice = 'ru-RU-SvetlanaNeural';
-          break;
-        case 'el-gr':
-          defaultVoice = 'el-GR-AthinaNeural';
-          break;
-        case 'ar-sa':
-          defaultVoice = 'ar-SA-ZariyahNeural';
-          break;
-        case 'hi-in':
-          defaultVoice = 'hi-IN-SwaraNeural';
-          break;
-        case 'ja-jp':
-          defaultVoice = 'ja-JP-NanamiNeural';
-          break;
-        case 'ko-kr':
-          defaultVoice = 'ko-KR-SunHiNeural';
-          break;
-        default:
-          defaultVoice = 'en-US-AriaNeural';
-      }
-
-      // If the current config's language matches the requested language, prefer its voice name
-      final voiceNameToUse = (currentConfig.voiceName != null &&
-              (currentConfig.languageCode.toLowerCase() == normalizedLangLower))
-          ? currentConfig.voiceName
-          : defaultVoice;
-
-      final config = AlouetteTTSConfig(
-        speechRate: currentConfig.speechRate,
-        volume: currentConfig.volume,
-        pitch: currentConfig.pitch,
-        languageCode: bcp47Lang, // BCP-47 style (e.g. fr-FR)
-        voiceName: voiceNameToUse,
-      );
-
-      await widget.ttsService!.speak(text, config: config);
+      await widget.ttsService!.speak(text);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

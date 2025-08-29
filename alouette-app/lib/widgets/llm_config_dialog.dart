@@ -158,7 +158,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                initialValue: _selectedProvider,
+                value: _selectedProvider,
                 items: const [
                   DropdownMenuItem(value: 'ollama', child: Text('Ollama')),
                   DropdownMenuItem(value: 'lmstudio', child: Text('LM Studio')),
@@ -325,8 +325,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue:
-                          _selectedModel.isEmpty ? null : _selectedModel,
+                      value: _selectedModel.isEmpty ? null : _selectedModel,
                       items: _availableModels.map((model) {
                         return DropdownMenuItem(
                           value: model,

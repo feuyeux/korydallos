@@ -1,36 +1,32 @@
-/// Alouette TTS - A unified text-to-speech platform for Flutter
+/// Alouette TTS - Multi-platform TTS library
 ///
-/// This library provides consistent TTS functionality across all major platforms
-/// by intelligently selecting the optimal TTS implementation based on the target platform.
+/// This library provides text-to-speech functionality through multiple implementations:
+/// - Edge TTS: Microsoft Edge's TTS engine via command line
+/// - Flutter TTS: Cross-platform TTS using system engines
 library alouette_tts;
 
 // Core interfaces
-export 'src/interfaces/i_tts_service.dart';
-export 'src/interfaces/i_platform_detector.dart';
-export 'src/interfaces/i_tts_factory.dart';
+export 'src/core/tts_service.dart';
+export 'src/core/tts_player.dart';
+export 'src/core/tts_voice_adapter.dart';
+export 'src/core/tts_factory.dart';
 
-// Data models
-export 'src/models/alouette_tts_config.dart';
-export 'src/models/alouette_voice.dart';
-export 'src/models/tts_request.dart';
-export 'src/models/tts_result.dart';
-export 'src/models/tts_state.dart';
+// Platform-specific factory
+export 'src/platform/platform_tts_factory.dart';
+
+// Edge TTS implementation
+export 'src/edge/edge_tts_service.dart';
+export 'src/edge/edge_tts_player.dart';
+export 'src/edge/edge_tts_voice_adapter.dart';
+
+// Flutter TTS implementation
+export 'src/flutter/flutter_tts_service.dart';
+export 'src/flutter/flutter_tts_player.dart';
+export 'src/flutter/flutter_tts_voice_adapter.dart';
+
+// Models
+export 'src/models/voice.dart';
 
 // Enums
-export 'src/enums/tts_platform.dart';
 export 'src/enums/voice_gender.dart';
 export 'src/enums/voice_quality.dart';
-export 'src/enums/audio_format.dart';
-
-// Exceptions
-export 'src/exceptions/tts_exception.dart';
-
-// Main service
-export 'src/alouette_tts_service.dart';
-
-// Error recovery services
-export 'src/services/error_recovery_service.dart';
-export 'src/services/retry_tts_service.dart';
-
-// Dependency injection
-export 'src/di/service_locator.dart';

@@ -1,22 +1,25 @@
 name: alouette_lib_tts
-description: A TTS library that provides consistent text-to-speech functionality across all major platforms.
+description: A multi-platform TTS library supporting Edge TTS and Flutter TTS
 version: 1.0.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
-  flutter: ">=3.10.0"
+  flutter: ">=3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_tts: ^4.0.2
-  get_it: ^8.2.0
-  meta: ^1.16.0
-  http: ^1.1.0
-  uuid: ^4.1.0
+  meta: ^1.9.0
   path: ^1.8.3
-  path_provider: ^2.1.1
-  crypto: ^3.0.3
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
 
 dev_dependencies:
   flutter_test:

@@ -6,10 +6,7 @@ import '../models/translation_models.dart';
 class TranslationResultWidget extends StatelessWidget {
   final TranslationService translationService;
 
-  const TranslationResultWidget({
-    super.key,
-    required this.translationService,
-  });
+  const TranslationResultWidget({super.key, required this.translationService});
 
   @override
   Widget build(BuildContext context) {
@@ -21,18 +18,11 @@ class TranslationResultWidget extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.translate,
-                size: 32,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.translate, size: 32, color: Colors.grey.shade400),
               const SizedBox(height: 8),
               Text(
                 'Translation results will appear here',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -58,26 +48,27 @@ class TranslationResultWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Metadata
             _buildMetadata(context, translation),
             const SizedBox(height: 16),
-            
+
             // Original Text
             _buildOriginalText(context, translation),
             const SizedBox(height: 16),
-            
+
             // Translations
-            Expanded(
-              child: _buildTranslations(context, translation),
-            ),
+            Expanded(child: _buildTranslations(context, translation)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, TranslationResult translation) {
+  Widget _buildActionButtons(
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -111,10 +102,7 @@ class TranslationResultWidget extends StatelessWidget {
               'Model: ${translation.config.selectedModel} • '
               'Provider: ${translation.config.provider} • '
               'Time: ${_formatTime(translation.timestamp)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade700,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
             ),
           ),
         ],
@@ -122,14 +110,14 @@ class TranslationResultWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildOriginalText(BuildContext context, TranslationResult translation) {
+  Widget _buildOriginalText(
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Original Text:',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Original Text:', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 4),
         Container(
           width: double.infinity,
@@ -148,37 +136,38 @@ class TranslationResultWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTranslations(BuildContext context, TranslationResult translation) {
+  Widget _buildTranslations(
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Translations:',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Translations:', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         Expanded(
-          child: Scrollbar(
-            thumbVisibility: true, // 始终显示滚动条
-            child: ListView.builder(
-              itemCount: translation.translations.length,
-              itemBuilder: (context, index) {
-                final language = translation.languages[index];
-                final translatedText = translation.translations[language] ?? '';
-                
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildTranslationItem(context, language, translatedText),
-                );
-              },
-            ),
+          child: ListView.builder(
+            primary: true,
+            itemCount: translation.languages.length,
+            itemBuilder: (context, index) {
+              final language = translation.languages[index];
+              final translatedText = translation.translations[language] ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildTranslationItem(context, language, translatedText),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTranslationItem(BuildContext context, String language, String text) {
+  Widget _buildTranslationItem(
+    BuildContext context,
+    String language,
+    String text,
+  ) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -211,23 +200,25 @@ class TranslationResultWidget extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: Icon(Icons.copy, size: 16, color: Colors.green.shade700),
+                  icon: Icon(
+                    Icons.copy,
+                    size: 16,
+                    color: Colors.green.shade700,
+                  ),
                   tooltip: 'Copy $language translation',
-                  onPressed: () => _copySingleTranslation(context, language, text),
+                  onPressed: () =>
+                      _copySingleTranslation(context, language, text),
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                 ),
               ],
             ),
           ),
-          
+
           // Translation text
           Padding(
             padding: const EdgeInsets.all(12),
-            child: SelectableText(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
+            child: SelectableText(text, style: const TextStyle(fontSize: 14)),
           ),
         ],
       ),
@@ -236,11 +227,15 @@ class TranslationResultWidget extends StatelessWidget {
 
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:'
-           '${time.minute.toString().padLeft(2, '0')}:'
-           '${time.second.toString().padLeft(2, '0')}';
+        '${time.minute.toString().padLeft(2, '0')}:'
+        '${time.second.toString().padLeft(2, '0')}';
   }
 
-  void _copySingleTranslation(BuildContext context, String language, String text) {
+  void _copySingleTranslation(
+    BuildContext context,
+    String language,
+    String text,
+  ) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -250,7 +245,10 @@ class TranslationResultWidget extends StatelessWidget {
     );
   }
 
-  void _copyAllTranslations(BuildContext context, TranslationResult translation) {
+  void _copyAllTranslations(
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     final buffer = StringBuffer();
     buffer.writeln('Translation Results');
     buffer.writeln('Generated: ${translation.timestamp}');
@@ -261,7 +259,7 @@ class TranslationResultWidget extends StatelessWidget {
     buffer.writeln(translation.original);
     buffer.writeln();
     buffer.writeln('Translations:');
-    
+
     for (final language in translation.languages) {
       final translatedText = translation.translations[language] ?? '';
       buffer.writeln();

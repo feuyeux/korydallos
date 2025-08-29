@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
-import '../constants/app_constants.dart';
 
 class TTSConfigDialog extends StatefulWidget {
-  final AlouetteTTSService? ttsService;
+  final TTSService? ttsService;
 
   const TTSConfigDialog({super.key, this.ttsService});
 
@@ -12,13 +11,9 @@ class TTSConfigDialog extends StatefulWidget {
 }
 
 class _TTSConfigDialogState extends State<TTSConfigDialog> {
-  double _speechRate = AppConstants.defaultSpeechRate;
-  double _volume = AppConstants.defaultVolume;
-  double _pitch = AppConstants.defaultPitch;
   bool _isInitialized = false;
-  String _selectedLanguage = 'en-us';
-  String? _selectedVoiceId;
-  Map<String, dynamic>? _engineInfo;
+  List<Voice> _voices = [];
+  String? _currentVoice;
 
   @override
   void initState() {
@@ -26,40 +21,55 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
     _initializeTTSSettings();
   }
 
-  String _formatToBCP47(String raw) {
-    final parts = raw.replaceAll('_', '-').split('-');
-    if (parts.isEmpty) return raw;
-    final lang = parts[0].toLowerCase();
-    if (parts.length == 1) return lang;
-    final region = parts[1].toUpperCase();
-    return '$lang-$region';
-  }
-
   Future<void> _initializeTTSSettings() async {
     if (widget.ttsService != null) {
       try {
-        // 获取当前TTS配置
-        final currentConfig = widget.ttsService!.currentConfig;
-
-        // 获取TTS引擎信息
-        final engineInfo = widget.ttsService!.getTTSEngineInfo();
+        // 获取可用的语音列表
+        final voices = await widget.ttsService!.getVoices();
 
         if (mounted) {
           setState(() {
-            _speechRate = currentConfig.speechRate;
-            _volume = currentConfig.volume;
-            _pitch = currentConfig.pitch;
-            _selectedLanguage = currentConfig.languageCode;
-            _selectedVoiceId = currentConfig.voiceName;
-            _engineInfo = engineInfo;
+            _voices = voices;
+            _currentVoice = voices.isNotEmpty ? voices.first.id : null;
+            if (_currentVoice != null) {
+              widget.ttsService!.setVoice(_currentVoice!);
+            }
             _isInitialized = true;
           });
         }
-      } catch (e) {
+      } catch (e, stack) {
         if (mounted) {
           setState(() {
             _isInitialized = true;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('TTS Error: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 10),
+              action: SnackBarAction(
+                label: 'Details',
+                textColor: Colors.white,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('TTS Error Details'),
+                      content: SingleChildScrollView(
+                        child: Text('$e\n\n$stack'),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
         }
       }
     } else {
@@ -73,25 +83,8 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
     if (widget.ttsService == null) return;
 
     try {
-      final config = AlouetteTTSConfig(
-        speechRate: _speechRate,
-        volume: _volume,
-        pitch: _pitch,
-        languageCode: _selectedLanguage
-                    .replaceAll('_', '-')
-                    .split('-')
-                    .map((e) => e)
-                    .toList()
-                    .length >
-                1
-            ? '${_selectedLanguage.split('-')[0].toLowerCase()}-${_selectedLanguage.split('-')[1].toUpperCase()}'
-            : _selectedLanguage.toLowerCase(),
-        voiceName: _selectedVoiceId,
-      );
-
       await widget.ttsService!.speak(
         "Hello, this is a test of the text to speech settings.",
-        config: config,
       );
     } catch (e) {
       if (mounted) {
@@ -110,38 +103,14 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
     await widget.ttsService!.stop();
   }
 
-  Future<void> _resetToDefaults() async {
-    setState(() {
-      _speechRate = AppConstants.defaultSpeechRate;
-      _volume = AppConstants.defaultVolume;
-      _pitch = AppConstants.defaultPitch;
-    });
-
-    // 应用默认配置到TTS服务
-    if (widget.ttsService != null) {
-      final defaultConfig = AlouetteTTSConfig(
-        speechRate: _speechRate,
-        volume: _volume,
-        pitch: _pitch,
-        languageCode: _selectedLanguage,
-        voiceName: _selectedVoiceId,
-      );
-      await widget.ttsService!.updateConfig(defaultConfig);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final maxDialogHeight = screenHeight * 0.85; // 最大高度为屏幕的85%
-
     return Dialog(
       child: SizedBox(
-        width: 500,
-        height: maxDialogHeight,
+        width: 400,
+        height: 500,
         child: Column(
           children: [
-            // 固定的标题栏
             Container(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Row(
@@ -163,8 +132,6 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                 ],
               ),
             ),
-
-            // 可滚动的内容区域（保持加载指示器的固定布局占位以避免跳动）
             Expanded(
               child: Stack(
                 children: [
@@ -175,7 +142,6 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                       children: [
                         const SizedBox(height: 8),
                         if (_isInitialized) ...[
-                          // TTS状态
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -214,142 +180,46 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                               ],
                             ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          // TTS引擎信息
-                          if (_engineInfo != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.blue.shade200),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.settings_voice,
-                                        color: Colors.blue.shade600,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'TTS Engine Information',
-                                        style: TextStyle(
-                                          color: Colors.blue.shade800,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildEngineInfoRow(
-                                    'Engine',
-                                    _engineInfo!['engineName'] ?? 'Unknown',
-                                  ),
-                                  _buildEngineInfoRow(
-                                    'Type',
-                                    (_engineInfo!['engineType'] as String?)
-                                            ?.toUpperCase() ??
-                                        'Unknown',
-                                  ),
-                                  _buildEngineInfoRow(
-                                    'Platform',
-                                    _engineInfo!['platform'] ?? 'Unknown',
-                                  ),
-                                  _buildEngineInfoRow(
-                                    'Provider',
-                                    _engineInfo!['provider'] ??
-                                        (_engineInfo!['engineType'] == 'edge'
-                                            ? 'Microsoft Edge TTS'
-                                            : 'System TTS'),
-                                  ),
-                                  if (_engineInfo!['description'] != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        _engineInfo!['description'],
-                                        style: TextStyle(
-                                          color: Colors.blue.shade700,
-                                          fontSize: 12,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // 语音速度
-                          _buildSliderSetting(
-                            'Speech Rate',
-                            _speechRate,
-                            0.1,
-                            2.0,
-                            (value) async {
-                              setState(() => _speechRate = value);
-                              if (widget.ttsService != null) {
-                                final config = AlouetteTTSConfig(
-                                  speechRate: value,
-                                  volume: _volume,
-                                  pitch: _pitch,
-                                  languageCode:
-                                      _formatToBCP47(_selectedLanguage),
-                                  voiceName: _selectedVoiceId,
-                                );
-                                await widget.ttsService!.updateConfig(config);
-                              }
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // 音量
-                          _buildSliderSetting('Volume', _volume, 0.0, 1.0, (
-                            value,
-                          ) async {
-                            setState(() => _volume = value);
-                            if (widget.ttsService != null) {
-                              final config = AlouetteTTSConfig(
-                                speechRate: _speechRate,
-                                volume: value,
-                                pitch: _pitch,
-                                languageCode: _formatToBCP47(_selectedLanguage),
-                                voiceName: _selectedVoiceId,
-                              );
-                              await widget.ttsService!.updateConfig(config);
-                            }
-                          }),
-
-                          const SizedBox(height: 16),
-
-                          // 音调
-                          _buildSliderSetting('Pitch', _pitch, 0.5, 2.0, (
-                            value,
-                          ) async {
-                            setState(() => _pitch = value);
-                            if (widget.ttsService != null) {
-                              final config = AlouetteTTSConfig(
-                                speechRate: _speechRate,
-                                volume: _volume,
-                                pitch: value,
-                                languageCode: _formatToBCP47(_selectedLanguage),
-                                voiceName: _selectedVoiceId,
-                              );
-                              await widget.ttsService!.updateConfig(config);
-                            }
-                          }),
-
                           const SizedBox(height: 24),
-
-                          // 操作按钮
+                          if (_voices.isNotEmpty) ...[
+                            Text(
+                              'Available Voices',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              value: _currentVoice,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              items: _voices.map((voice) {
+                                return DropdownMenuItem<String>(
+                                  value: voice.id,
+                                  child: Text(
+                                    '${voice.name} (${voice.languageCode})',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) async {
+                                if (newValue != null &&
+                                    widget.ttsService != null) {
+                                  setState(() {
+                                    _currentVoice = newValue;
+                                  });
+                                  await widget.ttsService!.setVoice(newValue);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -373,23 +243,12 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                   foregroundColor: Colors.white,
                                 ),
                               ),
-                              ElevatedButton.icon(
-                                onPressed: _resetToDefaults,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Reset'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
                             ],
                           ),
                         ],
                       ],
                     ),
                   ),
-
-                  // 居中加载指示器，使用 Visibility 保留空间
                   Positioned.fill(
                     child: Visibility(
                       visible: !_isInitialized,
@@ -412,109 +271,6 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSliderSetting(
-    String title,
-    double value,
-    double min,
-    double max,
-    ValueChanged<double> onChanged,
-  ) {
-    String displayValue;
-    IconData icon;
-
-    switch (title) {
-      case 'Speech Rate':
-        displayValue = '${value.toStringAsFixed(1)}x';
-        icon = Icons.speed;
-        break;
-      case 'Volume':
-        displayValue = '${(value * 100).round()}%';
-        icon = Icons.volume_up;
-        break;
-      case 'Pitch':
-        displayValue = '${value.toStringAsFixed(1)}x';
-        icon = Icons.graphic_eq;
-        break;
-      default:
-        displayValue = value.toStringAsFixed(2);
-        icon = Icons.tune;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                displayValue,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: ((max - min) * 10).round(),
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEngineInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 70,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                color: Colors.blue.shade700,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: Colors.blue.shade800,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

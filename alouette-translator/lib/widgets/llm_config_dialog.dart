@@ -59,7 +59,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
             Text('Provider', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              initialValue: _selectedProvider,
+              value: _selectedProvider,
               items: llmProviders.map((provider) {
                 return DropdownMenuItem(
                   value: provider['value'],
@@ -198,7 +198,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
               Text('Model', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                initialValue: _selectedModel.isEmpty ? null : _selectedModel,
+                value: _selectedModel.isEmpty ? null : _selectedModel,
                 items: widget.llmConfigService.availableModels.map((model) {
                   return DropdownMenuItem(value: model, child: Text(model));
                 }).toList(),

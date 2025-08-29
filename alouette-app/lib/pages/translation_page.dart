@@ -4,6 +4,7 @@ import '../models/app_models.dart';
 import '../services/llm_config_service.dart';
 import '../services/translation_service.dart';
 import '../services/auto_config_service.dart';
+import '../services/tts_manager.dart';
 import '../widgets/llm_config_dialog.dart';
 import '../widgets/tts_config_dialog.dart';
 import '../widgets/translation_input_widget.dart';
@@ -21,7 +22,7 @@ class _TranslationPageState extends State<TranslationPage> {
   final LLMConfigService _llmConfigService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
   final AutoConfigService _autoConfigService = AutoConfigService();
-  late final AlouetteTTSService _ttsService;
+  late TTSService _ttsService;
 
   LLMConfig _llmConfig = const LLMConfig(
     provider: 'ollama',
@@ -48,6 +49,7 @@ class _TranslationPageState extends State<TranslationPage> {
   @override
   void dispose() {
     _textController.dispose();
+    TTSManager.dispose();
     super.dispose();
   }
 
@@ -59,58 +61,8 @@ class _TranslationPageState extends State<TranslationPage> {
 
     try {
       debugPrint('TTS: Starting initialization...');
-      String languageName =
-          _selectedLanguages.isNotEmpty ? _selectedLanguages.first : 'English';
 
-      String formatCode(String raw) {
-        if (raw.isEmpty) return 'en-US';
-        final parts = raw.split('-');
-        if (parts.length == 1) return parts[0].toLowerCase();
-        final lang = parts[0].toLowerCase();
-        final country = parts[1].toUpperCase();
-        return '$lang-$country';
-      }
-
-      String initialLanguageCode = 'en-US';
-      try {
-        final map = LanguageConstants.translationLanguageNames;
-        final match = map.entries.firstWhere(
-          (e) => e.value.toLowerCase() == languageName.toLowerCase(),
-          orElse: () => const MapEntry('en-us', 'English'),
-        );
-        initialLanguageCode = formatCode(match.key);
-      } catch (e) {
-        initialLanguageCode = 'en-US';
-      }
-
-      debugPrint(
-          'TTS: Creating service with languageCode=$initialLanguageCode');
-
-      _ttsService = await AlouetteTTSService.create(
-        onStart: () {
-          debugPrint('TTS: Started playing');
-        },
-        onComplete: () {
-          debugPrint('TTS: Completed playing');
-        },
-        onError: (message) {
-          debugPrint('TTS Error in callback: $message');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('TTS Error: $message'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        config: AlouetteTTSConfig(
-          languageCode: initialLanguageCode,
-          speechRate: AppConstants.defaultSpeechRate,
-          volume: AppConstants.defaultVolume,
-          pitch: AppConstants.defaultPitch,
-        ),
-      );
+      _ttsService = await TTSManager.getService();
 
       setState(() {
         _isTTSInitialized = true;
@@ -247,9 +199,16 @@ class _TranslationPageState extends State<TranslationPage> {
         _llmConfig,
       );
 
-      setState(() {
-        // Trigger UI update to show translation results
-      });
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Translation completed'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -338,7 +297,7 @@ class _TranslationPageState extends State<TranslationPage> {
                     textController: _textController,
                     selectedLanguages: _selectedLanguages,
                     onTranslate: _performTranslation,
-                    isTranslating: _translationService.isTranslating,
+                    translationService: _translationService,
                     onLanguageToggle: (language, selected) {
                       setState(() {
                         if (selected) {

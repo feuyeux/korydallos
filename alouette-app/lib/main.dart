@@ -1,7 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'pages/app_home_page.dart';
 
 void main() {
+  debugPrint('Starting app initialization...');
+
+  // Print environment info for debugging
+  final home = Platform.environment['HOME'];
+  final path = Platform.environment['PATH'];
+  debugPrint('Environment variables:');
+  debugPrint('HOME: $home');
+  debugPrint('PATH: $path');
+
   runApp(const AlouetteApp());
 }
 
