@@ -1,9 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
+import 'package:alouette_lib_tts/alouette_tts.dart';
+import '../services/tts_manager.dart';
 
-class AlouetteAppBar extends StatelessWidget implements PreferredSizeWidget {
+class AlouetteAppBar extends StatefulWidget implements PreferredSizeWidget {
   const AlouetteAppBar({super.key});
+
+  @override
+  State<AlouetteAppBar> createState() => _AlouetteAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _AlouetteAppBarState extends State<AlouetteAppBar> {
+  TTSEngineType? _currentEngine;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTTSEngineInfo();
+    // 定期检查TTS状态更新
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    // 每秒检查一次TTS状态，直到初始化完成
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      
+      if (TTSManager.isInitialized && _currentEngine != TTSManager.currentEngine) {
+        setState(() {
+          _currentEngine = TTSManager.currentEngine;
+        });
+        return false; // 停止检查
+      }
+      
+      return !TTSManager.isInitialized; // 继续检查直到初始化完成
+    });
+  }
+
+  Future<void> _loadTTSEngineInfo() async {
+    try {
+      if (TTSManager.isInitialized) {
+        setState(() {
+          _currentEngine = TTSManager.currentEngine;
+        });
+      }
+    } catch (e) {
+      // 忽略错误，使用默认显示
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +119,7 @@ class AlouetteAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildSystemInfo() {
     final platform = _getPlatformName();
+    final ttsEngine = _getTTSEngineName();
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -101,8 +151,14 @@ class AlouetteAppBar extends StatelessWidget implements PreferredSizeWidget {
             color: Colors.white.withValues(alpha: 0.5),
           ),
           const SizedBox(width: 8),
+          Icon(
+            _getTTSEngineIcon(),
+            size: 14,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
           Text(
-            'Flutter',
+            ttsEngine,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -112,6 +168,28 @@ class AlouetteAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
     );
+  }
+
+  String _getTTSEngineName() {
+    switch (_currentEngine) {
+      case TTSEngineType.edge:
+        return 'Edge TTS';
+      case TTSEngineType.flutter:
+        return 'Flutter TTS';
+      case null:
+        return 'Loading...'; // 避免使用TTS缩写，显示加载状态
+    }
+  }
+
+  IconData _getTTSEngineIcon() {
+    switch (_currentEngine) {
+      case TTSEngineType.edge:
+        return Icons.cloud; // Edge TTS 使用云图标
+      case TTSEngineType.flutter:
+        return Icons.phone_android; // Flutter TTS 使用设备图标
+      case null:
+        return Icons.record_voice_over; // 默认语音图标
+    }
   }
 
   String _getPlatformName() {
@@ -143,7 +221,4 @@ class AlouetteAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
     return Icons.devices;
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

@@ -1,16 +1,23 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'pages/app_home_page.dart';
 
 void main() {
   debugPrint('Starting app initialization...');
 
-  // Print environment info for debugging
-  final home = Platform.environment['HOME'];
-  final path = Platform.environment['PATH'];
-  debugPrint('Environment variables:');
-  debugPrint('HOME: $home');
-  debugPrint('PATH: $path');
+  // Print environment info for debugging (only on non-web platforms)
+  if (!kIsWeb) {
+    try {
+      final home = Platform.environment['HOME'];
+      final path = Platform.environment['PATH'];
+      debugPrint('Environment variables:');
+      debugPrint('HOME: $home');
+      debugPrint('PATH: $path');
+    } catch (e) {
+      debugPrint('Cannot access environment variables: $e');
+    }
+  }
 
   runApp(const AlouetteApp());
 }

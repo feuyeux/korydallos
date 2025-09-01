@@ -22,7 +22,7 @@ class _TranslationPageState extends State<TranslationPage> {
   final LLMConfigService _llmConfigService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
   final AutoConfigService _autoConfigService = AutoConfigService();
-  late TTSService _ttsService;
+  UnifiedTTSService? _ttsService;
 
   LLMConfig _llmConfig = const LLMConfig(
     provider: 'ollama',
@@ -62,12 +62,18 @@ class _TranslationPageState extends State<TranslationPage> {
     try {
       debugPrint('TTS: Starting initialization...');
 
-      _ttsService = await TTSManager.getService();
+      // 添加超时机制，避免无限等待
+      _ttsService = await TTSManager.getService().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('TTS initialization timeout after 10 seconds');
+        },
+      );
 
       setState(() {
         _isTTSInitialized = true;
       });
-      debugPrint('TTS: Successfully initialized');
+      debugPrint('TTS: Successfully initialized with ${_ttsService?.currentEngine}');
     } catch (error) {
       debugPrint('Failed to initialize TTS: $error');
       debugPrint('TTS Error Type: ${error.runtimeType}');
@@ -156,7 +162,7 @@ class _TranslationPageState extends State<TranslationPage> {
     await showDialog(
       context: context,
       builder: (context) => TTSConfigDialog(
-        ttsService: _isTTSInitialized ? _ttsService : null,
+        ttsService: _ttsService,
       ),
     );
   }
@@ -334,7 +340,7 @@ class _TranslationPageState extends State<TranslationPage> {
                 Expanded(
                   child: TranslationResultWidget(
                     translationService: _translationService,
-                    ttsService: _isTTSInitialized ? _ttsService : null,
+                    ttsService: _ttsService,
                   ),
                 ),
               ],

@@ -1,18 +1,16 @@
-import 'dart:io';
 import '../core/tts_service.dart';
+import '../core/audio_player.dart';
 import '../models/voice.dart';
-import '../enums/voice_gender.dart';
-import '../enums/voice_quality.dart';
-
-import 'edge_tts_player.dart';
+import '../models/tts_error.dart';
+import 'edge_tts_processor.dart';
 
 /// Edge TTS 的实现类
+/// 重构后使用新的 EdgeTTSProcessor 和 AudioPlayer
 class EdgeTTSService implements TTSService {
-  final EdgeTTSPlayer _player = EdgeTTSPlayer();
+  EdgeTTSProcessor? _processor;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   String? _currentVoice;
   bool _initialized = false;
-  String _command = 'edge-tts';
-  String _workDir = '';
 
   @override
   bool get isInitialized => _initialized;
@@ -20,41 +18,31 @@ class EdgeTTSService implements TTSService {
   @override
   Future<void> initialize() async {
     try {
-      // Use full path from environment
-      final homeDir = Platform.environment['HOME'];
-      if (homeDir == null) {
-        throw EdgeTTSException('HOME environment variable not set');
-      }
-
-      final edgeTTSPath = '$homeDir/miniconda3/bin/edge-tts';
-      final workDir = '$homeDir/miniconda3/bin';
-
-      if (!await File(edgeTTSPath).exists()) {
-        throw EdgeTTSException('edge-tts not found at $edgeTTSPath');
-      }
-
-      final result = await Process.run(
-        edgeTTSPath,
-        ['--list-voices'],
-        workingDirectory: workDir,
-        environment: {
-          'PATH': '$workDir:${Platform.environment['PATH'] ?? ''}',
-          'HOME': homeDir,
-          'PYTHONPATH': Platform.environment['PYTHONPATH'] ?? '',
-        },
-      );
-
-      if (result.exitCode != 0) {
-        throw EdgeTTSException(
-            'edge-tts initialization failed: ${result.stderr}');
-      }
-
-      // Store the working command path and directory for future use
-      _command = edgeTTSPath;
-      _workDir = workDir;
+      // 简化初始化逻辑，使用统一的命令行检查
+      _processor = EdgeTTSProcessor();
+      
+      // 通过尝试获取语音列表来验证 edge-tts 是否可用
+      await _processor!.getVoices();
+      
       _initialized = true;
     } catch (e) {
-      throw EdgeTTSException('Failed to initialize edge-tts: $e');
+      _processor = null;
+      
+      if (e is TTSError) {
+        throw TTSError(
+          'Failed to initialize Edge TTS: ${e.message}',
+          code: TTSErrorCodes.initializationFailed,
+          originalError: e,
+        );
+      }
+      
+      throw TTSError(
+        'Failed to initialize Edge TTS: $e. '
+        'Please ensure edge-tts is installed and accessible. '
+        'Install it using "pip install edge-tts" and verify it works by running "edge-tts --list-voices".',
+        code: TTSErrorCodes.initializationFailed,
+        originalError: e,
+      );
     }
   }
 
@@ -63,42 +51,25 @@ class EdgeTTSService implements TTSService {
     _checkInitialized();
 
     try {
-      final result = await Process.run(
-        _command,
-        ['--list-voices'],
-        workingDirectory: _workDir,
-        environment: {
-          'PATH': '$_workDir:${Platform.environment['PATH'] ?? ''}',
-          'HOME': Platform.environment['HOME'] ?? '',
-          'PYTHONPATH': Platform.environment['PYTHONPATH'] ?? '',
-        },
-      );
-      if (result.exitCode != 0) {
-        throw EdgeTTSException('Failed to get voices: ${result.stderr}');
-      }
-
-      final lines = result.stdout.toString().split('\n');
-      final voices = <Voice>[];
-
-      for (var line in lines) {
-        if (line.trim().isEmpty) continue;
-
-        final voice = _parseVoiceLine(line);
-        if (voice != null) {
-          voices.add(voice);
-        }
-      }
-
-      return voices;
+      // 使用新的 EdgeTTSProcessor 获取语音列表
+      return await _processor!.getVoices();
     } catch (e) {
-      throw EdgeTTSException('Failed to get voices: $e');
+      if (e is TTSError) {
+        rethrow;
+      }
+      
+      throw TTSError(
+        'Failed to get voices: $e',
+        code: TTSErrorCodes.voiceListFailed,
+        originalError: e,
+      );
     }
   }
 
   @override
   Future<List<Voice>> getVoicesByLanguage(String languageCode) async {
     final voices = await getVoices();
-    return voices.where((v) => v.languageCode == languageCode).toList();
+    return voices.where((v) => v.locale == languageCode).toList();
   }
 
   @override
@@ -112,104 +83,96 @@ class EdgeTTSService implements TTSService {
     _checkInitialized();
 
     if (_currentVoice == null) {
-      throw EdgeTTSException('No voice selected');
+      throw TTSError(
+        'No voice selected. Please call setVoice() with a valid voice ID before speaking. '
+        'Use getVoices() to see available voices.',
+        code: TTSErrorCodes.noVoiceSelected,
+      );
     }
 
-    if (text.isEmpty) {
+    if (text.trim().isEmpty) {
       return;
     }
 
-    final tempFile = await _synthesize(text, _currentVoice!);
     try {
-      await _player.play(tempFile.path);
-    } finally {
-      await tempFile.delete();
+      // 使用新的 EdgeTTSProcessor 进行语音合成
+      final audioData = await _processor!.synthesizeText(text, _currentVoice!);
+      
+      // 使用 AudioPlayer 播放音频数据
+      await _audioPlayer.playBytes(audioData);
+    } catch (e) {
+      if (e is TTSError) {
+        rethrow;
+      }
+      
+      throw TTSError(
+        'Failed to speak text: $e',
+        code: TTSErrorCodes.speakFailed,
+        originalError: e,
+      );
     }
   }
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (e) {
+      throw TTSError(
+        'Failed to stop playback: $e',
+        code: TTSErrorCodes.stopFailed,
+        originalError: e,
+      );
+    }
+  }
 
   @override
   Future<void> dispose() async {
-    await stop();
-    await _player.dispose();
+    final errors = <String>[];
+    
+    // 尝试停止播放，收集错误但继续清理其他资源
+    try {
+      await stop();
+    } catch (e) {
+      errors.add('Failed to stop playback: $e');
+    }
+    
+    // 尝试释放音频播放器
+    try {
+      await _audioPlayer.dispose();
+    } catch (e) {
+      errors.add('Failed to dispose audio player: $e');
+    }
+    
+    // 尝试释放处理器
+    try {
+      _processor?.dispose();
+    } catch (e) {
+      errors.add('Failed to dispose processor: $e');
+    }
+    
+    // 清理状态
+    _processor = null;
     _initialized = false;
+    _currentVoice = null;
+    
+    // 如果有错误发生，抛出包含所有错误信息的异常
+    if (errors.isNotEmpty) {
+      throw TTSError(
+        'Edge TTS service disposal completed with errors: ${errors.join('; ')}. '
+        'Some resources may not have been properly cleaned up.',
+        code: TTSErrorCodes.disposePartialFailure,
+        originalError: errors,
+      );
+    }
   }
 
   void _checkInitialized() {
-    if (!_initialized) {
-      throw EdgeTTSException('EdgeTTS not initialized');
+    if (!_initialized || _processor == null) {
+      throw TTSError(
+        'Edge TTS service not initialized. Please call initialize() before using the service.',
+        code: TTSErrorCodes.notInitialized,
+      );
     }
   }
-
-  Voice? _parseVoiceLine(String line) {
-    final parts = line.split('\t');
-    if (parts.length < 2) return null;
-
-    final nameParts = parts[0].split(' ');
-    if (nameParts.length < 2) return null;
-
-    final locale = nameParts[0];
-    final name = nameParts.sublist(1).join(' ');
-
-    return Voice(
-      id: parts[0],
-      name: name,
-      languageCode: locale,
-      gender: _parseGender(name),
-      quality: VoiceQuality.neural,
-      metadata: {
-        'edgeTTSName': parts[0],
-      },
-    );
-  }
-
-  VoiceGender _parseGender(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains('female') || lower.contains('woman')) {
-      return VoiceGender.female;
-    } else if (lower.contains('male') || lower.contains('man')) {
-      return VoiceGender.male;
-    }
-    return VoiceGender.neutral;
-  }
-
-  Future<File> _synthesize(String text, String voice) async {
-    final temp = await Directory.systemTemp.createTemp('edge_tts_');
-    final output = File('${temp.path}/output.mp3');
-
-    final result = await Process.run(
-      _command,
-      [
-        '--voice',
-        voice,
-        '--text',
-        text,
-        '--write-media',
-        output.path,
-      ],
-      workingDirectory: _workDir,
-      environment: {
-        'PATH': '$_workDir:${Platform.environment['PATH'] ?? ''}',
-        'HOME': Platform.environment['HOME'] ?? '',
-        'PYTHONPATH': Platform.environment['PYTHONPATH'] ?? '',
-      },
-    );
-
-    if (result.exitCode != 0) {
-      throw EdgeTTSException('Synthesis failed: ${result.stderr}');
-    }
-
-    return output;
-  }
-}
-
-/// Edge TTS 相关异常
-class EdgeTTSException implements Exception {
-  final String message;
-  EdgeTTSException(this.message);
-
-  @override
-  String toString() => 'EdgeTTSException: $message';
 }

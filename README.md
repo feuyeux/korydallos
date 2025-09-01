@@ -2,6 +2,23 @@
 
 A collection of Flutter applications for translation and text-to-speech functionality.
 
+## 🌐 Supported Languages
+
+Alouette TTS supports the following 12 languages with high-quality neural voices:
+
+1. 🇨🇳 Chinese (zh-CN): 这是中文语音合成技术的演示。
+2. 🇺🇸 English (en-US): This is a demonstration of TTS in English.
+3. 🇩🇪 German (de-DE): Dies ist eine Demonstration der deutschen Sprachsynthese-Technologie.
+4. 🇫🇷 French (fr-FR): Ceci est une démonstration de la technologie de synthèse vocale française.
+5. 🇪🇸 Spanish (es-ES): Esta es una demostración de la tecnología de síntesis de voz en español.
+6. 🇮🇹 Italian (it-IT): Questa è una dimostrazione della tecnologia di sintesi vocale italiana.
+7. 🇷🇺 Russian (ru-RU): Это демонстрация технологии синтеза речи на русском языке.
+8. 🇬🇷 Greek (el-GR): Αυτή είναι μια επίδειξη της τεχνολογίας σύνθεσης ομιλίας στα ελληνικά.
+9. 🇸🇦 Arabic (ar-SA): هذا عرض توضيحي لتقنية تحويل النص إلى كلام باللغة العربية.
+10. 🇮🇳 Hindi (hi-IN): यह हिंदी भाषा में टेक्स्ट-टू-स्पीच तकनीक का प्रदर्शन है।
+11. 🇯🇵 Japanese (ja-JP): これは日本語音声合成技術のデモンストレーションです。
+12. 🇰🇷 Korean (ko-KR): 이것은 한국어 음성 합성 기술의 시연입니다。
+
 ## Sub-projects
 
 This repository contains three sub-projects:
