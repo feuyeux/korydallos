@@ -4,15 +4,15 @@
 /// - Edge TTS: Microsoft Edge's TTS engine via command line
 /// - Flutter TTS: Cross-platform TTS using system engines
 ///
-/// ## New Unified API (Recommended)
+/// ## Main API (Recommended)
 ///
-/// The new unified API provides a consistent interface across all TTS engines:
+/// The main API provides a consistent interface across all TTS engines:
 ///
 /// ```dart
 /// import 'package:alouette_tts/alouette_tts.dart';
 ///
-/// // Create a unified TTS service with automatic platform detection
-/// final ttsService = UnifiedTTSService();
+/// // Create a TTS service with automatic platform detection
+/// final ttsService = TTSService();
 /// await ttsService.initialize();
 ///
 /// // Get available voices
@@ -28,69 +28,43 @@
 ///
 /// ## Platform-Specific Engine Selection
 ///
-/// You can also manually select engines or use platform-specific factories:
+/// You can also manually select engines or use the unified platform factory:
 ///
 /// ```dart
 /// // Automatic platform-based selection
-/// final processor = await PlatformTTSFactory.createForPlatform();
+/// final processor = await PlatformTTSFactory.instance.createForPlatform();
 ///
 /// // Manual engine selection
-/// final edgeProcessor = await PlatformTTSFactory.create(TTSEngineType.edge);
-/// final flutterProcessor = await PlatformTTSFactory.create(TTSEngineType.flutter);
-/// ```
-///
-/// ## Legacy API (Backward Compatible)
-///
-/// The original API is still available for backward compatibility:
-///
-/// ```dart
-/// // Legacy Edge TTS usage
-/// final edgeService = EdgeTTSService();
-/// await edgeService.initialize();
-///
-/// // Legacy Flutter TTS usage  
-/// final flutterService = FlutterTTSService();
-/// await flutterService.initialize();
+/// final edgeProcessor = await PlatformTTSFactory.instance.createForEngine(TTSEngineType.edge);
+/// final flutterProcessor = await PlatformTTSFactory.instance.createForEngine(TTSEngineType.flutter);
 /// ```
 library alouette_tts;
 
-// Core interfaces (existing - for backward compatibility)
-export 'src/core/tts_service.dart';
-export 'src/core/tts_player.dart';
-export 'src/core/tts_voice_adapter.dart';
-export 'src/core/tts_factory.dart';
+// Core Services (Main API)
+export 'src/core/services.dart';
 
-// New core interfaces (unified design)
-export 'src/core/tts_processor.dart';
-export 'src/core/audio_player.dart';
-export 'src/core/config_manager.dart';
-export 'src/core/unified_tts_service.dart';
+// TTS Engines (Consolidated)
+export 'src/engines/base_processor.dart';
+export 'src/engines/edge_tts_processor.dart';
+export 'src/engines/flutter_tts_processor.dart';
 
-// Platform-specific factory
-export 'src/platform/platform_tts_factory.dart';
+// Platform Management (Factory Pattern)
+export 'src/platform/platform_factory.dart';
 
-// Edge TTS implementation
-export 'src/edge/edge_tts_service.dart';
-export 'src/edge/edge_tts_player.dart';
-export 'src/edge/edge_tts_voice_adapter.dart';
-export 'src/edge/edge_tts_processor.dart';
-
-// Flutter TTS implementation
-export 'src/flutter/flutter_tts_service.dart';
-export 'src/flutter/flutter_tts_player.dart';
-export 'src/flutter/flutter_tts_voice_adapter.dart';
-export 'src/flutter/flutter_tts_processor.dart';
-
-// Models (updated Voice model + new models)
+// Models
 export 'src/models/voice.dart';
 export 'src/models/tts_error.dart';
 export 'src/models/tts_config.dart';
 
-// Enums (existing - for backward compatibility)
+// Enums
 export 'src/enums/voice_gender.dart';
 export 'src/enums/voice_quality.dart';
+export 'src/enums/tts_engine_type.dart';
 
-// Utilities
+// Core Utilities (Most Commonly Used)
+export 'src/utils/core_utils.dart';
+
+// Specialized Utilities (Available for advanced usage)
 export 'src/utils/platform_utils.dart';
 export 'src/utils/file_utils.dart';
-export 'src/utils/command_line_checker.dart';
+export 'src/utils/tts_diagnostics.dart';

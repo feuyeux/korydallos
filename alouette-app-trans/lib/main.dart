@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import 'pages/translation_page.dart';
 
 void main() {
@@ -12,10 +13,8 @@ class AlouetteTranslatorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Alouette Translator',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       home: const TranslationPage(),
       debugShowCheckedModeBanner: false,
     );

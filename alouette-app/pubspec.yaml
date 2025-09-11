@@ -20,6 +20,8 @@ dependencies:
     path: ../alouette-lib-tts
   alouette_lib_trans:
     path: ../alouette-lib-trans
+  alouette_ui_shared:
+    path: ../alouette-ui-shared
 
 dev_dependencies:
   flutter_test:

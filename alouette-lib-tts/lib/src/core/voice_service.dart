@@ -1,0 +1,365 @@
+import 'package:flutter/foundation.dart';
+import '../models/voice.dart';
+import '../models/tts_error.dart';
+import '../enums/voice_gender.dart';
+import '../enums/voice_quality.dart';
+import '../utils/cache_manager.dart';
+import 'tts_service.dart';
+
+/// Service for managing TTS voices and voice selection
+/// 
+/// Provides advanced voice discovery, filtering, and selection capabilities
+/// with caching and preference management.
+class VoiceService extends ChangeNotifier {
+  final TTSService _ttsService;
+  final CacheManager _cacheManager = CacheManager.instance;
+  List<Voice> _cachedVoices = [];
+  Map<String, List<Voice>> _languageVoiceCache = {};
+  bool _isLoading = false;
+  String? _preferredVoice;
+
+  /// Notifier for voice loading state
+  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
+
+  VoiceService(this._ttsService);
+
+  /// Get all cached voices
+  List<Voice> get cachedVoices => List.unmodifiable(_cachedVoices);
+
+  /// Check if voices are currently being loaded
+  bool get isLoading => _isLoading;
+
+  /// Get the preferred voice name
+  String? get preferredVoice => _preferredVoice;
+
+  /// Get all available voices with caching
+  Future<List<Voice>> getAllVoices({bool forceRefresh = false}) async {
+    // 检查统一缓存管理器中的缓存
+    if (!forceRefresh && _cachedVoices.isEmpty && _ttsService.currentBackend != null) {
+      final cachedVoices = _cacheManager.getCachedVoices(_ttsService.currentBackend!);
+      if (cachedVoices != null) {
+        _cachedVoices = cachedVoices;
+        _updateLanguageCache();
+        return _cachedVoices;
+      }
+    }
+
+    if (_cachedVoices.isNotEmpty && !forceRefresh) {
+      return _cachedVoices;
+    }
+
+    _isLoading = true;
+    isLoadingNotifier.value = true;
+    notifyListeners();
+
+    try {
+      _cachedVoices = await _ttsService.getVoices();
+      
+      // 缓存到统一缓存管理器
+      if (_ttsService.currentBackend != null) {
+        _cacheManager.cacheVoices(_ttsService.currentBackend!, _cachedVoices);
+      }
+      
+      _updateLanguageCache();
+      notifyListeners();
+      return _cachedVoices;
+    } catch (e) {
+      throw TTSError(
+        'Failed to load voices: $e',
+        code: TTSErrorCodes.voiceListError,
+        originalError: e,
+      );
+    } finally {
+      _isLoading = false;
+      isLoadingNotifier.value = false;
+      notifyListeners();
+    }
+  }
+
+  /// Get voices for a specific language
+  Future<List<Voice>> getVoicesByLanguage(
+    String languageCode, {
+    bool exactMatch = false,
+  }) async {
+    final cacheKey = '$languageCode:$exactMatch';
+    
+    if (_languageVoiceCache.containsKey(cacheKey)) {
+      return _languageVoiceCache[cacheKey]!;
+    }
+
+    final allVoices = await getAllVoices();
+    List<Voice> filteredVoices;
+
+    if (exactMatch) {
+      filteredVoices = allVoices
+          .where((voice) => voice.locale.toLowerCase() == languageCode.toLowerCase())
+          .toList();
+    } else {
+      // Match language prefix (e.g., 'en' matches 'en-US', 'en-GB')
+      final langPrefix = languageCode.toLowerCase().split('-')[0];
+      filteredVoices = allVoices
+          .where((voice) => voice.locale.toLowerCase().startsWith(langPrefix))
+          .toList();
+    }
+
+    _languageVoiceCache[cacheKey] = filteredVoices;
+    return filteredVoices;
+  }
+
+  /// Find the best voice for a language based on quality preferences
+  Future<Voice?> findBestVoice(
+    String languageCode,
+    VoiceQuality preferredQuality, {
+    VoiceGender? preferredGender,
+    bool exactLanguageMatch = false,
+  }) async {
+    final voices = await getVoicesByLanguage(
+      languageCode,
+      exactMatch: exactLanguageMatch,
+    );
+
+    if (voices.isEmpty) return null;
+
+    // Sort voices by preference
+    final sortedVoices = List<Voice>.from(voices);
+    sortedVoices.sort((a, b) {
+      // Quality preference (neural > standard)
+      if (preferredQuality == VoiceQuality.neural) {
+        if (a.isNeural && !b.isNeural) return -1;
+        if (!a.isNeural && b.isNeural) return 1;
+      } else {
+        if (a.isStandard && !b.isStandard) return -1;
+        if (!a.isStandard && b.isStandard) return 1;
+      }
+
+      // Gender preference
+      if (preferredGender != null) {
+        final aGenderMatch = a.gender.toLowerCase() == preferredGender.name.toLowerCase();
+        final bGenderMatch = b.gender.toLowerCase() == preferredGender.name.toLowerCase();
+        if (aGenderMatch && !bGenderMatch) return -1;
+        if (!aGenderMatch && bGenderMatch) return 1;
+      }
+
+      // Exact locale match preference
+      final exactLocale = languageCode.toLowerCase();
+      final aExactMatch = a.locale.toLowerCase() == exactLocale;
+      final bExactMatch = b.locale.toLowerCase() == exactLocale;
+      if (aExactMatch && !bExactMatch) return -1;
+      if (!aExactMatch && bExactMatch) return 1;
+
+      // Alphabetical order as final criteria
+      return a.displayName.compareTo(b.displayName);
+    });
+
+    return sortedVoices.first;
+  }
+
+  /// Get default voice for a language
+  Future<Voice?> getDefaultVoice(String languageCode) async {
+    // Try to find a neural voice first
+    final bestNeural = await findBestVoice(
+      languageCode,
+      VoiceQuality.neural,
+    );
+
+    if (bestNeural != null) return bestNeural;
+
+    // Fallback to any available voice
+    return await findBestVoice(
+      languageCode,
+      VoiceQuality.standard,
+    );
+  }
+
+  /// Filter voices by criteria
+  List<Voice> filterVoices({
+    List<Voice>? voices,
+    String? languageCode,
+    VoiceGender? gender,
+    VoiceQuality? quality,
+    String? searchTerm,
+  }) {
+    final voicesToFilter = voices ?? _cachedVoices;
+    
+    return voicesToFilter.where((voice) {
+      // Language filter
+      if (languageCode != null) {
+        final langPrefix = languageCode.toLowerCase().split('-')[0];
+        if (!voice.locale.toLowerCase().startsWith(langPrefix)) {
+          return false;
+        }
+      }
+
+      // Gender filter
+      if (gender != null) {
+        if (voice.gender.toLowerCase() != gender.name.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Quality filter
+      if (quality != null) {
+        switch (quality) {
+          case VoiceQuality.neural:
+            if (!voice.isNeural) return false;
+            break;
+          case VoiceQuality.standard:
+            if (!voice.isStandard) return false;
+            break;
+          case VoiceQuality.other:
+            if (voice.isNeural || voice.isStandard) return false;
+            break;
+        }
+      }
+
+      // Search term filter
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        final term = searchTerm.toLowerCase();
+        return voice.displayName.toLowerCase().contains(term) ||
+               voice.name.toLowerCase().contains(term) ||
+               voice.locale.toLowerCase().contains(term);
+      }
+
+      return true;
+    }).toList();
+  }
+
+  /// Group voices by language
+  Map<String, List<Voice>> groupVoicesByLanguage([List<Voice>? voices]) {
+    final voicesToGroup = voices ?? _cachedVoices;
+    final grouped = <String, List<Voice>>{};
+
+    for (final voice in voicesToGroup) {
+      final langCode = voice.language;
+      grouped.putIfAbsent(langCode, () => []).add(voice);
+    }
+
+    // Sort voices within each language group
+    for (final entry in grouped.entries) {
+      entry.value.sort((a, b) {
+        // Neural voices first
+        if (a.isNeural && !b.isNeural) return -1;
+        if (!a.isNeural && b.isNeural) return 1;
+        
+        // Then by display name
+        return a.displayName.compareTo(b.displayName);
+      });
+    }
+
+    return grouped;
+  }
+
+  /// Set preferred voice
+  void setPreferredVoice(String voiceName) {
+    _preferredVoice = voiceName;
+    notifyListeners();
+  }
+
+  /// Clear preferred voice
+  void clearPreferredVoice() {
+    _preferredVoice = null;
+    notifyListeners();
+  }
+
+  /// Get voice statistics
+  Map<String, dynamic> getVoiceStatistics([List<Voice>? voices]) {
+    final voicesToAnalyze = voices ?? _cachedVoices;
+    
+    final totalVoices = voicesToAnalyze.length;
+    final neuralVoices = voicesToAnalyze.where((v) => v.isNeural).length;
+    final standardVoices = voicesToAnalyze.where((v) => v.isStandard).length;
+    
+    final languageGroups = groupVoicesByLanguage(voicesToAnalyze);
+    final languageCount = languageGroups.length;
+    
+    final genderCounts = <String, int>{};
+    for (final voice in voicesToAnalyze) {
+      genderCounts[voice.gender] = (genderCounts[voice.gender] ?? 0) + 1;
+    }
+
+    return {
+      'totalVoices': totalVoices,
+      'neuralVoices': neuralVoices,
+      'standardVoices': standardVoices,
+      'languageCount': languageCount,
+      'languages': languageGroups.keys.toList(),
+      'genderDistribution': genderCounts,
+      'neuralPercentage': totalVoices > 0 ? (neuralVoices / totalVoices * 100).round() : 0,
+    };
+  }
+
+  /// Update language voice cache
+  void _updateLanguageCache() {
+    _languageVoiceCache.clear();
+    // Cache will be rebuilt on demand
+  }
+
+  /// Clear all caches
+  void clearCache() {
+    _cachedVoices.clear();
+    _languageVoiceCache.clear();
+    
+    // 也清理统一缓存管理器中的语音缓存
+    if (_ttsService.currentBackend != null) {
+      _cacheManager.clearVoiceCache(_ttsService.currentBackend!);
+    }
+    
+    notifyListeners();
+  }
+
+  /// Refresh voices from the TTS service
+  Future<void> refreshVoices() async {
+    clearCache();
+    await getAllVoices(forceRefresh: true);
+  }
+
+  /// Check if a voice exists
+  bool hasVoice(String voiceName) {
+    return _cachedVoices.any((voice) => voice.name == voiceName);
+  }
+
+  /// Find voice by name
+  Voice? findVoice(String voiceName) {
+    try {
+      return _cachedVoices.firstWhere((voice) => voice.name == voiceName);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Get recommended voices for a language
+  Future<List<Voice>> getRecommendedVoices(
+    String languageCode, {
+    int maxCount = 3,
+  }) async {
+    final voices = await getVoicesByLanguage(languageCode);
+    
+    if (voices.isEmpty) return [];
+
+    // Sort by recommendation criteria
+    final sortedVoices = List<Voice>.from(voices);
+    sortedVoices.sort((a, b) {
+      // Neural voices first
+      if (a.isNeural && !b.isNeural) return -1;
+      if (!a.isNeural && b.isNeural) return 1;
+      
+      // Exact locale match
+      final exactLocale = languageCode.toLowerCase();
+      final aExact = a.locale.toLowerCase() == exactLocale;
+      final bExact = b.locale.toLowerCase() == exactLocale;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      
+      // Gender diversity (prefer alternating male/female)
+      return a.displayName.compareTo(b.displayName);
+    });
+
+    return sortedVoices.take(maxCount).toList();
+  }
+
+  @override
+  void dispose() {
+    isLoadingNotifier.dispose();
+    super.dispose();
+  }
+}

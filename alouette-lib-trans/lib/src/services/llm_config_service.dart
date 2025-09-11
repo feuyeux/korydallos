@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../models/llm_config.dart';
 import '../models/connection_status.dart';
 import '../providers/translation_provider.dart';
@@ -8,10 +9,13 @@ import '../providers/lmstudio_provider.dart';
 import '../exceptions/translation_exceptions.dart';
 
 /// Service for managing LLM configurations and testing connections
-class LLMConfigService {
+class LLMConfigService extends ChangeNotifier {
   List<String> _availableModels = [];
   ConnectionStatus? _connectionStatus;
   bool _isTestingConnection = false;
+  
+  /// Notifier for connection testing state
+  final ValueNotifier<bool> isTestingConnectionNotifier = ValueNotifier<bool>(false);
 
   final Map<String, TranslationProvider> _providers = {
     'ollama': OllamaProvider(),
@@ -36,6 +40,8 @@ class LLMConfigService {
     }
 
     _isTestingConnection = true;
+    isTestingConnectionNotifier.value = true;
+    notifyListeners();
 
     try {
       final provider = _getProvider(config.provider);
@@ -57,15 +63,19 @@ class LLMConfigService {
         _availableModels = [];
       }
 
+      notifyListeners();
       return _connectionStatus!;
     } catch (e) {
       _connectionStatus = ConnectionStatus.failure(
         message: 'Connection test failed: ${e.toString()}',
       );
       _availableModels = [];
+      notifyListeners();
       return _connectionStatus!;
     } finally {
       _isTestingConnection = false;
+      isTestingConnectionNotifier.value = false;
+      notifyListeners();
     }
   }
 
@@ -79,6 +89,7 @@ class LLMConfigService {
     try {
       final models = await provider.getAvailableModels(config);
       _availableModels = models;
+      notifyListeners();
       return models;
     } catch (e) {
       throw TranslationException(
@@ -352,6 +363,7 @@ class LLMConfigService {
   void clearConnection() {
     _availableModels.clear();
     _connectionStatus = null;
+    notifyListeners();
   }
 
   /// Get connection summary for display

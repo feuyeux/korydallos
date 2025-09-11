@@ -35,11 +35,11 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # HTTP client for API calls
-  http: ^1.1.0
-
-  # Flutter Text-to-Speech plugin
-  flutter_tts: ^4.2.3
+  # Alouette libraries
+  alouette_lib_trans:
+    path: ../alouette-lib-trans
+  alouette_ui_shared:
+    path: ../alouette-ui-shared
 
 dev_dependencies:
   flutter_test:
@@ -99,19 +99,19 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "alouette-translator.png"
+  image_path: "assets/icons/alouette_rounded.png"
   remove_alpha_ios: true
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "alouette-translator.png"
+    image_path: "assets/icons/alouette_rounded.png"
   windows:
     generate: true
-    image_path: "alouette-translator.png"
+    image_path: "assets/icons/alouette_rounded.png"
     icon_size: 48 # min:48, max:256, default: 48
   macos:
     generate: true
-    image_path: "alouette-translator.png"
+    image_path: "assets/icons/alouette_rounded.png"
   # 添加圆角配置
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "alouette-translator.png"
+  adaptive_icon_foreground: "assets/icons/alouette_rounded.png"

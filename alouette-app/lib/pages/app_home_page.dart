@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import 'translation_page.dart';
 import 'tts_test_page.dart';
-import '../widgets/alouette_app_bar.dart';
 
 /// 应用主页面
 class AppHomePage extends StatelessWidget {
@@ -10,7 +10,9 @@ class AppHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AlouetteAppBar(),
+      appBar: const AlouetteAppBar(
+        ttsInitialized: true, // This will be updated dynamically
+      ),
       body: const TranslationPage(),
       drawer: Drawer(
         child: ListView(

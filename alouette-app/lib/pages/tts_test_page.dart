@@ -1,5 +1,6 @@
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import 'package:flutter/material.dart';
+import '../services/tts_manager.dart';
 
 class TTSTestPage extends StatefulWidget {
   const TTSTestPage({super.key});
@@ -9,14 +10,14 @@ class TTSTestPage extends StatefulWidget {
 }
 
 class _TTSTestPageState extends State<TTSTestPage> {
-  late final Future<UnifiedTTSService> _ttsServiceFuture;
+  late final Future<VoiceService> _voiceServiceFuture;
   final TextEditingController _textController = TextEditingController(
     text: 'Hello, this is a test message.',
   );
 
   String? _currentVoiceName;
-  List<Voice>? _voices;
-  UnifiedTTSService? _ttsService;
+  VoiceService? _voiceService;
+  TTSService? _ttsService;
   AudioPlayer? _audioPlayer;
   bool _isPlaying = false;
   TTSEngineType? _currentEngine;
@@ -24,35 +25,33 @@ class _TTSTestPageState extends State<TTSTestPage> {
   @override
   void initState() {
     super.initState();
-    _ttsServiceFuture = _initTTSService();
+    _voiceServiceFuture = _initServices();
   }
 
-  Future<UnifiedTTSService> _initTTSService() async {
+  Future<VoiceService> _initServices() async {
     try {
-      final service = UnifiedTTSService();
-      await service.initialize();
-      _audioPlayer = AudioPlayer();
+      _ttsService = await TTSManager.getService();
+      _voiceService = await TTSManager.getVoiceService();
+      _audioPlayer = TTSManager.getAudioPlayer();
       
       setState(() {
-        _ttsService = service;
-        _currentEngine = service.currentEngine;
+        _currentEngine = _ttsService!.currentEngine;
       });
       
       await _loadVoices();
-      return service;
+      return _voiceService!;
     } catch (e) {
-      debugPrint('Failed to initialize TTS service: $e');
+      debugPrint('Failed to initialize services: $e');
       rethrow;
     }
   }
 
   Future<void> _loadVoices() async {
-    if (_ttsService == null) return;
+    if (_voiceService == null) return;
     
     try {
-      final voices = await _ttsService!.getVoices();
+      final voices = await _voiceService!.getAllVoices();
       setState(() {
-        _voices = voices;
         if (voices.isNotEmpty) {
           _currentVoiceName = voices.first.name;
         }
@@ -74,7 +73,6 @@ class _TTSTestPageState extends State<TTSTestPage> {
       await _ttsService!.switchEngine(engineType);
       setState(() {
         _currentEngine = engineType;
-        _voices = null;
         _currentVoiceName = null;
       });
       await _loadVoices();
@@ -130,8 +128,8 @@ class _TTSTestPageState extends State<TTSTestPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('TTS Test - Unified API')),
-      body: FutureBuilder<UnifiedTTSService>(
-        future: _ttsServiceFuture,
+      body: FutureBuilder<VoiceService>(
+        future: _voiceServiceFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -145,7 +143,7 @@ class _TTSTestPageState extends State<TTSTestPage> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _ttsServiceFuture = _initTTSService();
+                        _voiceServiceFuture = _initServices();
                       });
                     },
                     child: const Text('Retry'),
@@ -218,31 +216,48 @@ class _TTSTestPageState extends State<TTSTestPage> {
                 const SizedBox(height: 16),
 
                 // Voice selector
-                if (_voices != null) ...[
-                  DropdownButton<String>(
-                    value: _currentVoiceName,
-                    isExpanded: true,
-                    items: _voices!.map((voice) {
-                      return DropdownMenuItem(
-                        value: voice.name,
-                        child: Text(
-                          '${voice.displayName} (${voice.locale}, ${voice.gender})',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (voiceName) {
-                      if (voiceName != null) {
-                        setState(() => _currentVoiceName = voiceName);
+                if (_voiceService != null) ...[
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _voiceService!.isLoadingNotifier,
+                    builder: (context, isLoading, child) {
+                      if (isLoading) {
+                        return const Center(child: CircularProgressIndicator());
                       }
+                      
+                      final voices = _voiceService!.cachedVoices;
+                      if (voices.isEmpty) {
+                        return const Text('No voices available');
+                      }
+                      
+                      return Column(
+                        children: [
+                          DropdownButton<String>(
+                            value: _currentVoiceName,
+                            isExpanded: true,
+                            items: voices.map((voice) {
+                              return DropdownMenuItem(
+                                value: voice.name,
+                                child: Text(
+                                  '${voice.displayName} (${voice.locale}, ${voice.gender})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (voiceName) {
+                              if (voiceName != null) {
+                                setState(() => _currentVoiceName = voiceName);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Available voices: ${voices.length} (Neural: ${voices.where((v) => v.isNeural).length})',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      );
                     },
                   ),
-                  const SizedBox(height: 8),
-                  if (_voices!.isNotEmpty)
-                    Text(
-                      'Available voices: ${_voices!.length} (Neural: ${_voices!.where((v) => v.isNeural).length})',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
                   const SizedBox(height: 16),
                 ],
 

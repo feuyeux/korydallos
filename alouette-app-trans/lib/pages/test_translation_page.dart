@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/translation_models.dart';
-import '../services/llm_config_service.dart';
-import '../services/translation_service.dart';
-import '../services/auto_config_service.dart';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 
 class TestTranslationPage extends StatefulWidget {
   const TestTranslationPage({super.key});

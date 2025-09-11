@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
-import '../models/app_models.dart';
-import '../services/llm_config_service.dart';
-import '../services/translation_service.dart';
-import '../services/auto_config_service.dart';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import '../services/tts_manager.dart';
-import '../widgets/llm_config_dialog.dart';
-import '../widgets/tts_config_dialog.dart';
-import '../widgets/translation_input_widget.dart';
-import '../widgets/translation_result_widget.dart';
-import '../constants/app_constants.dart';
 
 class TranslationPage extends StatefulWidget {
   const TranslationPage({super.key});
@@ -22,11 +15,11 @@ class _TranslationPageState extends State<TranslationPage> {
   final LLMConfigService _llmConfigService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
   final AutoConfigService _autoConfigService = AutoConfigService();
-  UnifiedTTSService? _ttsService;
+  TTSService? _ttsService;
 
   LLMConfig _llmConfig = const LLMConfig(
     provider: 'ollama',
-    serverUrl: AppConstants.defaultOllamaUrl,
+    serverUrl: 'http://localhost:11434',
     selectedModel: '',
   );
 
@@ -61,8 +54,7 @@ class _TranslationPageState extends State<TranslationPage> {
 
     try {
       debugPrint('TTS: Starting initialization...');
-
-      // 添加超时机制，避免无限等待
+      
       _ttsService = await TTSManager.getService().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
@@ -76,10 +68,6 @@ class _TranslationPageState extends State<TranslationPage> {
       debugPrint('TTS: Successfully initialized with ${_ttsService?.currentEngine}');
     } catch (error) {
       debugPrint('Failed to initialize TTS: $error');
-      debugPrint('TTS Error Type: ${error.runtimeType}');
-      if (error is Exception) {
-        debugPrint('TTS Error toString: ${error.toString()}');
-      }
       setState(() {
         _isTTSInitialized = false;
       });

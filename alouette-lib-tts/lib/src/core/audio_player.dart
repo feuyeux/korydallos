@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:path/path.dart' as path;
 import '../models/tts_error.dart';
+import '../utils/tts_logger.dart';
+import '../utils/resource_manager.dart';
 
 /// 播放状态枚举
 enum PlaybackState {
@@ -16,8 +19,9 @@ enum PlaybackState {
 /// 参照 hello-tts-dart 的 AudioPlayer 实现
 class AudioPlayer {
   PlaybackState _state = PlaybackState.idle;
-  final List<File> _tempFiles = [];
   Process? _currentProcess;
+  final ResourceManager _resourceManager = ResourceManager.instance;
+  final List<File> _tempFiles = [];
 
   /// 获取当前播放状态
   PlaybackState get state => _state;
@@ -25,6 +29,8 @@ class AudioPlayer {
   /// 
   /// [filePath] 音频文件路径
   Future<void> play(String filePath) async {
+    TTSLogger.debug('Starting audio playback for: $filePath');
+    
     if (!File(filePath).existsSync()) {
       _state = PlaybackState.error;
       throw TTSError('Audio file not found: $filePath', code: 'FILE_NOT_FOUND');
@@ -46,9 +52,11 @@ class AudioPlayer {
       }
       
       _state = PlaybackState.idle;
+      TTSLogger.debug('Audio playback completed successfully');
     } catch (e) {
       _state = PlaybackState.error;
       await _cleanup();
+      TTSLogger.error('Audio playback failed', e);
       
       if (e is TTSError) {
         rethrow;
@@ -62,39 +70,33 @@ class AudioPlayer {
   /// [audioData] 音频数据字节数组
   /// [format] 音频格式，默认为 'mp3'
   Future<void> playBytes(Uint8List audioData, {String format = 'mp3'}) async {
-    // 创建临时文件
-    final tempDir = Directory.systemTemp;
-    final tempFile = File(path.join(tempDir.path, 'temp_audio_${DateTime.now().millisecondsSinceEpoch}.$format'));
-    
-    try {
-      // 注册临时文件以便后续清理
-      _tempFiles.add(tempFile);
-      await tempFile.writeAsBytes(audioData);
-      await play(tempFile.path);
-    } catch (e) {
-      // 确保在错误情况下清理临时文件
-      await _cleanupTempFile(tempFile);
-      rethrow;
-    } finally {
-      // 播放完成后清理临时文件
-      await _cleanupTempFile(tempFile);
-    }
+    // 使用资源管理器的 withTempFile 方法自动管理临时文件
+    await _resourceManager.withTempFile(
+      (tempFile) async {
+        TTSLogger.debug('Playing audio bytes: ${audioData.length} bytes for format $format');
+        
+        await tempFile.writeAsBytes(audioData);
+        await play(tempFile.path);
+      },
+      prefix: 'temp_audio_${DateTime.now().millisecondsSinceEpoch}',
+      suffix: '.$format',
+    );
   }
 
   /// 停止当前播放
   Future<void> stop() async {
+    TTSLogger.debug('Stopping audio playback');
     if (_currentProcess != null) {
-      _currentProcess!.kill();
+      _resourceManager.cleanupProcess(_currentProcess!);
       _currentProcess = null;
     }
     _state = PlaybackState.stopped;
-    await _cleanup();
   }
 
   /// 释放资源和清理临时文件
   Future<void> dispose() async {
+    TTSLogger.debug('Disposing audio player');
     await stop();
-    await _cleanup();
   }
 
   /// 清理所有临时文件和资源
@@ -117,10 +119,11 @@ class AudioPlayer {
     try {
       if (await file.exists()) {
         await file.delete();
+        TTSLogger.debug('Temporary file cleaned up: ${file.path}');
       }
       _tempFiles.remove(file);
     } catch (e) {
-      // 忽略清理错误
+      TTSLogger.warning('Failed to cleanup temporary file: ${file.path}, error: $e');
     }
   }
 
@@ -133,6 +136,7 @@ class AudioPlayer {
         final result = await Process.run('which', [player]);
         if (result.exitCode == 0) {
           _currentProcess = await Process.start(player, [filePath]);
+          _resourceManager.trackProcess(_currentProcess!);
           final exitCode = await _currentProcess!.exitCode;
           _currentProcess = null;
           
@@ -153,6 +157,7 @@ class AudioPlayer {
   Future<void> _playOnMacOS(String filePath) async {
     try {
       _currentProcess = await Process.start('afplay', [filePath]);
+      _resourceManager.trackProcess(_currentProcess!);
       final exitCode = await _currentProcess!.exitCode;
       _currentProcess = null;
       

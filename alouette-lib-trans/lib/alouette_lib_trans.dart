@@ -14,6 +14,7 @@ export 'src/models/connection_status.dart';
 // Services
 export 'src/services/translation_service.dart';
 export 'src/services/llm_config_service.dart';
+export 'src/services/auto_config_service.dart';
 
 // Providers
 export 'src/providers/translation_provider.dart';

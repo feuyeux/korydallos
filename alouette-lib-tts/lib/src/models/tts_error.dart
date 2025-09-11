@@ -63,6 +63,9 @@ class TTSErrorCodes {
   static const String initializationFailed = 'INITIALIZATION_FAILED';
   static const String notInitialized = 'NOT_INITIALIZED';
   
+  // 配置相关错误
+  static const String configurationError = 'CONFIGURATION_ERROR';
+  
   // 语音相关错误
   static const String voiceNotFound = 'VOICE_NOT_FOUND';
   static const String noVoiceSelected = 'NO_VOICE_SELECTED';

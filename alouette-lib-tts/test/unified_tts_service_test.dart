@@ -2,11 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 
 void main() {
-  group('UnifiedTTSService Tests', () {
-    late UnifiedTTSService service;
+  group('TTSService Tests', () {
+    late TTSService service;
 
     setUp(() {
-      service = UnifiedTTSService();
+      service = TTSService();
     });
 
     tearDown(() {

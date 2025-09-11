@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/translation_models.dart';
-import '../services/llm_config_service.dart';
-import '../services/translation_service.dart';
-import '../services/auto_config_service.dart';
-import '../widgets/llm_config_dialog.dart';
-import '../widgets/translation_input_widget.dart';
-import '../widgets/translation_result_widget.dart';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 
 class TranslationPage extends StatefulWidget {
   const TranslationPage({super.key});
@@ -69,7 +64,7 @@ class _TranslationPageState extends State<TranslationPage> {
             _buildConfigStatus(),
             const SizedBox(height: 2),
 
-            // 翻译输入区域
+            // Translation input area
             Expanded(
               flex: 2,
               child: TranslationInputWidget(
@@ -89,11 +84,12 @@ class _TranslationPageState extends State<TranslationPage> {
 
             const SizedBox(height: 8),
 
-            // 翻译结果区域
+            // Translation result area
             Expanded(
               flex: 3,
               child: TranslationResultWidget(
                 translationService: _translationService,
+                isCompactMode: true,
               ),
             ),
           ],

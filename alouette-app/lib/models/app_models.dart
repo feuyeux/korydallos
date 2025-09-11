@@ -1,6 +1,6 @@
 // Re-export models from libraries for backward compatibility
 export 'package:alouette_lib_tts/alouette_tts.dart'
-    show AlouetteTTSConfig, AlouetteVoice, TTSState;
+    show TTSConfig, Voice, TTSEngineType;
 export 'package:alouette_lib_trans/alouette_lib_trans.dart'
     show LLMConfig, TranslationRequest, TranslationResult, ConnectionStatus;
 

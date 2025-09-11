@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// TTS Configuration class
 /// 
 /// Defines configuration parameters for TTS operations including
@@ -9,14 +11,14 @@ class TTSConfig {
   /// Default audio format (mp3, wav, etc.)
   final String defaultFormat;
   
-  /// Default speech rate (slow, medium, fast, or numeric value)
-  final String defaultRate;
+  /// Default speech rate (0.1 to 3.0)
+  final double defaultRate;
   
-  /// Default pitch (low, medium, high, or numeric value)
-  final String defaultPitch;
+  /// Default pitch (0.5 to 2.0)
+  final double defaultPitch;
   
-  /// Default volume (quiet, medium, loud, or numeric value)
-  final String defaultVolume;
+  /// Default volume (0.0 to 1.0)
+  final double defaultVolume;
   
   /// Directory for output files
   final String outputDirectory;
@@ -30,9 +32,9 @@ class TTSConfig {
   const TTSConfig({
     this.defaultVoice = 'en-US-AriaNeural',
     this.defaultFormat = 'mp3',
-    this.defaultRate = 'medium',
-    this.defaultPitch = 'medium',
-    this.defaultVolume = 'medium',
+    this.defaultRate = 1.0,
+    this.defaultPitch = 1.0,
+    this.defaultVolume = 1.0,
     this.outputDirectory = 'output',
     this.enableCaching = true,
     this.enablePlayback = false,
@@ -45,13 +47,23 @@ class TTSConfig {
     return TTSConfig(
       defaultVoice: _validateString(json['defaultVoice'], 'en-US-AriaNeural'),
       defaultFormat: _validateString(json['defaultFormat'], 'mp3'),
-      defaultRate: _validateString(json['defaultRate'], 'medium'),
-      defaultPitch: _validateString(json['defaultPitch'], 'medium'),
-      defaultVolume: _validateString(json['defaultVolume'], 'medium'),
+      defaultRate: _validateDouble(json['defaultRate'], 1.0),
+      defaultPitch: _validateDouble(json['defaultPitch'], 1.0),
+      defaultVolume: _validateDouble(json['defaultVolume'], 1.0),
       outputDirectory: _validateString(json['outputDirectory'], 'output'),
       enableCaching: _validateBool(json['enableCaching'], true),
       enablePlayback: _validateBool(json['enablePlayback'], false),
     );
+  }
+
+  /// Create TTSConfig from JSON string
+  factory TTSConfig.fromJsonString(String jsonString) {
+    try {
+      final Map<String, dynamic> json = jsonDecode(jsonString);
+      return TTSConfig.fromJson(json);
+    } catch (e) {
+      throw FormatException('Invalid JSON string: $e');
+    }
   }
 
   /// Convert TTSConfig to JSON map
@@ -68,13 +80,18 @@ class TTSConfig {
     };
   }
 
+  /// Convert TTSConfig to JSON string
+  String toJsonString() {
+    return jsonEncode(toJson());
+  }
+
   /// Create a copy of this config with updated values
   TTSConfig copyWith({
     String? defaultVoice,
     String? defaultFormat,
-    String? defaultRate,
-    String? defaultPitch,
-    String? defaultVolume,
+    double? defaultRate,
+    double? defaultPitch,
+    double? defaultVolume,
     String? outputDirectory,
     bool? enableCaching,
     bool? enablePlayback,
@@ -109,28 +126,16 @@ class TTSConfig {
       errors.add('defaultFormat must be one of: mp3, wav, ogg, flac');
     }
     
-    if (defaultRate.isEmpty) {
-      errors.add('defaultRate cannot be empty');
-    }
-    
     if (!_isValidRate(defaultRate)) {
-      errors.add('defaultRate must be slow, medium, fast, or a number between 0.1 and 3.0');
-    }
-    
-    if (defaultPitch.isEmpty) {
-      errors.add('defaultPitch cannot be empty');
+      errors.add('defaultRate must be a number between 0.1 and 3.0');
     }
     
     if (!_isValidPitch(defaultPitch)) {
-      errors.add('defaultPitch must be low, medium, high, or a number between 0.5 and 2.0');
-    }
-    
-    if (defaultVolume.isEmpty) {
-      errors.add('defaultVolume cannot be empty');
+      errors.add('defaultPitch must be a number between 0.5 and 2.0');
     }
     
     if (!_isValidVolume(defaultVolume)) {
-      errors.add('defaultVolume must be quiet, medium, loud, or a number between 0.0 and 1.0');
+      errors.add('defaultVolume must be a number between 0.0 and 1.0');
     }
     
     if (outputDirectory.isEmpty) {
@@ -201,41 +206,36 @@ class TTSConfig {
     return defaultValue;
   }
 
+  static double _validateDouble(dynamic value, double defaultValue) {
+    if (value is double) {
+      return value;
+    }
+    if (value is int) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+    return defaultValue;
+  }
+
   static bool _isValidFormat(String format) {
     const validFormats = {'mp3', 'wav', 'ogg', 'flac'};
     return validFormats.contains(format.toLowerCase());
   }
 
-  static bool _isValidRate(String rate) {
-    const validRates = {'slow', 'medium', 'fast'};
-    if (validRates.contains(rate.toLowerCase())) {
-      return true;
-    }
-    
-    // Check if it's a valid numeric rate
-    final numericRate = double.tryParse(rate);
-    return numericRate != null && numericRate >= 0.1 && numericRate <= 3.0;
+  static bool _isValidRate(double rate) {
+    return rate >= 0.1 && rate <= 3.0;
   }
 
-  static bool _isValidPitch(String pitch) {
-    const validPitches = {'low', 'medium', 'high'};
-    if (validPitches.contains(pitch.toLowerCase())) {
-      return true;
-    }
-    
-    // Check if it's a valid numeric pitch
-    final numericPitch = double.tryParse(pitch);
-    return numericPitch != null && numericPitch >= 0.5 && numericPitch <= 2.0;
+  static bool _isValidPitch(double pitch) {
+    return pitch >= 0.5 && pitch <= 2.0;
   }
 
-  static bool _isValidVolume(String volume) {
-    const validVolumes = {'quiet', 'medium', 'loud'};
-    if (validVolumes.contains(volume.toLowerCase())) {
-      return true;
-    }
-    
-    // Check if it's a valid numeric volume
-    final numericVolume = double.tryParse(volume);
-    return numericVolume != null && numericVolume >= 0.0 && numericVolume <= 1.0;
+  static bool _isValidVolume(double volume) {
+    return volume >= 0.0 && volume <= 1.0;
   }
 }

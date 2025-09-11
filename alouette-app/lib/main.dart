@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import 'pages/app_home_page.dart';
 
 void main() {
@@ -29,10 +30,8 @@ class AlouetteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Alouette App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       home: const AppHomePage(),
       debugShowCheckedModeBanner: false,
     );

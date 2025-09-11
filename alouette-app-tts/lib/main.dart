@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import 'pages/home_page.dart';
 
 void main() async {
@@ -15,11 +15,10 @@ class AlouetteTTSApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Alouette TTS',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const TTSHomePage(),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      home: const HomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

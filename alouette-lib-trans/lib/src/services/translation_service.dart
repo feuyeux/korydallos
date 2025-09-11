@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/llm_config.dart';
 import '../models/translation_request.dart';
 import '../models/translation_result.dart';
@@ -7,9 +8,12 @@ import '../providers/lmstudio_provider.dart';
 import '../exceptions/translation_exceptions.dart';
 
 /// Core translation service that handles text translation operations
-class TranslationService {
+class TranslationService extends ChangeNotifier {
   TranslationResult? _currentTranslation;
   bool _isTranslating = false;
+  
+  /// Notifier for translation state changes
+  final ValueNotifier<bool> isTranslatingNotifier = ValueNotifier<bool>(false);
   
   final Map<String, TranslationProvider> _providers = {
     'ollama': OllamaProvider(),
@@ -48,6 +52,8 @@ class TranslationService {
     }
 
     _isTranslating = true;
+    isTranslatingNotifier.value = true;
+    notifyListeners();
     
     try {
       final translations = <String, String>{};
@@ -80,6 +86,7 @@ class TranslationService {
         },
       );
 
+      notifyListeners();
       return _currentTranslation!;
     } catch (error) {
       // Re-throw known exceptions
@@ -91,6 +98,8 @@ class TranslationService {
       throw TranslationException('Translation failed: ${error.toString()}');
     } finally {
       _isTranslating = false;
+      isTranslatingNotifier.value = false;
+      notifyListeners();
     }
   }
 
@@ -133,6 +142,7 @@ class TranslationService {
   /// Clear the current translation
   void clearTranslation() {
     _currentTranslation = null;
+    notifyListeners();
   }
 
   /// Get the current translation state
