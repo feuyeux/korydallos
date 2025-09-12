@@ -32,6 +32,21 @@ abstract class BaseTTSProcessor {
   /// 尝试停止当前正在进行的语音合成或播放
   /// 不是所有的TTS引擎都支持停止功能
   Future<void> stop();
+  
+  /// 设置语速
+  /// 
+  /// [rate] 语速值，通常在0.1到3.0之间
+  Future<void> setSpeechRate(double rate);
+  
+  /// 设置音调
+  /// 
+  /// [pitch] 音调值，通常在0.5到2.0之间
+  Future<void> setPitch(double pitch);
+  
+  /// 设置音量
+  /// 
+  /// [volume] 音量值，通常在0.0到1.0之间
+  Future<void> setVolume(double volume);
 
   /// 释放资源
   void dispose();

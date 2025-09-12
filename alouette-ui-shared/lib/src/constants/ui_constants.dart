@@ -47,8 +47,40 @@ class AppDefaults {
 class UISizes {
   // Input widget heights
   static const double textInputHeight = 60.0;
+  static const double textInputHeightCompact = 48.0;
+  
+  // Border radius
+  static const double inputBorderRadius = 8.0;
+  static const double buttonBorderRadius = 8.0;
   static const double languageSelectionHeight = 110.0;
+  
+  // Card dimensions
+  static const double cardBorderRadius = 12.0;
+  static const double cardElevation = 2.0;
+  static const double cardElevationHover = 4.0;
+  
+  // Button dimensions
+  static const double buttonHeightStandard = 48.0;
+  static const double buttonHeightCompact = 36.0;
+  
+  // Icon sizes
+  static const double iconSizeSmall = 16.0;
+  static const double iconSizeMedium = 24.0;
+  static const double iconSizeLarge = 32.0;
+  
+  // Spacing
+  static const double spacingXxs = 2.0;
+  static const double spacingXs = 4.0;
+  static const double spacingS = 8.0;
+  static const double spacingM = 16.0;
+  static const double spacingL = 24.0;
+  static const double spacingXl = 32.0;
+  static const double spacingXxl = 48.0;
   static const double fixedLanguageChipsHeight = 72.0;
+  
+  // Border radius
+  static const double borderRadiusS = 4.0;
+  static const double borderRadiusM = 8.0;
 
   // Button sizes
   static const double buttonHeight = 32.0;

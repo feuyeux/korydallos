@@ -345,6 +345,24 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
     await _ensureInitialized();
     await _tts.stop();
   }
+  
+  @override
+  Future<void> setSpeechRate(double rate) async {
+    await _ensureInitialized();
+    await _tts.setSpeechRate(rate);
+  }
+  
+  @override
+  Future<void> setPitch(double pitch) async {
+    await _ensureInitialized();
+    await _tts.setPitch(pitch);
+  }
+  
+  @override
+  Future<void> setVolume(double volume) async {
+    await _ensureInitialized();
+    await _tts.setVolume(volume);
+  }
 
   @override
   void dispose() {

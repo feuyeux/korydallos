@@ -1,8 +1,11 @@
 import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'tts_service_extension.dart';
+import 'tts_service_adapter.dart';
 
 /// Simplified TTS Manager for app-tts that reuses library functionality
 class AppTTSManager {
-  static TTSService? _service;
+  static TTSService? _ttsService;
+  static CustomTTSService? _service;
   static VoiceService? _voiceService;
   static AudioPlayer? _audioPlayer;
   static bool _isInitialized = false;
@@ -11,10 +14,11 @@ class AppTTSManager {
     if (_isInitialized) return;
     
     try {
-      _service = TTSService();
-      await _service!.initialize(autoFallback: true);
+      _ttsService = TTSService();
+      await _ttsService!.initialize(autoFallback: true);
       
-      _voiceService = VoiceService(_service!);
+      _service = CustomTTSService(_ttsService!);
+      _voiceService = VoiceService(_ttsService!);
       _audioPlayer = AudioPlayer();
       _isInitialized = true;
       
@@ -25,7 +29,7 @@ class AppTTSManager {
     }
   }
 
-  static TTSService get service {
+  static CustomTTSService get service {
     if (!_isInitialized || _service == null) {
       throw StateError('TTS Manager not initialized');
     }
@@ -49,10 +53,19 @@ class AppTTSManager {
   static bool get isInitialized => _isInitialized;
   
   static TTSEngineType? get currentEngine => _service?.currentEngine;
+  
+  /// 获取TTSService适配器，用于与需要TTSService接口的组件兼容
+  static TTSService getTTSServiceAdapter() {
+    if (!_isInitialized || _service == null) {
+      throw StateError('TTS Manager not initialized');
+    }
+    return TTSServiceAdapter(_service!);
+  }
 
   static void dispose() {
-    _service?.dispose();
+    _service?.dispose(); // 这会调用内部_ttsService的dispose
     _voiceService?.dispose();
+    _ttsService = null;
     _service = null;
     _voiceService = null;
     _audioPlayer = null;

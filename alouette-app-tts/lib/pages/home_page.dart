@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 import '../services/app_tts_manager.dart';
+import 'dart:ui' as ui;
+import 'tts_parameters_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +22,11 @@ class _HomePageState extends State<HomePage> {
   String? _currentVoice;
   VoiceService? _voiceService;
   TTSEngineType? _currentEngine;
+  
+  // TTS parameters
+  double _rate = 1.0;
+  double _pitch = 1.0;
+  double _volume = 1.0;
 
   @override
   void initState() {
@@ -73,7 +80,7 @@ class _HomePageState extends State<HomePage> {
     await showDialog(
       context: context,
       builder: (context) => TTSConfigDialog(
-        ttsService: AppTTSManager.service,
+        ttsService: AppTTSManager.getTTSServiceAdapter(),
       ),
     );
   }
@@ -91,7 +98,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Icon(Icons.error, color: Colors.red),
               SizedBox(width: 8),
-              Text('TTS Initialization Failed'),
+              Text('TTS Error'),
             ],
           ),
           content: SingleChildScrollView(
@@ -99,49 +106,23 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Error:', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    border: Border.all(color: Colors.red.shade200),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    error.toString(),
-                    style: const TextStyle(fontFamily: 'monospace'),
-                  ),
-                ),
+                Text('Error: ${error.toString()}'),
                 const SizedBox(height: 16),
-                Text('Diagnostic Report:', style: Theme.of(context).textTheme.titleMedium),
+                const Text('Diagnostic Information:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    border: Border.all(color: Colors.blue.shade200),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    report,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                  ),
-                ),
+                Text(report),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _initTTS();
-              },
-              child: const Text('Retry'),
-            ),
-            TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () => _showTTSConfig(),
+              child: const Text('Configure TTS'),
             ),
           ],
         ),
@@ -150,197 +131,301 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _speak() async {
-    if (_textController.text.isEmpty) {
-      _showError('Please enter text to read');
-      return;
-    }
-
-    if (!_isInitialized || _currentVoice == null || _voiceService == null) {
-      _showError('TTS service not properly initialized');
-      return;
-    }
-
+    if (!_isInitialized || _currentVoice == null) return;
+    
     try {
-      setState(() => _isPlaying = true);
+      // 设置语音和参数
+      await AppTTSManager.service.setVoice(_currentVoice!);
+      await AppTTSManager.service.setSpeechRate(_rate);
+      await AppTTSManager.service.setPitch(_pitch);
+      await AppTTSManager.service.setVolume(_volume);
       
-      final audioData = await AppTTSManager.service.synthesizeText(
-        _textController.text,
-        _currentVoice!,
-      );
+      // 设置完成回调
+      AppTTSManager.service.onComplete = () {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+          });
+        }
+      };
       
-      // Check if we got actual audio data or if TTS engine played directly
-      if (audioData.length > 100) {
-        await AppTTSManager.audioPlayer.playBytes(audioData);
-      } else {
-        // TTS engine already played directly
-        await Future.delayed(const Duration(milliseconds: 500));
+      // 更新播放状态
+      if (mounted) {
+        setState(() {
+          _isPlaying = true;
+        });
       }
       
-      setState(() => _isPlaying = false);
-    } on TTSError catch (e) {
-      setState(() => _isPlaying = false);
-      _showError('Playback failed: ${e.message}');
+      // 播放文本
+      await AppTTSManager.service.speak(_textController.text);
     } catch (e) {
-      setState(() => _isPlaying = false);
-      _showError('Playback failed: $e');
+      _showError('Failed to speak: ${e.toString()}');
     }
   }
 
   Future<void> _stop() async {
-    if (!_isInitialized) return;
-
     try {
       await AppTTSManager.service.stop();
-      setState(() => _isPlaying = false);
+      
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
     } catch (e) {
-      _showError('Failed to stop: $e');
+      _showError('Failed to stop: ${e.toString()}');
+    }
+  }
+
+  Future<void> _changeVoice(String voice) async {
+    try {
+      // 直接更新状态，因为TTSService没有setVoice方法
+      if (mounted) {
+        setState(() {
+          _currentVoice = voice;
+        });
+      }
+    } catch (e) {
+      _showError('Failed to change voice: ${e.toString()}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AlouetteAppBar(
-        currentEngine: _currentEngine,
-        ttsInitialized: _isInitialized,
+      appBar: AppBar(
+        title: const Text('Alouette TTS'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showTTSConfig,
+            tooltip: 'TTS Settings',
+          ),
+        ],
       ),
-      body: _isInitialized
-          ? _buildMainContent()
-          : const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Initializing TTS Service...'),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
+      body: Column(
         children: [
-          // TTS Status Indicator
-          TTSStatusIndicator(isPlaying: _isPlaying),
-          
-          const SizedBox(height: 24),
-          
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          // Status bar
+          Container(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
               children: [
-                // Voice Selector using VoiceService
-                if (_voiceService != null)
-                  ValueListenableBuilder<bool>(
-                    valueListenable: _voiceService!.isLoadingNotifier,
-                    builder: (context, isLoading, child) {
-                      if (isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      
-                      final voices = _voiceService!.cachedVoices;
-                      
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Voice Selection',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              if (voices.isNotEmpty)
-                                DropdownButton<String>(
-                                  value: _currentVoice,
-                                  isExpanded: true,
-                                  items: voices.map((voice) {
-                                    return DropdownMenuItem(
-                                      value: voice.name,
-                                      child: Text(
-                                        '${voice.displayName} (${voice.locale})',
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (voiceName) {
-                                    if (voiceName != null) {
-                                      setState(() => _currentVoice = voiceName);
-                                    }
-                                  },
-                                )
-                              else
-                                const Text('No voices available'),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Available: ${voices.length} voices',
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () => _showTTSConfig(),
-                                    icon: const Icon(Icons.settings, size: 16),
-                                    label: const Text('Settings'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                Icon(
+                  Icons.info_outline,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Engine: ${_currentEngine?.name ?? 'Not initialized'}',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w500,
                   ),
-
-                const SizedBox(height: 16),
-
+                ),
+                const Spacer(),
+                if (_isInitialized)
+                  TTSStatusIndicator(isPlaying: _isPlaying),
+              ],
+            ),
+          ),
+          
+          // Main content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(UISizes.spacingL),
+              children: [
                 // Text Input
-                Expanded(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.text_fields),
+                          SizedBox(width: 8),
+                          Text('Text Input', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      ModernTextField(
+                        controller: _textController,
+                        maxLines: 5,
+                        hintText: 'Enter text to speak...',
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: UISizes.spacingL),
+                
+                // Voice Selection
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.record_voice_over),
+                          SizedBox(width: 8),
+                          Text('Voice Selection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      if (_isInitialized && _voiceService != null)
+                        FutureBuilder<List<Voice>>(
+                          future: _voiceService!.getAllVoices(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            
+                            if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            }
+                            
+                            final voices = snapshot.data ?? [];
+                            if (voices.isEmpty) {
+                              return const Text('No voices available');
+                            }
+                            
+                            return ModernDropdown<String>(
+                              value: _currentVoice ?? voices.first.name,
+                              items: voices.map((voice) => DropdownMenuItem<String>(
+                                value: voice.name,
+                                child: Text('${voice.name} (${voice.locale})'),
+                              )).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  _changeVoice(value);
+                                }
+                              },
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: UISizes.spacingL),
+                
+                // TTS Parameters
+                TTSParametersWidget(
+                  rate: _rate,
+                  pitch: _pitch,
+                  volume: _volume,
+                  onRateChanged: (value) {
+                    setState(() {
+                      _rate = value;
+                    });
+                  },
+                  onPitchChanged: (value) {
+                    setState(() {
+                      _pitch = value;
+                    });
+                  },
+                  onVolumeChanged: (value) {
+                    setState(() {
+                      _volume = value;
+                    });
+                  },
+                ),
+                
+                const SizedBox(height: UISizes.spacingL),
+                
+                // Playback Controls
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.play_circle_outline),
+                          SizedBox(width: 8),
+                          Text('Playback Controls', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Text to Read',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              maxLines: null,
-                              expands: true,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Enter text to read aloud...',
-                              ),
+                            '播放控制',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: UISizes.spacingM),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ModernButton(
+                            text: _isPlaying ? '暂停' : '播放',
+                            icon: _isPlaying ? Icons.pause : Icons.play_arrow,
+                            onPressed: _isInitialized ? (_isPlaying ? _stop : _speak) : null,
+                            type: ModernButtonType.primary,
+                            size: ModernButtonSize.large,
+                          ),
+                          const SizedBox(width: UISizes.spacingM),
+                          ModernButton(
+                            text: '停止',
+                            icon: Icons.stop,
+                            onPressed: _isInitialized && _isPlaying ? _stop : null,
+                            type: ModernButtonType.outline,
+                            size: ModernButtonSize.large,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          const SizedBox(height: 24),
-
-          // TTS Control Buttons
-          TTSControlButtons(
-            isPlaying: _isPlaying,
-            onPlayPause: _isPlaying ? _stop : _speak,
-            onStop: _stop,
+class TTSStatusIndicator extends StatelessWidget {
+  final bool isPlaying;
+  
+  const TTSStatusIndicator({Key? key, required this.isPlaying}) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isPlaying ? Colors.green.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(UISizes.borderRadiusM),
+        border: Border.all(
+          color: isPlaying ? Colors.green.withOpacity(0.3) : Colors.blue.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPlaying ? Icons.volume_up : Icons.volume_off,
+            color: isPlaying ? Colors.green : Colors.blue,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isPlaying ? 'Currently Speaking...' : 'Ready to Speak',
+            style: TextStyle(
+              color: isPlaying ? Colors.green : Colors.blue,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

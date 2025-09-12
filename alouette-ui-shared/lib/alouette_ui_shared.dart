@@ -15,6 +15,13 @@ export 'src/widgets/alouette_app_bar.dart';
 export 'src/widgets/enhanced_volume_slider.dart';
 export 'src/widgets/compact_slider.dart';
 
+// Modern UI Components
+export 'src/widgets/modern_app_bar.dart';
+export 'src/widgets/modern_card.dart';
+export 'src/widgets/modern_button.dart';
+export 'src/widgets/modern_text_field.dart';
+export 'src/widgets/modern_dropdown.dart';
+
 // Dialogs
 export 'src/dialogs/llm_config_dialog.dart';
 export 'src/dialogs/tts_config_dialog.dart';

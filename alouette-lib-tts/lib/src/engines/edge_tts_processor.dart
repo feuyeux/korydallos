@@ -86,6 +86,24 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
     // 这里只是一个占位符实现
   }
 
+  @override
+  Future<void> setSpeechRate(double rate) async {
+    // Edge TTS 通过命令行参数控制语速，在synthesizeText时使用
+    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+  }
+
+  @override
+  Future<void> setPitch(double pitch) async {
+    // Edge TTS 通过命令行参数控制音调，在synthesizeText时使用
+    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+  }
+
+  @override
+  Future<void> setVolume(double volume) async {
+    // Edge TTS 通过命令行参数控制音量，在synthesizeText时使用
+    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+  }
+
   /// 解析 edge-tts --list-voices 的输出
   /// Edge TTS 输出格式为表格形式:
   /// Name                               Gender    ContentCategories      VoicePersonalities
