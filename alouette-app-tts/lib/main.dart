@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
-import 'pages/home_page.dart';
+import 'presentation/pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AlouetteTTSApp());
+  runApp(const AlouetteAppTTS());
 }
 
 /// Alouette TTS 应用程序
-class AlouetteTTSApp extends StatelessWidget {
-  const AlouetteTTSApp({super.key});
+class AlouetteAppTTS extends StatelessWidget {
+  const AlouetteAppTTS({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -2,34 +2,34 @@
 class TranslationConstants {
   /// Default timeout for translation requests
   static const Duration defaultTimeout = Duration(seconds: 30);
-  
+
   /// Default timeout for connection tests
   static const Duration connectionTimeout = Duration(seconds: 10);
-  
+
   /// Maximum number of retry attempts for failed requests
   static const int maxRetryAttempts = 3;
-  
+
   /// Default temperature for translation requests (lower = more deterministic)
   static const double defaultTemperature = 0.1;
-  
+
   /// Default maximum tokens for translation responses
   static const int defaultMaxTokens = 150;
-  
+
   /// Supported providers
   static const List<String> supportedProviders = ['ollama', 'lmstudio'];
-  
+
   /// Default server URLs for each provider
   static const Map<String, String> defaultServerUrls = {
     'ollama': 'http://localhost:11434',
     'lmstudio': 'http://localhost:1234',
   };
-  
+
   /// Default ports for each provider
   static const Map<String, int> defaultPorts = {
     'ollama': 11434,
     'lmstudio': 1234,
   };
-  
+
   /// API endpoints for each provider
   static const Map<String, Map<String, String>> apiEndpoints = {
     'ollama': {
@@ -43,7 +43,7 @@ class TranslationConstants {
       'completions': '/v1/completions',
     },
   };
-  
+
   /// Common language codes and their display names
   static const Map<String, String> languageNames = {
     'en': 'English',
@@ -109,12 +109,19 @@ class TranslationConstants {
     'ca': 'Catalan',
     'gl': 'Galician',
   };
-  
+
   /// Language codes that use right-to-left text direction
   static const List<String> rtlLanguages = [
-    'ar', 'he', 'fa', 'ur', 'ps', 'sd', 'ku', 'dv'
+    'ar',
+    'he',
+    'fa',
+    'ur',
+    'ps',
+    'sd',
+    'ku',
+    'dv',
   ];
-  
+
   /// Common error messages
   static const Map<String, String> errorMessages = {
     'emptyText': 'Please enter text to translate',
@@ -129,7 +136,7 @@ class TranslationConstants {
     'emptyTranslation': 'Empty translation received',
     'rateLimitExceeded': 'Rate limit exceeded',
   };
-  
+
   /// HTTP status codes and their meanings
   static const Map<int, String> httpStatusMessages = {
     200: 'OK',
@@ -143,18 +150,18 @@ class TranslationConstants {
     503: 'Service Unavailable',
     504: 'Gateway Timeout',
   };
-  
+
   /// Default request options for different providers
   static const Map<String, Map<String, dynamic>> defaultRequestOptions = {
     'ollama': {
-      'temperature': 0.1,
+      'temperature': 0.3, // Increased from 0.1 for better translation quality
       'num_predict': 150,
-      'top_p': 0.1,
+      'top_p': 0.3, // Increased from 0.1 for more diverse output
       'repeat_penalty': 1.05,
-      'top_k': 10,
+      'top_k': 20, // Increased from 10 for better quality
       'num_ctx': 2048,
       'repeat_last_n': 64,
-      'stop': ['\n\n', 'Translation:', 'Explanation:', 'Note:', 'Original:', 'Source:'],
+      'stop': ['<think>', '</think>', '<thinking>', '</thinking>'],
     },
     'lmstudio': {
       'temperature': 0.1,
@@ -164,15 +171,18 @@ class TranslationConstants {
       'presence_penalty': 0.0,
     },
   };
-  
+
   /// Validation patterns
   static const Map<String, String> validationPatterns = {
-    'url': r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
-    'ipAddress': r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
-    'port': r'^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$',
+    'url':
+        r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    'ipAddress':
+        r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
+    'port':
+        r'^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$',
     'languageCode': r'^[a-z]{2}(-[A-Z]{2})?$',
   };
-  
+
   /// Configuration keys for storage
   static const Map<String, String> configKeys = {
     'provider': 'llm_provider',
@@ -182,7 +192,7 @@ class TranslationConstants {
     'lastUsed': 'llm_last_used',
     'autoSave': 'llm_auto_save',
   };
-  
+
   /// Feature flags
   static const Map<String, bool> features = {
     'autoRetry': true,

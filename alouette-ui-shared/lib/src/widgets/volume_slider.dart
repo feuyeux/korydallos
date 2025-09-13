@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../constants/ui_constants.dart';
 
-/// Enhanced volume slider component
-class EnhancedVolumeSlider extends StatelessWidget {
+/// Volume slider component
+class VolumeSlider extends StatelessWidget {
   final double volume;
   final ValueChanged<double> onVolumeChanged;
 
-  const EnhancedVolumeSlider({
+  const VolumeSlider({
     super.key,
     required this.volume,
     required this.onVolumeChanged,

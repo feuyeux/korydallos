@@ -1,15 +1,15 @@
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import 'package:flutter/material.dart';
-import '../services/tts_manager.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart';
 
-class TTSTestPage extends StatefulWidget {
-  const TTSTestPage({super.key});
+class TTSPage extends StatefulWidget {
+  const TTSPage({super.key});
 
   @override
-  State<TTSTestPage> createState() => _TTSTestPageState();
+  State<TTSPage> createState() => _TTSPageState();
 }
 
-class _TTSTestPageState extends State<TTSTestPage> {
+class _TTSPageState extends State<TTSPage> {
   late final Future<VoiceService> _voiceServiceFuture;
   final TextEditingController _textController = TextEditingController(
     text: 'Hello, this is a test message.',
@@ -30,9 +30,9 @@ class _TTSTestPageState extends State<TTSTestPage> {
 
   Future<VoiceService> _initServices() async {
     try {
-      _ttsService = await TTSManager.getService();
-      _voiceService = await TTSManager.getVoiceService();
-      _audioPlayer = TTSManager.getAudioPlayer();
+      _ttsService = await SharedTTSManager.getService();
+      _voiceService = await SharedTTSManager.getVoiceService();
+      _audioPlayer = SharedTTSManager.getAudioPlayer();
       
       setState(() {
         _currentEngine = _ttsService!.currentEngine;
@@ -127,7 +127,9 @@ class _TTSTestPageState extends State<TTSTestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('TTS Test - Unified API')),
+      appBar: const ModernAppBar(
+        title: 'TTS - Unified API',
+      ),
       body: FutureBuilder<VoiceService>(
         future: _voiceServiceFuture,
         builder: (context, snapshot) {

@@ -35,20 +35,8 @@ class _TranslationPageState extends State<TranslationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(
-              Icons.translate,
-              size: 24,
-              color: Theme.of(context).primaryColor,
-            ),
-            const SizedBox(width: 8),
-            const Text('Alouette Translator'),
-          ],
-        ),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        automaticallyImplyLeading: false, // 移除返回按钮
+      appBar: ModernAppBar(
+        title: 'Alouette Translator',
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -60,8 +48,14 @@ class _TranslationPageState extends State<TranslationPage> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // 配置状态指示器
-            _buildConfigStatus(),
+            // Configuration status indicator
+            ConfigStatusWidget(
+              isAutoConfiguring: _isAutoConfiguring,
+              isConfigured: _isConfigured,
+              autoConfigStatus: _autoConfigStatus,
+              llmConfig: _llmConfig,
+              onConfigurePressed: _showConfigDialog,
+            ),
             const SizedBox(height: 2),
 
             // Translation input area
@@ -91,106 +85,6 @@ class _TranslationPageState extends State<TranslationPage> {
                 translationService: _translationService,
                 isCompactMode: true,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfigStatus() {
-    // 如果正在自动配置，显示进度状态
-    if (_isAutoConfiguring) {
-      return Card(
-        color: Colors.blue.shade50,
-        child: Padding(
-          padding: const EdgeInsets.all(6.0),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.blue.shade600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _autoConfigStatus.isEmpty
-                      ? 'Auto-configuring LLM connection...'
-                      : _autoConfigStatus,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 如果已配置成功，显示成功状态
-    if (_isConfigured) {
-      return Card(
-        color: Colors.green.shade50,
-        child: Padding(
-          padding: const EdgeInsets.all(6.0),
-          child: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green.shade600),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Connected to Ollama',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.green.shade800,
-                      ),
-                    ),
-                    if (_llmConfig.selectedModel.isNotEmpty)
-                      Text(
-                        'Model: ${_llmConfig.selectedModel}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green.shade600,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 如果配置失败，显示错误状态
-    return Card(
-      color: Colors.orange.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(6.0),
-        child: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.orange.shade600),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'Auto-configuration failed. Click the settings button to configure manually.',
-              ),
-            ),
-            TextButton(
-              onPressed: _showConfigDialog,
-              child: const Text('Configure'),
             ),
           ],
         ),

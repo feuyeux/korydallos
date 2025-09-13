@@ -32,19 +32,12 @@ class OllamaProvider extends TranslationProvider {
       'system': systemPrompt,
       'stream': false,
       'options': {
-        'temperature': 0.1,
+        'temperature': 0.3, // Increased from 0.1 for better translation quality
         'num_predict': 150,
-        'top_p': 0.1,
+        'top_p': 0.3, // Increased from 0.1 for more diverse output
         'repeat_penalty': 1.05,
-        'top_k': 10,
-        'stop': [
-          '\n\n',
-          'Translation:',
-          'Explanation:',
-          'Note:',
-          'Original:',
-          'Source:',
-        ],
+        'top_k': 20, // Increased from 10 for better quality
+        'stop': ['<think>', '</think>', '<thinking>', '</thinking>'],
         'num_ctx': 2048,
         'repeat_last_n': 64,
         ...?additionalParams?['options'],
@@ -52,18 +45,37 @@ class OllamaProvider extends TranslationProvider {
     };
 
     try {
+      // Debug: Print request information
+      print('Ollama Request URL: $apiUrl');
+      print('Ollama Request Body: ${json.encode(requestBody)}');
+
       final response = await _postWithFallback(
         apiUrl,
         json.encode(requestBody),
         headers: {'Content-Type': 'application/json'},
       );
 
+      print('Ollama Response Status: ${response.statusCode}');
+      print('Ollama Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final rawTranslation = responseData['response'] as String?;
 
+        print('Raw Translation: "$rawTranslation"');
+
         if (rawTranslation == null || rawTranslation.trim().isEmpty) {
-          throw TranslationException('Empty translation response from Ollama');
+          // More detailed error information
+          throw TranslationException(
+            'Empty translation response from Ollama. Response data: ${responseData.toString()}',
+          );
+        }
+
+        // First check if raw translation is meaningful
+        if (rawTranslation.trim().length < 1) {
+          throw TranslationException(
+            'Translation response too short: "${rawTranslation.trim()}"',
+          );
         }
 
         final cleanedTranslation = TextCleaner.cleanTranslationResult(
@@ -71,10 +83,9 @@ class OllamaProvider extends TranslationProvider {
           targetLanguage,
         );
 
+        // If cleaning removed everything, return raw translation
         if (cleanedTranslation.trim().isEmpty) {
-          throw TranslationException(
-            'Translation result is empty after cleaning',
-          );
+          return rawTranslation.trim();
         }
 
         return cleanedTranslation;

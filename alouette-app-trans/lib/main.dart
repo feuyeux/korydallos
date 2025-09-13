@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
-import 'pages/translation_page.dart';
+import 'presentation/pages/translation_page.dart';
 
 void main() {
-  runApp(const AlouetteTranslatorApp());
+  runApp(const AlouetteAppTrans());
 }
 
-class AlouetteTranslatorApp extends StatelessWidget {
-  const AlouetteTranslatorApp({super.key});
+class AlouetteAppTrans extends StatelessWidget {
+  const AlouetteAppTrans({super.key});
 
   @override
   Widget build(BuildContext context) {

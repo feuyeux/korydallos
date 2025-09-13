@@ -39,8 +39,6 @@ class _TTSParametersWidgetState extends State<TTSParametersWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return ModernCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,9 +128,8 @@ class _TTSParametersWidgetState extends State<TTSParametersWidget> {
     required String valueDisplay,
     required Function(double) onChanged,
   }) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final sliderColor = AppTheme.primaryColor;
-    final backgroundColor = isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.05);
+    final backgroundColor = Theme.of(context).brightness == Brightness.dark ? Colors.white12 : Colors.black.withOpacity(0.05);
     
     return Row(
       children: [
@@ -158,7 +155,7 @@ class _TTSParametersWidgetState extends State<TTSParametersWidget> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
                     ),
                   ),
                   Container(

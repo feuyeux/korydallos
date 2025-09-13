@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 
-class TestTranslationPage extends StatefulWidget {
-  const TestTranslationPage({super.key});
+class TranslationTestPage extends StatefulWidget {
+  const TranslationTestPage({super.key});
 
   @override
-  State<TestTranslationPage> createState() => _TestTranslationPageState();
+  State<TranslationTestPage> createState() => _TranslationTestPageState();
 }
 
-class _TestTranslationPageState extends State<TestTranslationPage> {
+class _TranslationTestPageState extends State<TranslationTestPage> {
   final LLMConfigService _llmService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
   final AutoConfigService _autoConfigService = AutoConfigService();

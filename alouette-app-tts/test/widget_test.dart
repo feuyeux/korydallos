@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:alouette_tts_app/main.dart';
+import 'package:alouette_app_tts/main.dart';
 
 void main() {
   testWidgets('应用程序加载测试', (WidgetTester tester) async {
     // 构建应用程序并触发一个帧
-    await tester.pumpWidget(const AlouetteTTSApp());
+    await tester.pumpWidget(const AlouetteAppTTS());
 
     // 验证应用程序标题是否存在
     expect(find.text('Alouette TTS'), findsOneWidget);

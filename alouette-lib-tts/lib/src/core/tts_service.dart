@@ -32,7 +32,7 @@ class TTSService {
       if (preferredEngine != null) {
         // 尝试使用指定的引擎
         try {
-          _processor = await PlatformTTSFactory.instance.createForEngine(preferredEngine);
+      _processor = await PlatformTTSFactory.instance.createForEngine(preferredEngine);
           _currentEngine = preferredEngine;
           TTSLogger.engine('Initialized', preferredEngine.name, 'Using preferred engine');
         } catch (e) {
@@ -57,7 +57,6 @@ class TTSService {
       throw ErrorHandler.handleInitializationError(e, 'TTS service');
     }
   } 
-  
   Future<void> switchEngine(
     TTSEngineType engineType, {
     bool disposeOld = true,
@@ -147,51 +146,6 @@ class TTSService {
       'currentBackend': currentBackend,
       'isInitialized': isInitialized,
     };
-  }
-  
-  /// 设置语速
-  Future<void> setRate(double rate) async {
-    _ensureInitialized();
-    
-    try {
-      await _processor!.setSpeechRate(rate);
-    } catch (e) {
-      throw TTSError(
-        'Failed to set speech rate: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    }
-  }
-  
-  /// 设置音调
-  Future<void> setPitch(double pitch) async {
-    _ensureInitialized();
-    
-    try {
-      await _processor!.setPitch(pitch);
-    } catch (e) {
-      throw TTSError(
-        'Failed to set pitch: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    }
-  }
-  
-  /// 设置音量
-  Future<void> setVolume(double volume) async {
-    _ensureInitialized();
-    
-    try {
-      await _processor!.setVolume(volume);
-    } catch (e) {
-      throw TTSError(
-        'Failed to set volume: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    }
   }
 
   /// 检查指定引擎是否可用

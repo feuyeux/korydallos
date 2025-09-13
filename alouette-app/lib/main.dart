@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
-import 'pages/app_home_page.dart';
+import 'presentation/pages/app_home_page.dart';
 
 void main() {
   debugPrint('Starting app initialization...');

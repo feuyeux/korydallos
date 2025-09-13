@@ -8,18 +8,21 @@ class TextCleaner {
 
     String cleaned = rawText.trim();
 
+    // Remove think tags and their content
+    cleaned = _removeThinkTags(cleaned);
+
     // Remove common translation prefixes
     cleaned = _removePrefixes(cleaned);
-    
+
     // Remove trailing punctuation that might be artifacts
     cleaned = _removeTrailingArtifacts(cleaned);
-    
+
     // Remove quotes if they wrap the entire text
     cleaned = _removeWrappingQuotes(cleaned);
-    
+
     // Handle multi-line responses by taking the first meaningful line
     cleaned = _extractMainTranslation(cleaned);
-    
+
     // Final cleanup
     cleaned = cleaned.trim();
 
@@ -43,14 +46,18 @@ class TextCleaner {
       RegExp(r'^response:\s*', caseSensitive: false),
       RegExp(r'^result:\s*', caseSensitive: false),
       RegExp(r'^output:\s*', caseSensitive: false),
-      
+
       // Numbered prefixes
       RegExp(r'^\d+\.\s*'),
       RegExp(r'^\d+\)\s*'),
       RegExp(r'^[-*]\s*'),
-      
-      // Generic patterns
-      RegExp(r'^[a-zA-Z\s]*:\s*', caseSensitive: false),
+
+      // Generic patterns - more specific to avoid removing actual translation content
+      RegExp(r'^[a-zA-Z\s]*translation[a-zA-Z\s]*:\s*', caseSensitive: false),
+      RegExp(r'^[a-zA-Z\s]*answer[a-zA-Z\s]*:\s*', caseSensitive: false),
+      RegExp(r'^[a-zA-Z\s]*response[a-zA-Z\s]*:\s*', caseSensitive: false),
+      RegExp(r'^[a-zA-Z\s]*result[a-zA-Z\s]*:\s*', caseSensitive: false),
+      RegExp(r'^[a-zA-Z\s]*output[a-zA-Z\s]*:\s*', caseSensitive: false),
     ];
 
     String result = text;
@@ -61,10 +68,33 @@ class TextCleaner {
     return result.trim();
   }
 
+  /// Remove think tags and their content
+  static String _removeThinkTags(String text) {
+    String result = text;
+
+    // Remove <think>...</think> blocks including multiline content
+    result = result.replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '');
+
+    // Remove <thinking>...</thinking> blocks including multiline content
+    result = result.replaceAll(
+      RegExp(r'<thinking>.*?</thinking>', dotAll: true),
+      '',
+    );
+
+    // Remove standalone opening/closing tags in case they got separated
+    result = result.replaceAll(RegExp(r'</?think>', caseSensitive: false), '');
+    result = result.replaceAll(
+      RegExp(r'</?thinking>', caseSensitive: false),
+      '',
+    );
+
+    return result.trim();
+  }
+
   /// Remove quotes that wrap the entire text
   static String _removeWrappingQuotes(String text) {
     String result = text.trim();
-    
+
     // Remove outer quotes if they wrap the entire text
     if (result.length >= 2) {
       if ((result.startsWith('"') && result.endsWith('"')) ||
@@ -72,7 +102,7 @@ class TextCleaner {
           (result.startsWith('`') && result.endsWith('`'))) {
         result = result.substring(1, result.length - 1).trim();
       }
-      
+
       // Handle smart quotes
       if ((result.startsWith('"') && result.endsWith('"')) ||
           (result.startsWith(''') && result.endsWith('''))) {
@@ -86,7 +116,7 @@ class TextCleaner {
   /// Remove trailing artifacts that might be added by the model
   static String _removeTrailingArtifacts(String text) {
     String result = text.trim();
-    
+
     // Remove trailing explanatory text
     final trailingPatterns = [
       RegExp(r'\s*\(.*translation.*\)$', caseSensitive: false),
@@ -106,7 +136,7 @@ class TextCleaner {
   /// Extract the main translation from multi-line responses
   static String _extractMainTranslation(String text) {
     final lines = text.split('\n').map((line) => line.trim()).toList();
-    
+
     // If single line, return as is
     if (lines.length == 1) {
       return lines.first;
@@ -131,17 +161,17 @@ class TextCleaner {
 
   /// Check if text is substantial (not just punctuation or very short)
   static bool _isSubstantialText(String text) {
-    if (text.length < 2) return false;
-    
-    // Check if it's mostly punctuation
+    if (text.length < 1) return false;
+
+    // Check if it's mostly punctuation - be more lenient
     final alphanumericCount = text.replaceAll(RegExp(r'[^\w\s]'), '').length;
-    return alphanumericCount >= text.length * 0.5;
+    return alphanumericCount >= text.length * 0.3; // Reduced from 0.5 to 0.3
   }
 
   /// Fallback extraction when main cleaning fails
   static String _fallbackExtraction(String rawText) {
     final lines = rawText.split('\n');
-    
+
     // Find first non-empty line
     for (final line in lines) {
       final trimmed = line.trim();
@@ -149,43 +179,47 @@ class TextCleaner {
         return trimmed;
       }
     }
-    
+
     return rawText.trim();
   }
 
   /// Validate that the cleaned text is reasonable
   static bool isValidTranslation(String text, String originalText) {
     if (text.trim().isEmpty) return false;
-    
+
     // Check if it's too similar to original (might indicate translation failure)
     if (text.toLowerCase().trim() == originalText.toLowerCase().trim()) {
       return false;
     }
-    
+
     // Check for common error patterns
     final errorPatterns = [
       RegExp(r'^(error|failed|cannot|unable)', caseSensitive: false),
       RegExp(r'(sorry|apologize)', caseSensitive: false),
       RegExp(r"^(i don't|i can't)", caseSensitive: false),
     ];
-    
+
     for (final pattern in errorPatterns) {
       if (pattern.hasMatch(text)) {
         return false;
       }
     }
-    
+
     return true;
   }
 
   /// Clean and validate translation result
-  static String cleanAndValidate(String rawText, String targetLanguage, String originalText) {
+  static String cleanAndValidate(
+    String rawText,
+    String targetLanguage,
+    String originalText,
+  ) {
     final cleaned = cleanTranslationResult(rawText, targetLanguage);
-    
+
     if (!isValidTranslation(cleaned, originalText)) {
       throw Exception('Invalid translation result: $cleaned');
     }
-    
+
     return cleaned;
   }
 
@@ -193,7 +227,10 @@ class TextCleaner {
   static String normalizeText(String text) {
     return text
         .trim()
-        .replaceAll(RegExp(r'\s+'), ' ') // Replace multiple spaces with single space
+        .replaceAll(
+          RegExp(r'\s+'),
+          ' ',
+        ) // Replace multiple spaces with single space
         .toLowerCase();
   }
 
@@ -204,17 +241,17 @@ class TextCleaner {
       case 'chinese':
         // Remove common Chinese translation artifacts
         return text.replaceAll(RegExp(r'^翻译[:：]\s*'), '');
-      
+
       case 'ja':
       case 'japanese':
         // Remove common Japanese translation artifacts
         return text.replaceAll(RegExp(r'^翻訳[:：]\s*'), '');
-      
+
       case 'ar':
       case 'arabic':
         // Handle RTL text cleaning if needed
         return text.trim();
-      
+
       default:
         return text;
     }

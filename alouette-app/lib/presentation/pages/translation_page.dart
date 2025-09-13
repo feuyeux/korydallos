@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
-import '../services/tts_manager.dart';
 
 class TranslationPage extends StatefulWidget {
   const TranslationPage({super.key});
@@ -42,7 +41,7 @@ class _TranslationPageState extends State<TranslationPage> {
   @override
   void dispose() {
     _textController.dispose();
-    TTSManager.dispose();
+    SharedTTSManager.dispose();
     super.dispose();
   }
 
@@ -55,7 +54,7 @@ class _TranslationPageState extends State<TranslationPage> {
     try {
       debugPrint('TTS: Starting initialization...');
       
-      _ttsService = await TTSManager.getService().timeout(
+      _ttsService = await SharedTTSManager.getService().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw Exception('TTS initialization timeout after 10 seconds');
