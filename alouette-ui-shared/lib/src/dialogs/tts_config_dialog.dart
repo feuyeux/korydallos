@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../constants/ui_constants.dart';
+import '../widgets/modern_button.dart';
 
 class TTSConfigDialog extends StatefulWidget {
   final TTSService? ttsService;
@@ -29,10 +30,10 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
       try {
         // Initialize audio player
         _audioPlayer = AudioPlayer();
-        
+
         // Get current engine type
         _currentEngine = widget.ttsService!.currentEngine;
-        
+
         // Get available voices
         final voices = await widget.ttsService!.getVoices();
 
@@ -65,9 +66,11 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                         child: Text('$e\n\n$stack'),
                       ),
                       actions: [
-                        TextButton(
+                        ModernButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Close'),
+                          text: 'Close',
+                          type: ModernButtonType.text,
+                          size: ModernButtonSize.medium,
                         ),
                       ],
                     ),
@@ -86,7 +89,9 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
   }
 
   Future<void> _testTTS() async {
-    if (widget.ttsService == null || _currentVoice == null || _audioPlayer == null) return;
+    if (widget.ttsService == null ||
+        _currentVoice == null ||
+        _audioPlayer == null) return;
 
     try {
       final audioData = await widget.ttsService!.synthesizeText(
@@ -143,7 +148,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
         _voices = [];
         _currentVoice = null;
       });
-      
+
       // Reload voices for the new engine
       final voices = await widget.ttsService!.getVoices();
       setState(() {
@@ -172,14 +177,15 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(
-                AppDefaults.largePadding, 
-                AppDefaults.largePadding, 
-                AppDefaults.largePadding, 
+                AppDefaults.largePadding,
+                AppDefaults.largePadding,
+                AppDefaults.largePadding,
                 AppDefaults.defaultPadding,
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.record_voice_over, size: AppDefaults.largePadding),
+                  const Icon(Icons.record_voice_over,
+                      size: AppDefaults.largePadding),
                   const SizedBox(width: 12),
                   Text(
                     'TTS Configuration',
@@ -201,9 +207,9 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                 children: [
                   SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
-                      AppDefaults.largePadding, 
-                      0, 
-                      AppDefaults.largePadding, 
+                      AppDefaults.largePadding,
+                      0,
+                      AppDefaults.largePadding,
                       AppDefaults.largePadding,
                     ),
                     child: Column(
@@ -250,7 +256,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                             ),
                           ),
                           const SizedBox(height: AppDefaults.largePadding),
-                          
+
                           // Engine Selection
                           Text(
                             'TTS Engine',
@@ -263,50 +269,48 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                           Row(
                             children: [
                               Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _currentEngine == TTSEngineType.edge 
-                                      ? null 
+                                child: ModernButton(
+                                  onPressed: _currentEngine ==
+                                          TTSEngineType.edge
+                                      ? null
                                       : () => _switchEngine(TTSEngineType.edge),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _currentEngine == TTSEngineType.edge 
-                                        ? Theme.of(context).primaryColor 
-                                        : null,
-                                    foregroundColor: _currentEngine == TTSEngineType.edge 
-                                        ? Colors.white 
-                                        : null,
-                                  ),
-                                  child: const Text('Edge TTS'),
+                                  text: 'Edge TTS',
+                                  type: _currentEngine == TTSEngineType.edge
+                                      ? ModernButtonType.primary
+                                      : ModernButtonType.outline,
+                                  size: ModernButtonSize.medium,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _currentEngine == TTSEngineType.flutter 
-                                      ? null 
-                                      : () => _switchEngine(TTSEngineType.flutter),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _currentEngine == TTSEngineType.flutter 
-                                        ? Theme.of(context).primaryColor 
-                                        : null,
-                                    foregroundColor: _currentEngine == TTSEngineType.flutter 
-                                        ? Colors.white 
-                                        : null,
-                                  ),
-                                  child: const Text('Flutter TTS'),
+                                child: ModernButton(
+                                  onPressed: _currentEngine ==
+                                          TTSEngineType.flutter
+                                      ? null
+                                      : () =>
+                                          _switchEngine(TTSEngineType.flutter),
+                                  text: 'Flutter TTS',
+                                  type: _currentEngine == TTSEngineType.flutter
+                                      ? ModernButtonType.primary
+                                      : ModernButtonType.outline,
+                                  size: ModernButtonSize.medium,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: AppDefaults.defaultPadding),
-                          
+
                           Text(
                             'Current Engine: ${_currentEngine?.name ?? 'Unknown'}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey.shade600,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
                           ),
                           const SizedBox(height: AppDefaults.largePadding),
-                          
+
                           if (_voices.isNotEmpty) ...[
                             Text(
                               'Available Voices (${_voices.length})',
@@ -331,7 +335,8 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                   value: voice.name,
                                   child: Text(
                                     '${voice.displayName} (${voice.locale}, ${voice.gender})',
-                                    style: const TextStyle(fontSize: TextStyles.largeFontSize),
+                                    style: const TextStyle(
+                                        fontSize: TextStyles.largeFontSize),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 );
@@ -347,34 +352,35 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                             const SizedBox(height: 8),
                             Text(
                               'Neural voices: ${_voices.where((v) => v.isNeural).length}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Colors.grey.shade600,
+                                  ),
                             ),
                             const SizedBox(height: AppDefaults.largePadding),
                           ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              ElevatedButton.icon(
-                                onPressed: (widget.ttsService != null && _currentVoice != null) 
-                                    ? _testTTS 
+                              ModernButton(
+                                onPressed: (widget.ttsService != null &&
+                                        _currentVoice != null)
+                                    ? _testTTS
                                     : null,
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Test'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                ),
+                                text: 'Test',
+                                icon: Icons.play_arrow,
+                                type: ModernButtonType.primary,
+                                size: ModernButtonSize.medium,
                               ),
-                              ElevatedButton.icon(
-                                onPressed: widget.ttsService != null ? _stopTTS : null,
-                                icon: const Icon(Icons.stop),
-                                label: const Text('Stop'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                ),
+                              ModernButton(
+                                onPressed:
+                                    widget.ttsService != null ? _stopTTS : null,
+                                text: 'Stop',
+                                icon: Icons.stop,
+                                type: ModernButtonType.secondary,
+                                size: ModernButtonSize.medium,
                               ),
                             ],
                           ),

@@ -1,5 +1,5 @@
 /// Shared UI components for Alouette applications
-/// 
+///
 /// This library provides reusable UI components that can be used across
 /// all Alouette applications including translation widgets, TTS controls,
 /// configuration dialogs, and common styling.
@@ -11,7 +11,11 @@ export 'src/widgets/translation_result_widget.dart';
 export 'src/widgets/language_selector.dart';
 export 'src/widgets/tts_control_buttons.dart';
 export 'src/widgets/tts_status_indicator.dart';
+export 'src/widgets/tts_status_card.dart';
+export 'src/widgets/tts_input_widget.dart';
+export 'src/widgets/tts_control_widget.dart';
 export 'src/widgets/alouette_app_bar.dart';
+export 'src/widgets/alouette_logo.dart';
 export 'src/widgets/volume_slider.dart';
 export 'src/widgets/compact_slider.dart';
 

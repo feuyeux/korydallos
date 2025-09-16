@@ -16,14 +16,16 @@ class TTSStatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final statusColor = isPlaying ? AppTheme.primaryColor : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600);
-    final backgroundColor = isPlaying 
+    final statusColor = isPlaying
+        ? AppTheme.primaryColor
+        : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600);
+    final backgroundColor = isPlaying
         ? AppTheme.primaryColor.withOpacity(isDarkMode ? 0.2 : 0.1)
         : (isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100);
-    final borderColor = isPlaying 
+    final borderColor = isPlaying
         ? AppTheme.primaryColor.withOpacity(isDarkMode ? 0.4 : 0.3)
         : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300);
-    
+
     return ModernCard(
       child: Container(
         width: double.infinity,
@@ -53,9 +55,9 @@ class TTSStatusIndicator extends StatelessWidget {
                 size: UISizes.iconSizeMedium,
               ),
             ),
-            
-            const SizedBox(width: UISizes.spacingM),
-            
+
+            const SizedBox(width: 8), // Reduced spacing to prevent overflow
+
             // Status text and animation
             Expanded(
               child: Column(
@@ -71,7 +73,7 @@ class TTSStatusIndicator extends StatelessWidget {
                   ),
                   const SizedBox(height: UISizes.spacingXs),
                   Text(
-                    isPlaying 
+                    isPlaying
                         ? 'Tap pause to stop speaking'
                         : 'Enter text and tap play to start',
                     style: TextStyle(
@@ -82,7 +84,7 @@ class TTSStatusIndicator extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Animation indicator
             if (isPlaying)
               SizedBox(
@@ -98,9 +100,8 @@ class TTSStatusIndicator extends StatelessWidget {
 
   /// Build speaking animation with improved visuals
   Widget _buildSpeakingAnimation(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final animationColor = AppTheme.primaryColor;
-    
+
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 1500),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -110,9 +111,10 @@ class TTSStatusIndicator extends StatelessWidget {
           children: List.generate(3, (index) {
             // Create a more dynamic wave pattern
             final phase = (value + index * 0.33) % 1.0;
-            final amplitude = sin(phase * 3.14 * 2) * 0.5 + 0.5; // Sine wave pattern
+            final amplitude =
+                sin(phase * 3.14 * 2) * 0.5 + 0.5; // Sine wave pattern
             final barHeight = 4.0 + (12.0 * amplitude);
-            
+
             return Container(
               width: 3,
               height: barHeight,

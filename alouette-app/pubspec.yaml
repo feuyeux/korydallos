@@ -23,6 +23,9 @@ dependencies:
   alouette_ui_shared:
     path: ../alouette-ui-shared
 
+  # Logging package
+  logging: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -35,7 +38,6 @@ flutter:
   assets:
     - assets/icons/
 
-# (Optional) unified launcher icon config placeholder – run flutter pub run flutter_launcher_icons once icon provided
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true

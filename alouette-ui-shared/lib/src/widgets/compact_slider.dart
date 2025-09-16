@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
 
 /// Compact slider component
 class CompactSlider extends StatelessWidget {
@@ -23,19 +22,23 @@ class CompactSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(4),
@@ -43,21 +46,22 @@ class CompactSlider extends StatelessWidget {
               child: Text(
                 value.toStringAsFixed(2),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11,
+                    ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            trackHeight: 4,
+            trackHeight: 3,
             thumbShape: const RoundSliderThumbShape(
-              enabledThumbRadius: 8,
+              enabledThumbRadius: 6,
             ),
             overlayShape: const RoundSliderOverlayShape(
-              overlayRadius: UISizes.mediumIconSize,
+              overlayRadius: 12,
             ),
           ),
           child: Slider(

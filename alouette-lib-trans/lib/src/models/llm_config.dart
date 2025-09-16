@@ -1,3 +1,5 @@
+import 'dart:io';
+
 /// LLM Provider configuration model
 class LLMConfig {
   /// The LLM provider type ('ollama', 'lmstudio', etc.)
@@ -22,6 +24,75 @@ class LLMConfig {
     required this.selectedModel,
     this.providerSpecific,
   });
+
+  /// Basic validation of the configuration
+  bool get isValid {
+    return provider.isNotEmpty && 
+           serverUrl.isNotEmpty && 
+           selectedModel.isNotEmpty;
+  }
+
+  /// Comprehensive validation with detailed error reporting
+  Map<String, dynamic> validate() {
+    final errors = <String>[];
+    final warnings = <String>[];
+
+    // Required field validation
+    if (provider.isEmpty) {
+      errors.add('Provider is required');
+    }
+
+    if (serverUrl.isEmpty) {
+      errors.add('Server URL is required');
+    }
+
+    if (selectedModel.isEmpty) {
+      errors.add('Model selection is required');
+    }
+
+    // URL format validation
+    if (serverUrl.isNotEmpty) {
+      try {
+        final uri = Uri.parse(serverUrl);
+        if (!uri.hasScheme || !uri.hasAuthority) {
+          errors.add('Invalid server URL format');
+        }
+      } catch (e) {
+        errors.add('Invalid server URL format');
+      }
+    }
+
+    // Provider-specific warnings
+    if (provider == 'lmstudio' &&
+        (apiKey == null || apiKey!.isEmpty)) {
+      warnings.add('API key is recommended for LM Studio');
+    }
+
+    // URL-related warnings
+    if (serverUrl.isNotEmpty) {
+      if (serverUrl.contains('localhost') ||
+          serverUrl.contains('127.0.0.1')) {
+        warnings.add(
+          'Using localhost - ensure the server is running on this machine',
+        );
+      }
+
+      if (serverUrl.startsWith('http:') &&
+          !serverUrl.contains('localhost') &&
+          !serverUrl.contains('127.0.0.1')) {
+        warnings.add(
+          'Using HTTP (not HTTPS) for remote server - consider using HTTPS for security',
+        );
+      }
+    }
+
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
+  }
+
+  /// Get normalized server URL (without trailing slash)
+  String get normalizedServerUrl {
+    return serverUrl.trimRight().replaceAll(RegExp(r'\/$'), '');
+  }
 
   /// Convert to JSON representation
   Map<String, dynamic> toJson() {

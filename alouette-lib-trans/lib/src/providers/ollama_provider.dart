@@ -1,14 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
 import '../models/llm_config.dart';
 import '../models/connection_status.dart';
 import '../exceptions/translation_exceptions.dart';
-import '../utils/text_cleaner.dart';
+import '../network/http_client.dart';
 import 'translation_provider.dart';
+import 'dart:io';
+import 'dart:async';
 
 /// Ollama translation provider implementation
 class OllamaProvider extends TranslationProvider {
+  final HttpClient _httpClient;
+
+  OllamaProvider({HttpClient? httpClient})
+    : _httpClient = httpClient ?? DefaultHttpClient();
+
   @override
   String get providerName => 'ollama';
 
@@ -23,8 +28,32 @@ class OllamaProvider extends TranslationProvider {
       throw TranslationException('Unsupported provider: ${config.provider}');
     }
 
-    final systemPrompt = getSystemPrompt(targetLanguage);
-    final apiUrl = '${config.serverUrl.trimRight()}/api/generate';
+    // Use a more specific system prompt for Qwen models
+    String systemPrompt;
+    if (config.selectedModel.contains('qwen')) {
+      systemPrompt =
+          '''You are a professional translator. Translate the given text directly to ${getExplicitLanguageSpec(targetLanguage)}.
+
+IMPORTANT: You are a Qwen model. Qwen models should follow these special instructions:
+- Provide ONLY the translation, no explanations, no thinking, no reasoning
+- Do not output any internal thought process
+- Do not explain your translation steps
+- Do not use <thinking> tags or any similar tags
+- Output ONLY the final translated text
+- Do not output any text other than the translation
+
+CRITICAL REQUIREMENTS:
+- Maintain the original meaning and tone
+- Use natural, fluent language
+- Do not include phrases like "Translation:" or any prefixes
+- NEVER output any thinking process or reasoning
+- Output ONLY the final translated text with no additional content
+- Respond with the translation directly''';
+    } else {
+      systemPrompt = getSystemPrompt(targetLanguage);
+    }
+
+    final apiUrl = '${config.normalizedServerUrl}/api/generate';
 
     final requestBody = {
       'model': config.selectedModel,
@@ -32,12 +61,11 @@ class OllamaProvider extends TranslationProvider {
       'system': systemPrompt,
       'stream': false,
       'options': {
-        'temperature': 0.3, // Increased from 0.1 for better translation quality
-        'num_predict': 150,
-        'top_p': 0.3, // Increased from 0.1 for more diverse output
+        'temperature': 0.1, // Reduced for more deterministic output
+        'num_predict': 100, // Reduced for shorter output
+        'top_p': 0.1, // Reduced for more focused output
         'repeat_penalty': 1.05,
-        'top_k': 20, // Increased from 10 for better quality
-        'stop': ['<think>', '</think>', '<thinking>', '</thinking>'],
+        'top_k': 10, // Reduced for more focused output
         'num_ctx': 2048,
         'repeat_last_n': 64,
         ...?additionalParams?['options'],
@@ -45,73 +73,81 @@ class OllamaProvider extends TranslationProvider {
     };
 
     try {
-      // Debug: Print request information
-      print('Ollama Request URL: $apiUrl');
-      print('Ollama Request Body: ${json.encode(requestBody)}');
-
-      final response = await _postWithFallback(
+      final response = await _httpClient.post(
         apiUrl,
-        json.encode(requestBody),
         headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+        timeout: const Duration(seconds: 60),
       );
-
-      print('Ollama Response Status: ${response.statusCode}');
-      print('Ollama Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final rawTranslation = responseData['response'] as String?;
 
-        print('Raw Translation: "$rawTranslation"');
-
         if (rawTranslation == null || rawTranslation.trim().isEmpty) {
-          // More detailed error information
           throw TranslationException(
             'Empty translation response from Ollama. Response data: ${responseData.toString()}',
           );
         }
 
-        // First check if raw translation is meaningful
-        if (rawTranslation.trim().length < 1) {
-          throw TranslationException(
-            'Translation response too short: "${rawTranslation.trim()}"',
-          );
+        // Enhanced cleaning to extract only the actual translation
+        String cleanedTranslation = rawTranslation.trim();
+        // Specific cleaning for Qwen models
+        if (config.selectedModel.contains('qwen')) {
+          List<String> lines = cleanedTranslation.split('\n');
+          List<String> validLines = [];
+          for (String line in lines) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.isEmpty ||
+                trimmedLine.toLowerCase().contains('let me') ||
+                trimmedLine.toLowerCase().contains('first') ||
+                trimmedLine.toLowerCase().contains('thinking') ||
+                trimmedLine.toLowerCase().contains('translation') ||
+                trimmedLine.toLowerCase().contains('user wants') ||
+                trimmedLine.contains('<|') ||
+                trimmedLine.startsWith('====') ||
+                trimmedLine.contains('think>')) {
+              continue;
+            }
+            validLines.add(trimmedLine);
+          }
+          // 优先选取最后一条有效行，否则返回原始内容
+          if (validLines.isNotEmpty) {
+            cleanedTranslation = validLines.last;
+          } else {
+            cleanedTranslation = rawTranslation.trim();
+          }
         }
 
-        final cleanedTranslation = TextCleaner.cleanTranslationResult(
-          rawTranslation.trim(),
-          targetLanguage,
+        // Remove special characters at the beginning and end
+        cleanedTranslation = cleanedTranslation.replaceAll(
+          RegExp(r'^[^A-Za-zÀ-ÿ0-9]*'),
+          '',
+        );
+        cleanedTranslation = cleanedTranslation.replaceAll(
+          RegExp(r'[^A-Za-zÀ-ÿ0-9.!?]*$'),
+          '',
         );
 
+        // Final trim
+        cleanedTranslation = cleanedTranslation.trim();
+
         // If cleaning removed everything, return raw translation
-        if (cleanedTranslation.trim().isEmpty) {
+        if (cleanedTranslation.isEmpty) {
           return rawTranslation.trim();
         }
 
         return cleanedTranslation;
       } else {
-        final errorText = response.body;
         throw TranslationException(
-          'Ollama API request failed: HTTP ${response.statusCode}: $errorText',
+          'Ollama API request failed: HTTP ${response.statusCode}: ${response.body}',
         );
       }
     } catch (e) {
-      if (e is TranslationException) rethrow;
-
-      if (e.toString().contains('Connection refused') ||
-          e.toString().contains('network')) {
-        throw LLMConnectionException(
-          'Cannot connect to Ollama server at ${config.serverUrl}. Please check if the server is running and accessible.',
-        );
-      } else if (e.toString().contains('timeout')) {
-        throw TranslationTimeoutException(
-          'Translation request timed out. The server may be overloaded.',
-        );
-      } else {
-        throw TranslationException(
-          'Ollama translation failed: ${e.toString()}',
-        );
+      if (e is TranslationException) {
+        rethrow;
       }
+      throw TranslationException('Ollama translation failed: ${e.toString()}');
     }
   }
 
@@ -120,11 +156,10 @@ class OllamaProvider extends TranslationProvider {
     final startTime = DateTime.now();
 
     try {
-      final apiUrl = '${config.serverUrl.trimRight()}/api/tags';
-
-      final response = await _getWithFallback(
+      final apiUrl = '${config.normalizedServerUrl}/api/tags';
+      final response = await _httpClient.get(
         apiUrl,
-        const Duration(seconds: 10),
+        timeout: const Duration(seconds: 10),
       );
 
       final responseTime = DateTime.now().difference(startTime).inMilliseconds;
@@ -150,37 +185,29 @@ class OllamaProvider extends TranslationProvider {
     } catch (e) {
       final responseTime = DateTime.now().difference(startTime).inMilliseconds;
 
-      if (e.toString().contains('Connection refused') ||
-          e.toString().contains('network')) {
-        return ConnectionStatus.failure(
-          message: 'Cannot connect to Ollama server at ${config.serverUrl}',
-          responseTimeMs: responseTime,
-          details: {'error': e.toString()},
-        );
-      } else if (e.toString().contains('timeout')) {
-        return ConnectionStatus.failure(
-          message: 'Connection to Ollama server timed out',
-          responseTimeMs: responseTime,
-          details: {'error': e.toString()},
-        );
-      } else {
+      if (e is TranslationException) {
         return ConnectionStatus.failure(
           message: 'Ollama connection test failed: ${e.toString()}',
           responseTimeMs: responseTime,
           details: {'error': e.toString()},
         );
       }
+
+      return ConnectionStatus.failure(
+        message: 'Ollama connection test failed: ${e.toString()}',
+        responseTimeMs: responseTime,
+        details: {'error': e.toString()},
+      );
     }
   }
 
   @override
   Future<List<String>> getAvailableModels(LLMConfig config) async {
     try {
-      final apiUrl = '${config.serverUrl.trimRight()}/api/tags';
-
-      final response = await _getWithFallback(
+      final apiUrl = '${config.normalizedServerUrl}/api/tags';
+      final response = await _httpClient.get(
         apiUrl,
-        const Duration(seconds: 10),
+        timeout: const Duration(seconds: 10),
       );
 
       if (response.statusCode == 200) {
@@ -194,60 +221,17 @@ class OllamaProvider extends TranslationProvider {
               .toList();
         }
       } else {
-        throw LLMConnectionException(
-          'Failed to fetch models: HTTP ${response.statusCode}',
+        throw TranslationException(
+          'Ollama API request failed: HTTP ${response.statusCode}: ${response.body}',
         );
       }
     } catch (e) {
-      if (e is LLMConnectionException) rethrow;
-      throw LLMConnectionException(
-        'Failed to get available models: ${e.toString()}',
-      );
+      if (e is TranslationException) {
+        rethrow;
+      }
+      throw TranslationException('Ollama translation failed: ${e.toString()}');
     }
 
     return [];
-  }
-
-  // Helper: GET with fallback to 127.0.0.1 if localhost fails with operation not permitted
-  Future<http.Response> _getWithFallback(String url, Duration timeout) async {
-    try {
-      return await http.get(Uri.parse(url)).timeout(timeout);
-    } catch (e) {
-      // If it's a SocketException with 'Operation not permitted', try 127.0.0.1
-      if (e is SocketException &&
-          e.osError?.message.contains('Operation not permitted') == true) {
-        final fallback = url.replaceFirst(
-          RegExp(r'localhost', caseSensitive: false),
-          '127.0.0.1',
-        );
-        return await http.get(Uri.parse(fallback)).timeout(timeout);
-      }
-      rethrow;
-    }
-  }
-
-  // Helper: POST with fallback to 127.0.0.1 if localhost fails with operation not permitted
-  Future<http.Response> _postWithFallback(
-    String url,
-    String body, {
-    Map<String, String>? headers,
-  }) async {
-    try {
-      return await http
-          .post(Uri.parse(url), headers: headers, body: body)
-          .timeout(const Duration(seconds: 60));
-    } catch (e) {
-      if (e is SocketException &&
-          e.osError?.message.contains('Operation not permitted') == true) {
-        final fallback = url.replaceFirst(
-          RegExp(r'localhost', caseSensitive: false),
-          '127.0.0.1',
-        );
-        return await http
-            .post(Uri.parse(fallback), headers: headers, body: body)
-            .timeout(const Duration(seconds: 60));
-      }
-      rethrow;
-    }
   }
 }

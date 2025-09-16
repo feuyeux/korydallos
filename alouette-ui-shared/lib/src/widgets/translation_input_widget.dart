@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../constants/language_constants.dart';
 import '../constants/ui_constants.dart';
+import 'modern_button.dart';
+import 'language_selection_grid.dart';
 
 class TranslationInputWidget extends StatefulWidget {
   final TextEditingController textController;
@@ -36,7 +37,7 @@ class TranslationInputWidget extends StatefulWidget {
 
 class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   final ScrollController _scrollController = ScrollController();
-  
+
   bool get _isCompactMode => widget.onLanguagesChanged != null;
 
   @override
@@ -103,7 +104,8 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
         Flexible(
           fit: FlexFit.loose,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: UISizes.languageSelectionHeight),
+            constraints: const BoxConstraints(
+                maxHeight: UISizes.languageSelectionHeight),
             child: _buildLanguageSelection(),
           ),
         ),
@@ -123,7 +125,7 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
       children: [
         // Text Input
         Expanded(
-          flex: 3,
+          flex: 2,
           child: TextField(
             controller: widget.textController,
             maxLines: null,
@@ -137,7 +139,7 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
           ),
         ),
 
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
 
         // Language Selection Header
         Row(
@@ -162,41 +164,20 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 6),
 
         // Language chips
         Expanded(
-          flex: 3,
-          child: Scrollbar(
-            controller: _scrollController,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: LanguageConstants.supportedLanguages.map((lang) {
-                  final isSelected = widget.selectedLanguages.contains(lang.name);
-                  return FilterChip(
-                    label: Text(
-                      lang.nativeName,
-                      style: const TextStyle(fontSize: TextStyles.mediumFontSize),
-                    ),
-                    selected: isSelected,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    onSelected: (selected) => _onLanguageToggle(lang.name, selected),
-                  );
-                }).toList(),
-              ),
-            ),
+          flex: 4,
+          child: LanguageSelectionGrid(
+            scrollController: _scrollController,
+            selectedLanguages: widget.selectedLanguages,
+            onLanguageToggle: (language, selected) =>
+                _onLanguageToggle(language, selected),
           ),
         ),
 
-        const SizedBox(height: 2),
+        const SizedBox(height: 8),
 
         // Translate button
         _buildTranslateButton(),
@@ -205,20 +186,17 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   }
 
   Widget _buildCompactButton(String text, VoidCallback onPressed) {
-    return SizedBox(
-      width: UISizes.compactButtonWidth,
-      height: UISizes.buttonHeight,
-      child: TextButton(
+    return Container(
+      // 使用Container替代Flexible
+      constraints: const BoxConstraints(
+        minWidth: 60.0, // 最小宽度
+        maxWidth: 120.0, // 最大宽度避免溢出
+      ),
+      child: ModernButton(
+        text: text,
         onPressed: onPressed,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          minimumSize: Size(UISizes.compactButtonWidth, UISizes.buttonHeight),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        child: Text(text, style: const TextStyle(fontSize: TextStyles.smallFontSize + 1)),
+        type: ModernButtonType.text,
+        size: ModernButtonSize.small,
       ),
     );
   }
@@ -230,7 +208,7 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
         children: [
           Row(
             children: [
-              const Icon(Icons.language, size: UISizes.mediumIconSize),
+              const Icon(Icons.language, size: UISizes.iconSizeMedium),
               const SizedBox(width: 4),
               Text(
                 'Target Languages',
@@ -256,17 +234,25 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
                 spacing: 4,
                 runSpacing: 2,
                 children: LanguageConstants.supportedLanguages.map((language) {
-                  final isSelected = widget.selectedLanguages.contains(language.code);
+                  final isSelected =
+                      widget.selectedLanguages.contains(language.code);
                   return FilterChip(
-                    label: Text(
-                      '${language.flag} ${language.name}',
-                      style: const TextStyle(fontSize: TextStyles.smallFontSize),
+                    label: Container(
+                      width: 100, // 统一宽度
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${language.flag} ${language.name}',
+                        style:
+                            const TextStyle(fontSize: TextStyles.smallFontSize),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     selected: isSelected,
-                    onSelected: (selected) => _onLanguageToggle(language.code, selected),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                    selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                    onSelected: (selected) =>
+                        _onLanguageToggle(language.code, selected),
+                    padding: EdgeInsets.zero, // 移除内边距，由label的Container控制
+                    selectedColor:
+                        Theme.of(context).colorScheme.primaryContainer,
                     backgroundColor: Colors.grey.shade100,
                   );
                 }).toList(),
@@ -279,26 +265,20 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
           // Quick selection buttons
           Row(
             children: [
-              TextButton.icon(
+              ModernButton(
+                text: 'Reset',
+                icon: Icons.refresh,
                 onPressed: widget.onReset,
-                icon: const Icon(Icons.refresh, size: UISizes.smallIconSize),
-                label: const Text('Reset', style: TextStyle(fontSize: TextStyles.smallFontSize)),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+                type: ModernButtonType.text,
+                size: ModernButtonSize.small,
               ),
               const SizedBox(width: 4),
-              TextButton.icon(
+              ModernButton(
+                text: 'All',
+                icon: Icons.select_all,
                 onPressed: widget.onSelectAll,
-                icon: const Icon(Icons.select_all, size: UISizes.smallIconSize),
-                label: const Text('All', style: TextStyle(fontSize: TextStyles.smallFontSize)),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+                type: ModernButtonType.text,
+                size: ModernButtonSize.small,
               ),
             ],
           ),
@@ -322,33 +302,15 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   }
 
   Widget _buildTranslateButtonContent(bool isTranslating) {
-    return ElevatedButton.icon(
-      onPressed: (isTranslating || !widget.isConfigured) ? null : widget.onTranslate,
-      icon: isTranslating
-          ? const SizedBox(
-              width: UISizes.mediumIconSize,
-              height: UISizes.mediumIconSize,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.translate, size: UISizes.mediumIconSize),
-      label: Text(
-        isTranslating ? 'Translating...' : 'Translate',
-        style: TextStyle(
-          fontSize: _isCompactMode ? UISizes.mediumIconSize : 13,
-          fontWeight: _isCompactMode ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          vertical: _isCompactMode ? 12 : 6,
-        ),
-        backgroundColor: _isCompactMode ? Theme.of(context).primaryColor : null,
-        foregroundColor: _isCompactMode ? Colors.white : null,
-        elevation: _isCompactMode ? 2 : null,
-        shape: _isCompactMode
-            ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
-            : null,
-      ),
+    return ModernButton(
+      text: isTranslating ? 'Translating...' : 'Translate',
+      icon: Icons.translate,
+      onPressed:
+          (isTranslating || !widget.isConfigured) ? null : widget.onTranslate,
+      type: ModernButtonType.primary,
+      size: _isCompactMode ? ModernButtonSize.large : ModernButtonSize.medium,
+      loading: isTranslating,
+      fullWidth: true,
     );
   }
 

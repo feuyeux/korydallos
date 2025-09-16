@@ -161,7 +161,6 @@ class TranslationConstants {
       'top_k': 20, // Increased from 10 for better quality
       'num_ctx': 2048,
       'repeat_last_n': 64,
-      'stop': ['<think>', '</think>', '<thinking>', '</thinking>'],
     },
     'lmstudio': {
       'temperature': 0.1,

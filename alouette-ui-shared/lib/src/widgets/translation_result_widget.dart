@@ -9,16 +9,19 @@ class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
   final TTSService? ttsService;
   final bool isCompactMode;
+  final bool isTTSInitialized;
 
   const TranslationResultWidget({
     super.key,
     required this.translationService,
     this.ttsService,
     this.isCompactMode = false,
+    this.isTTSInitialized = false,
   });
 
   @override
-  State<TranslationResultWidget> createState() => _TranslationResultWidgetState();
+  State<TranslationResultWidget> createState() =>
+      _TranslationResultWidgetState();
 }
 
 class _TranslationResultWidgetState extends State<TranslationResultWidget> {
@@ -36,15 +39,17 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.translate, 
-                size: widget.isCompactMode ? 32 : 48, 
+                Icons.translate,
+                size: widget.isCompactMode ? 32 : 48,
                 color: Colors.grey.shade400,
               ),
               SizedBox(height: widget.isCompactMode ? 8 : 16),
               Text(
                 'Translation results will appear here',
                 style: TextStyle(
-                  fontSize: widget.isCompactMode ? TextStyles.largeFontSize : UISizes.mediumIconSize,
+                  fontSize: widget.isCompactMode
+                      ? TextStyles.largeFontSize
+                      : UISizes.mediumIconSize,
                   color: Colors.grey.shade600,
                 ),
               ),
@@ -67,7 +72,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppDefaults.defaultPadding),
-        child: widget.isCompactMode ? _buildCompactLayout(translation) : _buildStandardLayout(translation),
+        child: widget.isCompactMode
+            ? _buildCompactLayout(translation)
+            : _buildStandardLayout(translation),
       ),
     );
   }
@@ -90,7 +97,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                     ),
               ),
               const Spacer(),
-              _buildActionButtons(context, translation),
+              // _buildActionButtons(context, translation), // Removed
             ],
           ),
 
@@ -117,34 +124,31 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // Compact header with action buttons
         Row(
           children: [
+            Icon(Icons.language, size: 16, color: Colors.grey.shade600),
+            const SizedBox(width: 4),
             Text(
-              'Translation Results',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Translations',
+              style: Theme.of(context).textTheme.titleSmall,
             ),
             const Spacer(),
-            _buildActionButtons(context, translation),
+            // _buildActionButtons(context, translation), // Removed
           ],
         ),
-        const SizedBox(height: 8),
 
-        // Metadata
-        _buildMetadata(context, translation),
-        const SizedBox(height: AppDefaults.defaultPadding),
-
-        // Original Text
-        _buildOriginalText(context, translation),
-        const SizedBox(height: AppDefaults.defaultPadding),
-
-        // Translations
-        Expanded(child: _buildTranslations(context, translation)),
+        // Translations - 使用 Expanded 确保剩余空间被占用
+        Expanded(
+          child: _buildTranslations(context, translation),
+        ),
       ],
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, TranslationResult translation) {
+  /* 
+  Widget _buildActionButtons(
+      BuildContext context, TranslationResult translation) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -161,6 +165,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       ],
     );
   }
+  */
 
   Widget _buildMetadata(BuildContext context, TranslationResult translation) {
     return Container(
@@ -172,14 +177,17 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: TextStyles.largeFontSize, color: Colors.grey.shade600),
+          Icon(Icons.info_outline,
+              size: TextStyles.largeFontSize, color: Colors.grey.shade600),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               'Model: ${translation.config.selectedModel} | '
               'Provider: ${translation.config.provider} | '
               'Generated: ${_formatTimestamp(translation.timestamp)}',
-              style: TextStyle(fontSize: TextStyles.mediumFontSize, color: Colors.grey.shade700),
+              style: TextStyle(
+                  fontSize: TextStyles.mediumFontSize,
+                  color: Colors.grey.shade700),
             ),
           ),
         ],
@@ -187,13 +195,15 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     );
   }
 
-  Widget _buildOriginalText(BuildContext context, TranslationResult translation) {
+  Widget _buildOriginalText(
+      BuildContext context, TranslationResult translation) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.article_outlined, size: UISizes.mediumIconSize, color: Colors.grey.shade600),
+            Icon(Icons.article_outlined,
+                size: UISizes.mediumIconSize, color: Colors.grey.shade600),
             const SizedBox(width: 6),
             Text(
               'Original Text:',
@@ -219,14 +229,32 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     );
   }
 
-  Widget _buildTranslations(BuildContext context, TranslationResult translation) {
+  Widget _buildTranslations(
+      BuildContext context, TranslationResult translation) {
+    if (widget.isCompactMode) {
+      // 极简紧凑模式，直接显示列表
+      return ListView.builder(
+        itemCount: translation.languages.length,
+        itemBuilder: (context, index) {
+          final language = translation.languages[index];
+          final translatedText = translation.translations[language] ?? '';
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildTranslationItem(context, language, translatedText),
+          );
+        },
+      );
+    }
+
+    // 标准模式保持原来的结构
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            Icon(Icons.language, size: UISizes.mediumIconSize, color: Colors.grey.shade600),
+            Icon(Icons.language,
+                size: UISizes.mediumIconSize, color: Colors.grey.shade600),
             const SizedBox(width: 6),
             Text(
               'Translations:',
@@ -235,40 +263,36 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           ],
         ),
         const SizedBox(height: 8),
-        
-        if (widget.isCompactMode) 
-          Expanded(
+        SizedBox(
+          height: 300, // 可根据实际需求调整高度
+          child: Scrollbar(
+            thumbVisibility: true,
             child: ListView.builder(
-              primary: true,
               itemCount: translation.languages.length,
               itemBuilder: (context, index) {
                 final language = translation.languages[index];
                 final translatedText = translation.translations[language] ?? '';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildTranslationItem(context, language, translatedText),
+                  child:
+                      _buildTranslationItem(context, language, translatedText),
                 );
               },
             ),
-          )
-        else
-          // Standard mode - direct column layout
-          ...translation.translations.entries.map((entry) {
-            final language = entry.key;
-            final translatedText = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildTranslationItem(context, language, translatedText),
-            );
-          }),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildTranslationItem(BuildContext context, String language, String translatedText) {
+  Widget _buildTranslationItem(
+      BuildContext context, String language, String translatedText) {
     final isPlaying = _playingStates[language] ?? false;
     final languageCode = _getLanguageCode(language);
-    final hasTTS = widget.ttsService != null && languageCode != null && languageCode.isNotEmpty;
+    final hasTTS = widget.ttsService != null &&
+        widget.isTTSInitialized &&
+        languageCode != null &&
+        languageCode.isNotEmpty;
     final isCompactStyle = widget.isCompactMode;
 
     return Container(
@@ -286,7 +310,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isCompactStyle ? Colors.green.shade100 : Colors.grey.shade100,
+              color:
+                  isCompactStyle ? Colors.green.shade100 : Colors.grey.shade100,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(7),
                 topRight: Radius.circular(7),
@@ -303,8 +328,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                   ),
                 ),
                 const Spacer(),
-                // TTS play button (only for standard mode)
-                if (hasTTS && !isCompactStyle) ...[
+                // TTS play button (always show if TTS available)
+                if (hasTTS) ...[
                   IconButton(
                     icon: Icon(
                       isPlaying ? Icons.stop : Icons.volume_up,
@@ -323,12 +348,13 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 // Copy button
                 IconButton(
                   icon: Icon(
-                    Icons.copy, 
+                    Icons.copy,
                     size: UISizes.mediumIconSize,
                     color: isCompactStyle ? Colors.green.shade700 : null,
                   ),
                   tooltip: 'Copy translation',
-                  onPressed: () => _copyTranslation(context, language, translatedText),
+                  onPressed: () =>
+                      _copyTranslation(context, language, translatedText),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -384,14 +410,15 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         debugPrint('TTS: Using voice ${matchingVoice.name} for $language');
 
         // Synthesize text to audio data
-        final audioData = await widget.ttsService!.synthesizeText(text, matchingVoice.name);
-        
+        final audioData =
+            await widget.ttsService!.synthesizeText(text, matchingVoice.name);
+
         // Play the audio (if audio data is not empty)
         if (audioData.isNotEmpty) {
           await _audioPlayer!.playBytes(audioData);
         }
         // If audioData is empty, it means the TTS engine played directly
-        
+
         debugPrint('TTS: Playback completed for $language');
       } else {
         debugPrint('TTS: No voices available for language code: $languageCode');
@@ -407,7 +434,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       }
     } on TTSError catch (e) {
       debugPrint('TTS Error for $language: ${e.message}');
-      
+
       if (mounted) {
         String userMessage;
         if (e.code == TTSErrorCodes.voiceNotFound) {
@@ -419,7 +446,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         } else {
           userMessage = 'Cannot play $language on this device';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(userMessage),
@@ -430,7 +457,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       }
     } catch (error) {
       debugPrint('Unexpected TTS error for $language: $error');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -456,7 +483,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       if (_audioPlayer != null) {
         await _audioPlayer!.stop();
       }
-      
+
       // Try to stop TTS service if supported
       if (widget.ttsService != null) {
         try {
@@ -482,7 +509,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   String? _getLanguageCode(String languageKey) {
     try {
       debugPrint('Processing language key: $languageKey');
-      
+
       // First check if it's already a language code format (e.g., zh-CN, en-US)
       if (languageKey.contains('-') && languageKey.length >= 2) {
         final parts = languageKey.split('-');
@@ -491,11 +518,12 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           return languageKey.toLowerCase();
         }
       }
-      
+
       // If not a language code format, try to find from language name mapping
       final map = LanguageConstants.translationLanguageNames;
-      debugPrint('Available language mappings: ${map.entries.take(5).map((e) => '${e.key}: ${e.value}').join(', ')}...');
-      
+      debugPrint(
+          'Available language mappings: ${map.entries.take(5).map((e) => '${e.key}: ${e.value}').join(', ')}...');
+
       final entry = map.entries.firstWhere(
         (e) => e.value.toLowerCase() == languageKey.toLowerCase(),
         orElse: () => const MapEntry('', ''),
@@ -523,7 +551,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     }
   }
 
-  void _copyTranslation(BuildContext context, String language, String translatedText) {
+  void _copyTranslation(
+      BuildContext context, String language, String translatedText) {
     Clipboard.setData(ClipboardData(text: translatedText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -533,7 +562,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     );
   }
 
-  void _copyAllTranslations(BuildContext context, TranslationResult translation) {
+  /*
+  void _copyAllTranslations(
+      BuildContext context, TranslationResult translation) {
     final buffer = StringBuffer();
     buffer.writeln('Translation Results');
     buffer.writeln('=' * 50);
@@ -561,6 +592,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       ),
     );
   }
+  */
 
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_ui_shared/alouette_ui_shared.dart';
+import '../../services/auto_config_service.dart';
 
 class TranslationPage extends StatefulWidget {
   const TranslationPage({super.key});
@@ -56,11 +57,11 @@ class _TranslationPageState extends State<TranslationPage> {
               llmConfig: _llmConfig,
               onConfigurePressed: _showConfigDialog,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 8),
 
             // Translation input area
             Expanded(
-              flex: 2,
+              flex: 3,
               child: TranslationInputWidget(
                 textController: _textController,
                 selectedLanguages: _selectedLanguages,
@@ -70,20 +71,34 @@ class _TranslationPageState extends State<TranslationPage> {
                     _selectedLanguages.addAll(languages);
                   });
                 },
+                onLanguageToggle: (language, selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedLanguages.add(language);
+                    } else {
+                      _selectedLanguages.remove(language);
+                    }
+                  });
+                },
                 onTranslate: _translateText,
                 isTranslating: _translationService.isTranslating,
                 isConfigured: _isConfigured,
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
             // Translation result area
             Expanded(
               flex: 3,
-              child: TranslationResultWidget(
-                translationService: _translationService,
-                isCompactMode: true,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TranslationResultWidget(
+                    translationService: _translationService,
+                    isCompactMode: true,
+                  ),
+                ),
               ),
             ),
           ],
@@ -159,7 +174,7 @@ class _TranslationPageState extends State<TranslationPage> {
 
     try {
       // 尝试自动配置
-      final autoConfig = await _autoConfigService.autoConfigureLLM();
+      final autoConfig = await _autoConfigService.attemptAutoConfiguration();
 
       if (autoConfig != null) {
         setState(() {

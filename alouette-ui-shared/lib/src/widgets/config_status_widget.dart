@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import 'modern_button.dart';
 
 /// Shared configuration status indicator widget
 /// Shows the current LLM connection status across translation apps
@@ -110,9 +111,11 @@ class ConfigStatusWidget extends StatelessWidget {
                 'Auto-configuration failed. Click the settings button to configure manually.',
               ),
             ),
-            TextButton(
+            ModernButton(
+              text: 'Configure',
               onPressed: onConfigurePressed,
-              child: const Text('Configure'),
+              type: ModernButtonType.text,
+              size: ModernButtonSize.small,
             ),
           ],
         ),

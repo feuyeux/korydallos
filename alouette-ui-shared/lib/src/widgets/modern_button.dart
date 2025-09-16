@@ -46,7 +46,8 @@ class ModernButton extends StatefulWidget {
     this.color,
     this.padding,
     this.borderRadius,
-  }) : assert(text != null || child != null, 'Either text or child must be provided');
+  }) : assert(text != null || child != null,
+            'Either text or child must be provided');
 
   @override
   State<ModernButton> createState() => _ModernButtonState();
@@ -59,19 +60,20 @@ class _ModernButtonState extends State<ModernButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // 确定按钮颜色
     final Color primaryColor = widget.color ?? AppTheme.primaryColor;
     final Color textColor = _getTextColor(primaryColor, isDark);
     final Color backgroundColor = _getBackgroundColor(primaryColor, isDark);
     final Color borderColor = _getBorderColor(primaryColor, isDark);
-    
+
     // 确定按钮尺寸
     final double height = _getHeight();
     final EdgeInsetsGeometry effectivePadding = widget.padding ?? _getPadding();
     final double iconSize = _getIconSize();
-    final BorderRadius effectiveBorderRadius = widget.borderRadius ?? BorderRadius.circular(UISizes.buttonBorderRadius);
-    
+    final BorderRadius effectiveBorderRadius =
+        widget.borderRadius ?? BorderRadius.circular(6.0); // 减少圆角让样式更现代
+
     // 构建按钮内容
     Widget content;
     if (widget.loading) {
@@ -89,21 +91,26 @@ class _ModernButtonState extends State<ModernButton> {
       content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (widget.icon != null) ...[            
+          if (widget.icon != null) ...[
             Icon(widget.icon, size: iconSize, color: textColor),
-            SizedBox(width: widget.text != null ? UISizes.spacingS : 0),
+            if (widget.text != null) SizedBox(width: 4), // 减少图标和文本间距
           ],
           if (widget.text != null)
-            Text(
-              widget.text!,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w500,
-                fontSize: _getFontSize(),
+            Flexible(
+              // 使用Flexible包装文本避免溢出
+              child: Text(
+                widget.text!,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: _getFontSize(),
+                ),
+                overflow: TextOverflow.ellipsis, // 添加省略号处理
+                maxLines: 1, // 限制为单行
               ),
             )
           else if (widget.child != null)
-            widget.child!,
+            Flexible(child: widget.child!), // 同样包装child
         ],
       );
     }
@@ -115,20 +122,28 @@ class _ModernButtonState extends State<ModernButton> {
         duration: AppTheme.animationDuration,
         height: height,
         decoration: BoxDecoration(
-          color: widget.onPressed == null 
-              ? backgroundColor.withOpacity(0.6) 
-              : (_isHovering ? backgroundColor.withOpacity(0.8) : backgroundColor),
+          color: widget.onPressed == null
+              ? backgroundColor.withOpacity(0.4) // 更明显的禁用状态
+              : (_isHovering
+                  ? backgroundColor.withOpacity(0.9) // 更明显的悬停效果
+                  : backgroundColor),
           borderRadius: effectiveBorderRadius,
-          border: widget.type == ModernButtonType.outline 
-              ? Border.all(color: borderColor, width: 1.5) 
+          border: widget.type == ModernButtonType.outline
+              ? Border.all(
+                  color: widget.onPressed == null
+                      ? borderColor.withOpacity(0.4)
+                      : borderColor,
+                  width: 1.0) // 减少边框粗细
               : null,
-          boxShadow: widget.type == ModernButtonType.primary && widget.onPressed != null
+          boxShadow: widget.type == ModernButtonType.primary &&
+                  widget.onPressed != null &&
+                  !widget.loading
               ? [
                   BoxShadow(
-                    color: primaryColor.withOpacity(isDark ? 0.3 : 0.2),
-                    blurRadius: _isHovering ? 8 : 4,
-                    spreadRadius: _isHovering ? 1 : 0,
-                    offset: const Offset(0, 2),
+                    color: primaryColor.withOpacity(isDark ? 0.2 : 0.15),
+                    blurRadius: _isHovering ? 4 : 2,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 1),
                   ),
                 ]
               : null,
@@ -137,16 +152,22 @@ class _ModernButtonState extends State<ModernButton> {
           color: Colors.transparent,
           child: InkWell(
             onTap: widget.onPressed,
-            splashColor: widget.type == ModernButtonType.text 
-                ? primaryColor.withOpacity(0.1) 
+            splashColor: widget.type == ModernButtonType.text
+                ? primaryColor.withOpacity(0.1)
                 : null,
-            highlightColor: widget.type == ModernButtonType.text 
-                ? primaryColor.withOpacity(0.05) 
+            highlightColor: widget.type == ModernButtonType.text
+                ? primaryColor.withOpacity(0.05)
                 : null,
             borderRadius: effectiveBorderRadius,
             child: Container(
               padding: effectivePadding,
               width: widget.fullWidth ? double.infinity : null,
+              constraints: widget.fullWidth
+                  ? null
+                  : BoxConstraints(
+                      minWidth: UISizes.buttonMinWidth,
+                      maxWidth: double.infinity, // 允许扩展但不强制
+                    ),
               alignment: Alignment.center,
               child: content,
             ),
@@ -193,11 +214,11 @@ class _ModernButtonState extends State<ModernButton> {
   double _getHeight() {
     switch (widget.size) {
       case ModernButtonSize.small:
-        return UISizes.buttonHeightCompact;
+        return UISizes.buttonHeightSmall;
       case ModernButtonSize.medium:
-        return UISizes.buttonHeightStandard;
+        return UISizes.buttonHeightMedium;
       case ModernButtonSize.large:
-        return UISizes.buttonHeightStandard * 1.2;
+        return UISizes.buttonHeightLarge;
     }
   }
 
@@ -205,20 +226,23 @@ class _ModernButtonState extends State<ModernButton> {
     if (widget.iconOnly) {
       switch (widget.size) {
         case ModernButtonSize.small:
-          return const EdgeInsets.all(UISizes.spacingXs);
+          return const EdgeInsets.all(4.0);
         case ModernButtonSize.medium:
-          return const EdgeInsets.all(UISizes.spacingS);
+          return const EdgeInsets.all(6.0);
         case ModernButtonSize.large:
-          return const EdgeInsets.all(UISizes.spacingM);
+          return const EdgeInsets.all(8.0);
       }
     } else {
       switch (widget.size) {
         case ModernButtonSize.small:
-          return const EdgeInsets.symmetric(horizontal: UISizes.spacingM, vertical: UISizes.spacingXs);
+          return const EdgeInsets.symmetric(
+              horizontal: 8.0, vertical: 3.0); // 减少水平内边距
         case ModernButtonSize.medium:
-          return const EdgeInsets.symmetric(horizontal: UISizes.spacingL, vertical: UISizes.spacingS);
+          return const EdgeInsets.symmetric(
+              horizontal: 12.0, vertical: 5.0); // 减少内边距
         case ModernButtonSize.large:
-          return const EdgeInsets.symmetric(horizontal: UISizes.spacingXl, vertical: UISizes.spacingM);
+          return const EdgeInsets.symmetric(
+              horizontal: 16.0, vertical: 7.0); // 减少内边距
       }
     }
   }
@@ -237,11 +261,11 @@ class _ModernButtonState extends State<ModernButton> {
   double _getFontSize() {
     switch (widget.size) {
       case ModernButtonSize.small:
-        return 12;
+        return 11;
       case ModernButtonSize.medium:
-        return 14;
+        return 13;
       case ModernButtonSize.large:
-        return 16;
+        return 15;
     }
   }
 }

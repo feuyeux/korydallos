@@ -1,5 +1,5 @@
 /// A Flutter library for AI-powered translation functionality.
-/// 
+///
 /// This library provides a unified API for integrating AI translation
 /// capabilities into Flutter applications, with support for multiple
 /// LLM providers including Ollama and LM Studio.
@@ -14,7 +14,6 @@ export 'src/models/connection_status.dart';
 // Services
 export 'src/services/translation_service.dart';
 export 'src/services/llm_config_service.dart';
-export 'src/services/auto_config_service.dart';
 
 // Providers
 export 'src/providers/translation_provider.dart';
@@ -26,4 +25,6 @@ export 'src/exceptions/translation_exceptions.dart';
 
 // Utils
 export 'src/utils/translation_constants.dart';
-export 'src/utils/text_cleaner.dart';
+
+// Network
+export 'src/network/http_client.dart';

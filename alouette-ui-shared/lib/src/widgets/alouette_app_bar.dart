@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'alouette_logo.dart';
 
 class AlouetteAppBar extends StatefulWidget implements PreferredSizeWidget {
   final TTSEngineType? currentEngine;
@@ -38,26 +39,17 @@ class _AlouetteAppBarState extends State<AlouetteAppBar> {
               color: Colors.white,
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
-          // Logo placeholder
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-            ),
-            child: const Icon(
-              Icons.translate,
-              color: Colors.blue,
-              size: 20,
-            ),
+
+          // Logo
+          AlouetteLogo.circleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white,
           ),
-          
+
           const Spacer(),
-          
+
           // System info
           _buildSystemInfo(),
         ],
@@ -68,7 +60,7 @@ class _AlouetteAppBarState extends State<AlouetteAppBar> {
   Widget _buildSystemInfo() {
     final platform = _getPlatformName();
     final ttsEngine = _getTTSEngineName();
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -120,7 +112,7 @@ class _AlouetteAppBarState extends State<AlouetteAppBar> {
 
   String _getTTSEngineName() {
     if (!widget.ttsInitialized) return 'Loading...';
-    
+
     switch (widget.currentEngine) {
       case TTSEngineType.edge:
         return 'Edge TTS';

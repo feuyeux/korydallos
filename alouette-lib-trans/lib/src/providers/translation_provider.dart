@@ -25,28 +25,41 @@ abstract class TranslationProvider {
     return config.provider == providerName;
   }
 
+  /// Get default configuration for this provider
+  LLMConfig getDefaultConfig() {
+    return LLMConfig(
+      provider: providerName,
+      serverUrl: 'http://localhost:11434',
+      selectedModel: '',
+    );
+  }
+
   /// Get the system prompt for translation
   String getSystemPrompt(String targetLanguage) {
     final explicitLang = getExplicitLanguageSpec(targetLanguage);
     return '''You are a professional translator. Translate the given text directly to $explicitLang.
 
 CRITICAL REQUIREMENTS:
-- Provide ONLY the translation, no explanations
+- Provide ONLY the translation, no explanations, no thinking, no reasoning
 - Maintain the original meaning and tone
 - Use natural, fluent language
 - Do not include phrases like "Translation:" or any prefixes
-- NEVER use <think> tags or any XML-style tags
+- NEVER use <thinking> tags or any XML-style tags
 - NEVER output any thinking process or reasoning
 - NEVER show your internal thoughts or analysis
 - NEVER use <thinking> or similar tags
+- NEVER output step-by-step thinking
+- NEVER explain your translation process
 - Output ONLY the final translated text with no additional content
 - Do not wrap the translation in any tags or markers
-- Respond with the translation directly''';
+- Respond with the translation directly
+- Do not output any text other than the translation''';
   }
 
   /// Get explicit language specification to avoid confusion
   String getExplicitLanguageSpec(String targetLang) {
-    switch (targetLang.toLowerCase()) {
+    final lang = targetLang.toLowerCase();
+    switch (lang) {
       case 'chinese':
       case 'zh':
       case 'cn':
@@ -90,7 +103,10 @@ CRITICAL REQUIREMENTS:
       case 'el':
         return 'Greek (Ελληνικά)';
       default:
-        return targetLang;
+        // fallback: return English name if possible, else generic
+        // e.g. "zh-Hans" -> "Simplified Chinese", "pt" -> "Portuguese"
+        // For now, fallback to "Translate to $targetLang language"
+        return 'Translate to $targetLang language';
     }
   }
 }

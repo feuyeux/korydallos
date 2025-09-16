@@ -11,7 +11,6 @@ class TranslationTestPage extends StatefulWidget {
 class _TranslationTestPageState extends State<TranslationTestPage> {
   final LLMConfigService _llmService = LLMConfigService();
   final TranslationService _translationService = TranslationService();
-  final AutoConfigService _autoConfigService = AutoConfigService();
   final TextEditingController _textController = TextEditingController();
 
   String _status = 'Ready';
@@ -69,19 +68,39 @@ class _TranslationTestPageState extends State<TranslationTestPage> {
     });
 
     try {
-      final autoConfig = await _autoConfigService.autoConfigureLLM();
+      final config = LLMConfig(
+        provider: 'ollama',
+        serverUrl: 'http://localhost:11434',
+        selectedModel: '',
+      );
 
-      if (autoConfig != null) {
-        _currentConfig = autoConfig;
-        setState(() {
-          _status = 'Connected successfully';
-          _result =
-              'Model: ${autoConfig.selectedModel}\nAvailable models: ${_llmService.availableModels.join(', ')}';
-        });
+      final connectionStatus = await _llmService.testConnection(config);
+
+      if (connectionStatus.success) {
+        final models = await _llmService.getAvailableModels(config);
+
+        if (models.isNotEmpty) {
+          _currentConfig = LLMConfig(
+            provider: 'ollama',
+            serverUrl: 'http://localhost:11434',
+            selectedModel: models.first,
+          );
+
+          setState(() {
+            _status = 'Connected successfully';
+            _result =
+                'Model: ${_currentConfig!.selectedModel}\nAvailable models: ${models.join(', ')}';
+          });
+        } else {
+          setState(() {
+            _status = 'Connection failed';
+            _result = 'Could not connect to Ollama or no models available';
+          });
+        }
       } else {
         setState(() {
           _status = 'Connection failed';
-          _result = 'Could not connect to Ollama or no models available';
+          _result = 'Could not connect to Ollama: ${connectionStatus.message}';
         });
       }
     } catch (e) {
@@ -139,18 +158,38 @@ class _TranslationTestPageState extends State<TranslationTestPage> {
     });
 
     try {
-      final autoConfig = await _autoConfigService.autoConfigureLLM();
+      final config = LLMConfig(
+        provider: 'ollama',
+        serverUrl: 'http://localhost:11434',
+        selectedModel: '',
+      );
 
-      if (autoConfig != null) {
-        setState(() {
-          _currentConfig = autoConfig;
-          _status = 'Auto-configured with model: ${autoConfig.selectedModel}';
-          _result = 'Ready for translation';
-        });
+      final connectionStatus = await _llmService.testConnection(config);
+
+      if (connectionStatus.success) {
+        final models = await _llmService.getAvailableModels(config);
+
+        if (models.isNotEmpty) {
+          setState(() {
+            _currentConfig = LLMConfig(
+              provider: 'ollama',
+              serverUrl: 'http://localhost:11434',
+              selectedModel: models.first,
+            );
+            _status =
+                'Auto-configured with model: ${_currentConfig!.selectedModel}';
+            _result = 'Ready for translation';
+          });
+        } else {
+          setState(() {
+            _status =
+                'Auto-configuration failed. Please test connection manually.';
+            _result = '';
+          });
+        }
       } else {
         setState(() {
-          _status =
-              'Auto-configuration failed. Please test connection manually.';
+          _status = 'Auto-configuration error: ${connectionStatus.message}';
           _result = '';
         });
       }

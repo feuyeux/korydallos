@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_ui_shared/alouette_ui_shared.dart';
+// Import specific components instead of the entire alouette_ui_shared package
+import 'package:alouette_ui_shared/src/themes/app_theme.dart';
 import 'presentation/pages/translation_page.dart';
 
 void main() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../constants/ui_constants.dart';
+import '../widgets/modern_button.dart';
 
 class LLMConfigDialog extends StatefulWidget {
   final LLMConfig initialConfig;
@@ -32,8 +33,10 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
   void initState() {
     super.initState();
     _selectedProvider = widget.initialConfig.provider;
-    _serverUrlController = TextEditingController(text: widget.initialConfig.serverUrl);
-    _apiKeyController = TextEditingController(text: widget.initialConfig.apiKey ?? '');
+    _serverUrlController =
+        TextEditingController(text: widget.initialConfig.serverUrl);
+    _apiKeyController =
+        TextEditingController(text: widget.initialConfig.apiKey ?? '');
     _selectedModel = widget.initialConfig.selectedModel;
 
     // Try to load available models if already configured
@@ -95,7 +98,9 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
       setState(() {
         _connectionSuccess = result.success;
         _connectionMessage = result.message;
-        if (_connectionSuccess && result.details != null && result.details!['models'] != null) {
+        if (_connectionSuccess &&
+            result.details != null &&
+            result.details!['models'] != null) {
           _availableModels = List<String>.from(result.details!['models']);
           if (_availableModels.isNotEmpty) {
             // Auto-select first available model
@@ -146,7 +151,8 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
   }
 
   void _updateServerUrlForProvider(String provider) {
-    _serverUrlController.text = LLMProviders.defaultUrls[provider] ?? 'http://localhost:11434';
+    _serverUrlController.text =
+        LLMProviders.defaultUrls[provider] ?? 'http://localhost:11434';
   }
 
   @override
@@ -278,18 +284,12 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
         // Test Connection Button
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
+          child: ModernButton(
             onPressed: _isTestingConnection ? null : _testConnection,
-            icon: _isTestingConnection
-                ? const SizedBox(
-                    width: UISizes.mediumIconSize,
-                    height: UISizes.mediumIconSize,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.wifi),
-            label: Text(
-              _isTestingConnection ? 'Testing...' : 'Test Connection',
-            ),
+            text: _isTestingConnection ? 'Testing...' : 'Test Connection',
+            icon: _isTestingConnection ? null : Icons.wifi,
+            type: ModernButtonType.outline,
+            size: ModernButtonSize.medium,
           ),
         ),
 
@@ -378,7 +378,8 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                 },
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 hint: const Text('Select a model'),
               ),
@@ -391,14 +392,18 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
 
   List<Widget> _buildActions() {
     return [
-      TextButton(
+      ModernButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
+        text: 'Cancel',
+        type: ModernButtonType.text,
+        size: ModernButtonSize.medium,
       ),
       if (widget.useDialog) const SizedBox(width: 8),
-      ElevatedButton(
+      ModernButton(
         onPressed: _canSave() ? _saveConfig : null,
-        child: const Text('Save'),
+        text: 'Save',
+        type: ModernButtonType.primary,
+        size: ModernButtonSize.medium,
       ),
     ];
   }
