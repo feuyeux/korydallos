@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
-import '../themes/app_theme.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/motion_tokens.dart';
 
 /// 现代化的卡片组件，为所有Alouette应用提供一致的内容展示容器
 class ModernCard extends StatefulWidget {
@@ -44,25 +44,27 @@ class _ModernCardState extends State<ModernCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    final defaultBorderRadius = BorderRadius.circular(UISizes.cardBorderRadius);
-    final defaultElevation = widget.elevation ?? UISizes.cardElevation;
-    final defaultHoverElevation = widget.hoverElevation ?? UISizes.cardElevationHover;
-    
-    final effectiveElevation = _isHovering && widget.interactive 
-        ? defaultHoverElevation 
+
+    final defaultBorderRadius = BorderRadius.circular(DimensionTokens.radiusXl);
+    final defaultElevation = widget.elevation ?? 2.0;
+    final defaultHoverElevation = widget.hoverElevation ?? 4.0;
+
+    final effectiveElevation = _isHovering && widget.interactive
+        ? defaultHoverElevation
         : defaultElevation;
-    
-    final effectiveBorderColor = widget.borderColor ?? 
+
+    final effectiveBorderColor = widget.borderColor ??
         (isDark ? Colors.grey.shade700 : Colors.grey.shade300);
 
     return MouseRegion(
-      onEnter: (_) => widget.interactive ? setState(() => _isHovering = true) : null,
-      onExit: (_) => widget.interactive ? setState(() => _isHovering = false) : null,
+      onEnter: (_) =>
+          widget.interactive ? setState(() => _isHovering = true) : null,
+      onExit: (_) =>
+          widget.interactive ? setState(() => _isHovering = false) : null,
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: AppTheme.animationDuration,
+          duration: MotionTokens.normal,
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
@@ -70,20 +72,20 @@ class _ModernCardState extends State<ModernCard> {
             borderRadius: widget.borderRadius ?? defaultBorderRadius,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                 blurRadius: effectiveElevation * 2,
                 spreadRadius: effectiveElevation / 2,
                 offset: Offset(0, effectiveElevation / 2),
               ),
             ],
-            border: widget.addBorder 
-                ? Border.all(color: effectiveBorderColor, width: 1) 
+            border: widget.addBorder
+                ? Border.all(color: effectiveBorderColor, width: 1)
                 : null,
           ),
           child: ClipRRect(
             borderRadius: widget.borderRadius ?? defaultBorderRadius,
             child: Padding(
-              padding: widget.padding ?? const EdgeInsets.all(UISizes.spacingM),
+              padding: widget.padding ?? EdgeInsets.all(SpacingTokens.l),
               child: widget.child,
             ),
           ),

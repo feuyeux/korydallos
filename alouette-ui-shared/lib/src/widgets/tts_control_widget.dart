@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/modern_button.dart';
 import '../widgets/compact_slider.dart';
-import '../constants/ui_constants.dart';
 
 /// TTS控制组件 - 包含参数调节和播放控制
 class TTSControlWidget extends StatelessWidget {
@@ -39,7 +38,7 @@ class TTSControlWidget extends StatelessWidget {
         Expanded(
           flex: 2,
           child: ModernCard(
-            padding: const EdgeInsets.all(UISizes.spacingS),
+            padding: const EdgeInsets.all(8.0), // SpacingTokens.s
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -55,7 +54,7 @@ class TTSControlWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: UISizes.spacingM),
+                const SizedBox(height: 16.0), // SpacingTokens.l
                 Expanded(
                   child: Row(
                     children: [
@@ -105,7 +104,7 @@ class TTSControlWidget extends StatelessWidget {
         Expanded(
           flex: 1,
           child: ModernCard(
-            padding: const EdgeInsets.all(UISizes.spacingS),
+            padding: const EdgeInsets.all(8.0), // SpacingTokens.s
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -124,7 +123,7 @@ class TTSControlWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: UISizes.spacingM),
+                const SizedBox(height: 16.0), // SpacingTokens.l
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -141,7 +140,7 @@ class TTSControlWidget extends StatelessWidget {
                           size: ModernButtonSize.large,
                         ),
                       ),
-                      const SizedBox(height: UISizes.spacingM),
+                      const SizedBox(height: 16.0), // SpacingTokens.l
                       SizedBox(
                         width: double.infinity,
                         child: ModernButton(

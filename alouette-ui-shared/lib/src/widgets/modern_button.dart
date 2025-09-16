@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
-import '../themes/app_theme.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/color_tokens.dart';
 
 /// 按钮类型枚举
 enum ModernButtonType {
@@ -18,6 +18,7 @@ enum ModernButtonSize {
 }
 
 /// 现代化的按钮组件，为所有Alouette应用提供一致的交互元素
+/// 重构后减少了重复代码，使用设计令牌系统提供一致性
 class ModernButton extends StatefulWidget {
   final String? text;
   final Widget? child;
@@ -61,112 +62,45 @@ class _ModernButtonState extends State<ModernButton> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // 确定按钮颜色
-    final Color primaryColor = widget.color ?? AppTheme.primaryColor;
-    final Color textColor = _getTextColor(primaryColor, isDark);
-    final Color backgroundColor = _getBackgroundColor(primaryColor, isDark);
-    final Color borderColor = _getBorderColor(primaryColor, isDark);
-
-    // 确定按钮尺寸
-    final double height = _getHeight();
-    final EdgeInsetsGeometry effectivePadding = widget.padding ?? _getPadding();
-    final double iconSize = _getIconSize();
-    final BorderRadius effectiveBorderRadius =
-        widget.borderRadius ?? BorderRadius.circular(6.0); // 减少圆角让样式更现代
+    // 使用设计令牌系统
+    final Color primaryColor = widget.color ?? ColorTokens.primary;
+    final _ButtonStyle buttonStyle = _getButtonStyle(primaryColor, isDark);
+    final _ButtonSize buttonSize = _getButtonSize();
 
     // 构建按钮内容
-    Widget content;
-    if (widget.loading) {
-      content = SizedBox(
-        height: iconSize,
-        width: iconSize,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(textColor),
-        ),
-      );
-    } else if (widget.iconOnly && widget.icon != null) {
-      content = Icon(widget.icon, size: iconSize, color: textColor);
-    } else {
-      content = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.icon != null) ...[
-            Icon(widget.icon, size: iconSize, color: textColor),
-            if (widget.text != null) SizedBox(width: 4), // 减少图标和文本间距
-          ],
-          if (widget.text != null)
-            Flexible(
-              // 使用Flexible包装文本避免溢出
-              child: Text(
-                widget.text!,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: _getFontSize(),
-                ),
-                overflow: TextOverflow.ellipsis, // 添加省略号处理
-                maxLines: 1, // 限制为单行
-              ),
-            )
-          else if (widget.child != null)
-            Flexible(child: widget.child!), // 同样包装child
-        ],
-      );
-    }
+    Widget content = _buildContent(buttonStyle, buttonSize);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
       child: AnimatedContainer(
-        duration: AppTheme.animationDuration,
-        height: height,
+        duration: const Duration(milliseconds: 200),
+        height: buttonSize.height,
         decoration: BoxDecoration(
-          color: widget.onPressed == null
-              ? backgroundColor.withOpacity(0.4) // 更明显的禁用状态
-              : (_isHovering
-                  ? backgroundColor.withOpacity(0.9) // 更明显的悬停效果
-                  : backgroundColor),
-          borderRadius: effectiveBorderRadius,
+          color: _getEffectiveBackgroundColor(buttonStyle),
+          borderRadius: widget.borderRadius ??
+              BorderRadius.circular(DimensionTokens.radiusL),
           border: widget.type == ModernButtonType.outline
-              ? Border.all(
-                  color: widget.onPressed == null
-                      ? borderColor.withOpacity(0.4)
-                      : borderColor,
-                  width: 1.0) // 减少边框粗细
+              ? Border.all(color: buttonStyle.borderColor, width: 1.0)
               : null,
-          boxShadow: widget.type == ModernButtonType.primary &&
-                  widget.onPressed != null &&
-                  !widget.loading
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(isDark ? 0.2 : 0.15),
-                    blurRadius: _isHovering ? 4 : 2,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
+          boxShadow: _getShadow(buttonStyle),
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: widget.onPressed,
-            splashColor: widget.type == ModernButtonType.text
-                ? primaryColor.withOpacity(0.1)
-                : null,
-            highlightColor: widget.type == ModernButtonType.text
-                ? primaryColor.withOpacity(0.05)
-                : null,
-            borderRadius: effectiveBorderRadius,
+            splashColor: buttonStyle.splashColor,
+            highlightColor: buttonStyle.highlightColor,
+            borderRadius: widget.borderRadius ??
+                BorderRadius.circular(DimensionTokens.radiusL),
             child: Container(
-              padding: effectivePadding,
+              padding: widget.padding ?? buttonSize.padding,
               width: widget.fullWidth ? double.infinity : null,
               constraints: widget.fullWidth
                   ? null
                   : BoxConstraints(
-                      minWidth: UISizes.buttonMinWidth,
-                      maxWidth: double.infinity, // 允许扩展但不强制
+                      minWidth: DimensionTokens.buttonMinWidth,
+                      maxWidth: double.infinity,
                     ),
               alignment: Alignment.center,
               child: content,
@@ -177,95 +111,175 @@ class _ModernButtonState extends State<ModernButton> {
     );
   }
 
-  Color _getTextColor(Color primaryColor, bool isDark) {
+  Widget _buildContent(_ButtonStyle style, _ButtonSize size) {
+    if (widget.loading) {
+      return SizedBox(
+        height: size.iconSize,
+        width: size.iconSize,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(style.textColor),
+        ),
+      );
+    }
+
+    if (widget.iconOnly && widget.icon != null) {
+      return Icon(widget.icon, size: size.iconSize, color: style.textColor);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.icon != null) ...[
+          Icon(widget.icon, size: size.iconSize, color: style.textColor),
+          if (widget.text != null) const SizedBox(width: 4),
+        ],
+        if (widget.text != null)
+          Flexible(
+            child: Text(
+              widget.text!,
+              style: TextStyle(
+                color: style.textColor,
+                fontWeight: FontWeight.w500,
+                fontSize: size.fontSize,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          )
+        else if (widget.child != null)
+          Flexible(child: widget.child!),
+      ],
+    );
+  }
+
+  Color _getEffectiveBackgroundColor(_ButtonStyle style) {
+    if (widget.onPressed == null) {
+      return style.backgroundColor.withValues(alpha: 0.4);
+    }
+    return _isHovering
+        ? style.backgroundColor.withValues(alpha: 0.9)
+        : style.backgroundColor;
+  }
+
+  List<BoxShadow>? _getShadow(_ButtonStyle style) {
+    if (widget.type == ModernButtonType.primary &&
+        widget.onPressed != null &&
+        !widget.loading) {
+      return [
+        BoxShadow(
+          color: style.backgroundColor.withValues(alpha: 0.15),
+          blurRadius: _isHovering ? 4 : 2,
+          spreadRadius: 0,
+          offset: const Offset(0, 1),
+        ),
+      ];
+    }
+    return null;
+  }
+}
+
+/// 按钮样式配置类
+class _ButtonStyle {
+  final Color textColor;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color splashColor;
+  final Color highlightColor;
+
+  const _ButtonStyle({
+    required this.textColor,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.splashColor,
+    required this.highlightColor,
+  });
+}
+
+/// 按钮尺寸配置类
+class _ButtonSize {
+  final double height;
+  final double iconSize;
+  final double fontSize;
+  final EdgeInsetsGeometry padding;
+
+  const _ButtonSize({
+    required this.height,
+    required this.iconSize,
+    required this.fontSize,
+    required this.padding,
+  });
+}
+
+extension _ModernButtonStyleHelper on _ModernButtonState {
+  /// 获取按钮样式配置
+  _ButtonStyle _getButtonStyle(Color primaryColor, bool isDark) {
     switch (widget.type) {
       case ModernButtonType.primary:
-        return Colors.white;
+        return _ButtonStyle(
+          textColor: ColorTokens.onPrimary,
+          backgroundColor: primaryColor,
+          borderColor: Colors.transparent,
+          splashColor: Colors.white.withValues(alpha: 0.1),
+          highlightColor: Colors.white.withValues(alpha: 0.05),
+        );
       case ModernButtonType.secondary:
-        return isDark ? Colors.white : const Color(0xFF1F2937);
+        return _ButtonStyle(
+          textColor: isDark ? ColorTokens.darkOnSurface : ColorTokens.onSurface,
+          backgroundColor: isDark ? ColorTokens.gray800 : ColorTokens.gray100,
+          borderColor: Colors.transparent,
+          splashColor: primaryColor.withValues(alpha: 0.1),
+          highlightColor: primaryColor.withValues(alpha: 0.05),
+        );
       case ModernButtonType.outline:
+        return _ButtonStyle(
+          textColor: primaryColor,
+          backgroundColor: Colors.transparent,
+          borderColor: primaryColor,
+          splashColor: primaryColor.withValues(alpha: 0.1),
+          highlightColor: primaryColor.withValues(alpha: 0.05),
+        );
       case ModernButtonType.text:
-        return primaryColor;
+        return _ButtonStyle(
+          textColor: primaryColor,
+          backgroundColor: Colors.transparent,
+          borderColor: Colors.transparent,
+          splashColor: primaryColor.withValues(alpha: 0.1),
+          highlightColor: primaryColor.withValues(alpha: 0.05),
+        );
     }
   }
 
-  Color _getBackgroundColor(Color primaryColor, bool isDark) {
-    switch (widget.type) {
-      case ModernButtonType.primary:
-        return primaryColor;
-      case ModernButtonType.secondary:
-        return isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade100;
-      case ModernButtonType.outline:
-        return Colors.transparent;
-      case ModernButtonType.text:
-        return Colors.transparent;
-    }
-  }
-
-  Color _getBorderColor(Color primaryColor, bool isDark) {
-    switch (widget.type) {
-      case ModernButtonType.outline:
-        return primaryColor;
-      default:
-        return Colors.transparent;
-    }
-  }
-
-  double _getHeight() {
+  /// 获取按钮尺寸配置
+  _ButtonSize _getButtonSize() {
     switch (widget.size) {
       case ModernButtonSize.small:
-        return UISizes.buttonHeightSmall;
+        return _ButtonSize(
+          height: DimensionTokens.buttonS,
+          iconSize: DimensionTokens.iconS,
+          fontSize: 11.0,
+          padding: widget.iconOnly
+              ? const EdgeInsets.all(4.0)
+              : const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+        );
       case ModernButtonSize.medium:
-        return UISizes.buttonHeightMedium;
+        return _ButtonSize(
+          height: DimensionTokens.buttonM,
+          iconSize: DimensionTokens.iconM,
+          fontSize: 12.0,
+          padding: widget.iconOnly
+              ? const EdgeInsets.all(6.0)
+              : const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
+        );
       case ModernButtonSize.large:
-        return UISizes.buttonHeightLarge;
-    }
-  }
-
-  EdgeInsetsGeometry _getPadding() {
-    if (widget.iconOnly) {
-      switch (widget.size) {
-        case ModernButtonSize.small:
-          return const EdgeInsets.all(4.0);
-        case ModernButtonSize.medium:
-          return const EdgeInsets.all(6.0);
-        case ModernButtonSize.large:
-          return const EdgeInsets.all(8.0);
-      }
-    } else {
-      switch (widget.size) {
-        case ModernButtonSize.small:
-          return const EdgeInsets.symmetric(
-              horizontal: 8.0, vertical: 3.0); // 减少水平内边距
-        case ModernButtonSize.medium:
-          return const EdgeInsets.symmetric(
-              horizontal: 12.0, vertical: 5.0); // 减少内边距
-        case ModernButtonSize.large:
-          return const EdgeInsets.symmetric(
-              horizontal: 16.0, vertical: 7.0); // 减少内边距
-      }
-    }
-  }
-
-  double _getIconSize() {
-    switch (widget.size) {
-      case ModernButtonSize.small:
-        return UISizes.iconSizeSmall;
-      case ModernButtonSize.medium:
-        return UISizes.iconSizeMedium;
-      case ModernButtonSize.large:
-        return UISizes.iconSizeLarge;
-    }
-  }
-
-  double _getFontSize() {
-    switch (widget.size) {
-      case ModernButtonSize.small:
-        return 11;
-      case ModernButtonSize.medium:
-        return 13;
-      case ModernButtonSize.large:
-        return 15;
+        return _ButtonSize(
+          height: DimensionTokens.buttonL,
+          iconSize: DimensionTokens.iconL,
+          fontSize: 14.0,
+          padding: widget.iconOnly
+              ? const EdgeInsets.all(8.0)
+              : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+        );
     }
   }
 }

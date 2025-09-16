@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/typography_tokens.dart';
 import '../widgets/modern_button.dart';
 
 class TTSConfigDialog extends StatefulWidget {
@@ -171,21 +172,20 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       child: SizedBox(
-        width: UISizes.configDialogWidth,
+        width: 500.0, // Standard dialog width
         height: 500,
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(
-                AppDefaults.largePadding,
-                AppDefaults.largePadding,
-                AppDefaults.largePadding,
-                AppDefaults.defaultPadding,
+                SpacingTokens.xxl,
+                SpacingTokens.xxl,
+                SpacingTokens.xxl,
+                SpacingTokens.l,
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.record_voice_over,
-                      size: AppDefaults.largePadding),
+                  const Icon(Icons.record_voice_over, size: SpacingTokens.xxl),
                   const SizedBox(width: 12),
                   Text(
                     'TTS Configuration',
@@ -207,10 +207,10 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                 children: [
                   SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
-                      AppDefaults.largePadding,
+                      SpacingTokens.xxl,
                       0,
-                      AppDefaults.largePadding,
-                      AppDefaults.largePadding,
+                      SpacingTokens.xxl,
+                      SpacingTokens.xxl,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +255,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: AppDefaults.largePadding),
+                          const SizedBox(height: SpacingTokens.xxl),
 
                           // Engine Selection
                           Text(
@@ -298,7 +298,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppDefaults.defaultPadding),
+                          const SizedBox(height: SpacingTokens.l),
 
                           Text(
                             'Current Engine: ${_currentEngine?.name ?? 'Unknown'}',
@@ -309,7 +309,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                   color: Colors.grey.shade600,
                                 ),
                           ),
-                          const SizedBox(height: AppDefaults.largePadding),
+                          const SizedBox(height: SpacingTokens.xxl),
 
                           if (_voices.isNotEmpty) ...[
                             Text(
@@ -321,7 +321,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              value: _currentVoice,
+                              initialValue: _currentVoice,
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 contentPadding: EdgeInsets.symmetric(
@@ -336,7 +336,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                   child: Text(
                                     '${voice.displayName} (${voice.locale}, ${voice.gender})',
                                     style: const TextStyle(
-                                        fontSize: TextStyles.largeFontSize),
+                                        fontSize: TypographyTokens.titleLarge),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 );
@@ -359,7 +359,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                     color: Colors.grey.shade600,
                                   ),
                             ),
-                            const SizedBox(height: AppDefaults.largePadding),
+                            const SizedBox(height: SpacingTokens.xxl),
                           ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

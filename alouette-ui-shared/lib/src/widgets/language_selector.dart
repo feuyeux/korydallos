@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/language_constants.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/typography_tokens.dart';
 
 /// Language selector component
 class LanguageSelector extends StatelessWidget {
@@ -21,8 +22,8 @@ class LanguageSelector extends StatelessWidget {
         Text(
           'Language',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -50,13 +51,14 @@ class LanguageSelector extends StatelessWidget {
                       Expanded(
                         child: Text(
                           language.name,
-                          style: const TextStyle(fontSize: UISizes.mediumIconSize),
+                          style:
+                              const TextStyle(fontSize: DimensionTokens.iconM),
                         ),
                       ),
                       Text(
                         language.code,
                         style: TextStyle(
-                          fontSize: TextStyles.mediumFontSize,
+                          fontSize: TypographyTokens.bodyMediumStyle.fontSize,
                           color: Colors.grey.shade600,
                         ),
                       ),

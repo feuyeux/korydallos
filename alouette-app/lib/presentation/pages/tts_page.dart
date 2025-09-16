@@ -1,6 +1,6 @@
-import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import 'package:flutter/material.dart';
-import 'package:alouette_ui_shared/alouette_ui_shared.dart';
+import 'package:alouette_ui_shared/alouette_ui_shared.dart' as ui;
 
 class TTSPage extends StatefulWidget {
   const TTSPage({super.key});
@@ -10,17 +10,17 @@ class TTSPage extends StatefulWidget {
 }
 
 class _TTSPageState extends State<TTSPage> {
-  late final Future<VoiceService> _voiceServiceFuture;
+  late final Future<tts_lib.VoiceService> _voiceServiceFuture;
   final TextEditingController _textController = TextEditingController(
     text: 'Hello, this is a test message.',
   );
 
   String? _currentVoiceName;
-  VoiceService? _voiceService;
-  TTSService? _ttsService;
-  AudioPlayer? _audioPlayer;
+  tts_lib.VoiceService? _voiceService;
+  tts_lib.TTSService? _ttsService;
+  tts_lib.AudioPlayer? _audioPlayer;
   bool _isPlaying = false;
-  TTSEngineType? _currentEngine;
+  tts_lib.TTSEngineType? _currentEngine;
 
   @override
   void initState() {
@@ -28,16 +28,16 @@ class _TTSPageState extends State<TTSPage> {
     _voiceServiceFuture = _initServices();
   }
 
-  Future<VoiceService> _initServices() async {
+  Future<tts_lib.VoiceService> _initServices() async {
     try {
-      _ttsService = await SharedTTSManager.getService();
-      _voiceService = await SharedTTSManager.getVoiceService();
-      _audioPlayer = SharedTTSManager.getAudioPlayer();
-      
+      _ttsService = await ui.SharedTTSManager.getService();
+      _voiceService = await ui.SharedTTSManager.getVoiceService();
+      _audioPlayer = ui.SharedTTSManager.getAudioPlayer();
+
       setState(() {
         _currentEngine = _ttsService!.currentEngine;
       });
-      
+
       await _loadVoices();
       return _voiceService!;
     } catch (e) {
@@ -48,7 +48,7 @@ class _TTSPageState extends State<TTSPage> {
 
   Future<void> _loadVoices() async {
     if (_voiceService == null) return;
-    
+
     try {
       final voices = await _voiceService!.getAllVoices();
       setState(() {
@@ -58,14 +58,14 @@ class _TTSPageState extends State<TTSPage> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to get voices: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to get voices: $e')));
       }
     }
   }
 
-  Future<void> _switchEngine(TTSEngineType engineType) async {
+  Future<void> _switchEngine(tts_lib.TTSEngineType engineType) async {
     if (_ttsService == null) return;
 
     try {
@@ -78,9 +78,9 @@ class _TTSPageState extends State<TTSPage> {
       await _loadVoices();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to switch engine: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to switch engine: $e')));
       }
     } finally {
       setState(() => _isPlaying = false);
@@ -88,30 +88,34 @@ class _TTSPageState extends State<TTSPage> {
   }
 
   Future<void> _speak() async {
-    if (_ttsService == null || _currentVoiceName == null || _audioPlayer == null) return;
+    if (_ttsService == null ||
+        _currentVoiceName == null ||
+        _audioPlayer == null) {
+      return;
+    }
 
     setState(() => _isPlaying = true);
     try {
       final audioData = await _ttsService!.synthesizeText(
-        _textController.text, 
+        _textController.text,
         _currentVoiceName!,
       );
       await _audioPlayer!.playBytes(audioData);
-    } on TTSError catch (e) {
+    } on tts_lib.TTSError catch (e) {
       if (mounted) {
         String errorMessage = 'TTS Error: ${e.message}';
         if (e.code != null) {
           errorMessage += ' (Code: ${e.code})';
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unexpected error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unexpected error: $e')));
       }
     } finally {
       setState(() => _isPlaying = false);
@@ -127,10 +131,8 @@ class _TTSPageState extends State<TTSPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const ModernAppBar(
-        title: 'TTS - Unified API',
-      ),
-      body: FutureBuilder<VoiceService>(
+      appBar: const ui.ModernAppBar(title: 'TTS - Unified API'),
+      body: FutureBuilder<tts_lib.VoiceService>(
         future: _voiceServiceFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -186,7 +188,11 @@ class _TTSPageState extends State<TTSPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Platform: ${PlatformUtils.isDesktop ? 'Desktop' : PlatformUtils.isMobile ? 'Mobile' : 'Web'}',
+                          'Platform: ${tts_lib.PlatformUtils.isDesktop
+                              ? 'Desktop'
+                              : tts_lib.PlatformUtils.isMobile
+                              ? 'Mobile'
+                              : 'Web'}',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -201,14 +207,20 @@ class _TTSPageState extends State<TTSPage> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _currentEngine == TTSEngineType.edge ? null : () => _switchEngine(TTSEngineType.edge),
+                        onPressed: _currentEngine == tts_lib.TTSEngineType.edge
+                            ? null
+                            : () => _switchEngine(tts_lib.TTSEngineType.edge),
                         child: const Text('Edge TTS'),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _currentEngine == TTSEngineType.flutter ? null : () => _switchEngine(TTSEngineType.flutter),
+                        onPressed:
+                            _currentEngine == tts_lib.TTSEngineType.flutter
+                            ? null
+                            : () =>
+                                  _switchEngine(tts_lib.TTSEngineType.flutter),
                         child: const Text('Flutter TTS'),
                       ),
                     ),
@@ -225,12 +237,12 @@ class _TTSPageState extends State<TTSPage> {
                       if (isLoading) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      
+
                       final voices = _voiceService!.cachedVoices;
                       if (voices.isEmpty) {
                         return const Text('No voices available');
                       }
-                      
+
                       return Column(
                         children: [
                           DropdownButton<String>(
@@ -278,7 +290,9 @@ class _TTSPageState extends State<TTSPage> {
 
                 // Play/Stop button
                 ElevatedButton.icon(
-                  onPressed: _isPlaying ? _stop : (_currentVoiceName != null ? _speak : null),
+                  onPressed: _isPlaying
+                      ? _stop
+                      : (_currentVoiceName != null ? _speak : null),
                   icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
                   label: Text(_isPlaying ? 'Stop' : 'Speak'),
                 ),

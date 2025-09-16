@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/typography_tokens.dart';
 
 /// Volume slider component
 class VolumeSlider extends StatelessWidget {
@@ -24,15 +25,15 @@ class VolumeSlider extends StatelessWidget {
               children: [
                 Icon(
                   _getVolumeIcon(volume),
-                  size: UISizes.largeIconSize,
+                  size: DimensionTokens.iconL, // 24.0
                   color: Colors.grey.shade700,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'Volume',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
               ],
             ),
@@ -45,15 +46,15 @@ class VolumeSlider extends StatelessWidget {
               child: Text(
                 '${(volume * 100).round()}%',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ),
           ],
         ),
-        
+
         const SizedBox(height: 4),
-        
+
         // Volume slider
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
@@ -72,7 +73,7 @@ class VolumeSlider extends StatelessWidget {
             children: [
               Icon(
                 Icons.volume_down,
-                size: UISizes.largeIconSize,
+                size: DimensionTokens.iconL,
                 color: Colors.grey.shade500,
               ),
               Expanded(
@@ -86,13 +87,13 @@ class VolumeSlider extends StatelessWidget {
               ),
               Icon(
                 Icons.volume_up,
-                size: UISizes.largeIconSize,
+                size: DimensionTokens.iconL,
                 color: Colors.grey.shade500,
               ),
             ],
           ),
         ),
-        
+
         // Quick setting buttons
         const SizedBox(height: 8),
         Row(
@@ -111,27 +112,34 @@ class VolumeSlider extends StatelessWidget {
   }
 
   /// Build quick volume setting button
-  Widget _buildQuickVolumeButton(BuildContext context, String label, double value) {
+  Widget _buildQuickVolumeButton(
+      BuildContext context, String label, double value) {
     final isSelected = (volume - value).abs() < 0.01;
-    
+
     return GestureDetector(
       onTap: () => onVolumeChanged(value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.grey.shade100,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+              : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey.shade300,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: TextStyles.smallFontSize + 1,
+            fontSize: TypographyTokens.captionStyle.fontSize! + 1,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade700,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey.shade700,
           ),
         ),
       ),

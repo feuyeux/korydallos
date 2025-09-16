@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 import '../themes/app_theme.dart';
 
 /// 现代化的文本输入框组件，为所有Alouette应用提供一致的文本输入体验
@@ -50,11 +50,13 @@ class ModernTextField extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = AppTheme.primaryColor;
-    
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(UISizes.inputBorderRadius);
-    final effectiveContentPadding = contentPadding ?? 
-        const EdgeInsets.symmetric(horizontal: UISizes.spacingM, vertical: UISizes.spacingS);
-    
+
+    final effectiveBorderRadius =
+        borderRadius ?? BorderRadius.circular(DimensionTokens.radiusM);
+    final effectiveContentPadding = contentPadding ??
+        const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.l, vertical: SpacingTokens.s);
+
     return TextField(
       controller: controller,
       maxLines: expands ? null : maxLines,
@@ -69,49 +71,51 @@ class ModernTextField extends StatelessWidget {
       textAlign: textAlign,
       autofocus: autofocus,
       obscureText: obscureText,
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        labelText: labelText,
-        contentPadding: effectiveContentPadding,
-        filled: true,
-        fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-        hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[500]),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: effectiveBorderRadius,
-          borderSide: BorderSide(
-            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-            width: 1.0,
+      decoration: decoration ??
+          InputDecoration(
+            hintText: hintText,
+            labelText: labelText,
+            contentPadding: effectiveContentPadding,
+            filled: true,
+            fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+            hintStyle:
+                TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[500]),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                width: 1.0,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: primaryColor,
+                width: 2.0,
+              ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                width: 1.0,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: theme.colorScheme.error,
+                width: 1.0,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: effectiveBorderRadius,
+              borderSide: BorderSide(
+                color: theme.colorScheme.error,
+                width: 2.0,
+              ),
+            ),
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: effectiveBorderRadius,
-          borderSide: BorderSide(
-            color: primaryColor,
-            width: 2.0,
-          ),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: effectiveBorderRadius,
-          borderSide: BorderSide(
-            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-            width: 1.0,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: effectiveBorderRadius,
-          borderSide: BorderSide(
-            color: theme.colorScheme.error,
-            width: 1.0,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: effectiveBorderRadius,
-          borderSide: BorderSide(
-            color: theme.colorScheme.error,
-            width: 2.0,
-          ),
-        ),
-      ),
     );
   }
 }

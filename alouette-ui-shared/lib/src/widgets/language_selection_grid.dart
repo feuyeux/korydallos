@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/language_constants.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/typography_tokens.dart';
 
 class LanguageSelectionGrid extends StatelessWidget {
   final List<String> selectedLanguages;
@@ -41,7 +41,8 @@ class LanguageSelectionGrid extends StatelessWidget {
                 Expanded(
                   child: Text(
                     lang.nativeName,
-                    style: const TextStyle(fontSize: TextStyles.smallFontSize),
+                    style: TextStyle(
+                        fontSize: TypographyTokens.bodySmallStyle.fontSize!),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

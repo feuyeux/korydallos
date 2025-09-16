@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 import '../widgets/modern_button.dart';
 
 class LLMConfigDialog extends StatefulWidget {
@@ -171,8 +172,8 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
     } else {
       return Dialog(
         child: Container(
-          width: UISizes.configDialogWidth,
-          padding: const EdgeInsets.all(AppDefaults.largePadding),
+          width: 500.0, // Standard dialog width
+          padding: const EdgeInsets.all(SpacingTokens.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,9 +182,9 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                 'LLM Configuration',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: AppDefaults.largePadding),
+              const SizedBox(height: SpacingTokens.xxl),
               Flexible(child: SingleChildScrollView(child: content)),
-              const SizedBox(height: AppDefaults.defaultPadding),
+              const SizedBox(height: SpacingTokens.l),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: _buildActions(),
@@ -207,7 +208,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedProvider,
+          initialValue: _selectedProvider,
           items: LLMProviders.providers.map((provider) {
             return DropdownMenuItem(
               value: provider['value'],
@@ -231,7 +232,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           ),
         ),
 
-        const SizedBox(height: AppDefaults.defaultPadding),
+        const SizedBox(height: SpacingTokens.l),
 
         // Server URL
         Text(
@@ -254,7 +255,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           },
         ),
 
-        const SizedBox(height: AppDefaults.defaultPadding),
+        const SizedBox(height: SpacingTokens.l),
 
         // API Key (for LM Studio)
         if (_selectedProvider == 'lmstudio') ...[
@@ -278,7 +279,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
               });
             },
           ),
-          const SizedBox(height: AppDefaults.defaultPadding),
+          const SizedBox(height: SpacingTokens.l),
         ],
 
         // Test Connection Button
@@ -293,7 +294,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           ),
         ),
 
-        const SizedBox(height: AppDefaults.defaultPadding),
+        const SizedBox(height: SpacingTokens.l),
 
         // Connection Status - maintain layout space
         Visibility(
@@ -339,7 +340,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppDefaults.defaultPadding),
+              const SizedBox(height: SpacingTokens.l),
             ],
           ),
         ),
@@ -359,7 +360,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedModel.isEmpty ? null : _selectedModel,
+                initialValue: _selectedModel.isEmpty ? null : _selectedModel,
                 items: _availableModels.map((model) {
                   return DropdownMenuItem(
                     value: model,

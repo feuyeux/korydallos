@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../constants/language_constants.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/typography_tokens.dart';
 
 class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
@@ -48,8 +49,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 'Translation results will appear here',
                 style: TextStyle(
                   fontSize: widget.isCompactMode
-                      ? TextStyles.largeFontSize
-                      : UISizes.mediumIconSize,
+                      ? TypographyTokens.titleLargeStyle.fontSize!
+                      : DimensionTokens.iconM,
                   color: Colors.grey.shade600,
                 ),
               ),
@@ -58,7 +59,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 Text(
                   'Enter text and select languages to get started',
                   style: TextStyle(
-                    fontSize: TextStyles.largeFontSize,
+                    fontSize: TypographyTokens.titleLargeStyle.fontSize!,
                     color: Colors.grey.shade500,
                   ),
                 ),
@@ -71,7 +72,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppDefaults.defaultPadding),
+        padding: const EdgeInsets.all(SpacingTokens.l),
         child: widget.isCompactMode
             ? _buildCompactLayout(translation)
             : _buildStandardLayout(translation),
@@ -106,12 +107,12 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           // Metadata
           _buildMetadata(context, translation),
 
-          const SizedBox(height: AppDefaults.defaultPadding),
+          const SizedBox(height: SpacingTokens.l),
 
           // Original text
           _buildOriginalText(context, translation),
 
-          const SizedBox(height: AppDefaults.defaultPadding),
+          const SizedBox(height: SpacingTokens.l),
 
           // Translation results
           _buildTranslations(context, translation),
@@ -178,7 +179,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       child: Row(
         children: [
           Icon(Icons.info_outline,
-              size: TextStyles.largeFontSize, color: Colors.grey.shade600),
+              size: TypographyTokens.titleLargeStyle.fontSize!,
+              color: Colors.grey.shade600),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -186,7 +188,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
               'Provider: ${translation.config.provider} | '
               'Generated: ${_formatTimestamp(translation.timestamp)}',
               style: TextStyle(
-                  fontSize: TextStyles.mediumFontSize,
+                  fontSize: TypographyTokens.bodyMediumStyle.fontSize!,
                   color: Colors.grey.shade700),
             ),
           ),
@@ -203,7 +205,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         Row(
           children: [
             Icon(Icons.article_outlined,
-                size: UISizes.mediumIconSize, color: Colors.grey.shade600),
+                size: DimensionTokens.iconM, color: Colors.grey.shade600),
             const SizedBox(width: 6),
             Text(
               'Original Text:',
@@ -222,7 +224,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           ),
           child: Text(
             translation.original,
-            style: const TextStyle(fontSize: TextStyles.largeFontSize),
+            style:
+                TextStyle(fontSize: TypographyTokens.titleLargeStyle.fontSize!),
           ),
         ),
       ],
@@ -254,7 +257,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         Row(
           children: [
             Icon(Icons.language,
-                size: UISizes.mediumIconSize, color: Colors.grey.shade600),
+                size: DimensionTokens.iconM, color: Colors.grey.shade600),
             const SizedBox(width: 6),
             Text(
               'Translations:',
@@ -323,7 +326,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                   language,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: TextStyles.largeFontSize,
+                    fontSize: TypographyTokens.titleLargeStyle.fontSize!,
                     color: isCompactStyle ? Colors.green.shade800 : null,
                   ),
                 ),
@@ -333,7 +336,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                   IconButton(
                     icon: Icon(
                       isPlaying ? Icons.stop : Icons.volume_up,
-                      size: UISizes.mediumIconSize,
+                      size: DimensionTokens.iconM,
                       color: isPlaying ? Colors.red : Colors.blue,
                     ),
                     tooltip: isPlaying ? 'Stop speaking' : 'Play with TTS',
@@ -349,7 +352,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 IconButton(
                   icon: Icon(
                     Icons.copy,
-                    size: UISizes.mediumIconSize,
+                    size: DimensionTokens.iconM,
                     color: isCompactStyle ? Colors.green.shade700 : null,
                   ),
                   tooltip: 'Copy translation',
@@ -367,7 +370,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             padding: const EdgeInsets.all(12),
             child: SelectableText(
               translatedText,
-              style: const TextStyle(fontSize: TextStyles.largeFontSize),
+              style: TextStyle(
+                  fontSize: TypographyTokens.titleLargeStyle.fontSize!),
             ),
           ),
         ],

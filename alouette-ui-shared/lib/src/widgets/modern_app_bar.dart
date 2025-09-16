@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 import 'alouette_logo.dart';
 
 /// 现代化的应用栏组件，为所有Alouette应用提供一致的顶部导航栏
@@ -41,7 +41,7 @@ class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showLogo) ...[
-              AlouetteLogo.appBarLogo(height: UISizes.iconSizeMedium + 8),
+              AlouetteLogo.appBarLogo(height: DimensionTokens.iconM + 8),
               const SizedBox(width: 4), // Reduced spacing to prevent overflow
             ],
             Text(
@@ -66,7 +66,7 @@ class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
       bottom: bottom,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(UISizes.spacingXs),
+          bottom: Radius.circular(SpacingTokens.xs),
         ),
       ),
     );

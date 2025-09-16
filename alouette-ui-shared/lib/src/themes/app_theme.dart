@@ -6,10 +6,10 @@ class AppTheme {
   static const Color primaryColor = Color(0xFF3B82F6); // 明亮的蓝色
   static const Color secondaryColor = Color(0xFF10B981); // 绿松石色
   static const Color accentColor = Color(0xFFF59E0B); // 琥珀色
-  
+
   // 动画持续时间
   static const Duration animationDuration = Duration(milliseconds: 250);
-  
+
   static ThemeData get lightTheme {
     return ThemeData(
       colorScheme: ColorScheme.fromSeed(
@@ -18,8 +18,7 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        surface: Colors.white,
-        background: const Color(0xFFF8FAFC),
+        surface: const Color(0xFFF8FAFC),
         error: const Color(0xFFEF4444),
       ),
       useMaterial3: true,
@@ -28,7 +27,7 @@ class AppTheme {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: primaryColor,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         titleTextStyle: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -38,7 +37,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -57,7 +56,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         filled: true,
         fillColor: Colors.grey.shade50,
         isDense: false,
@@ -72,7 +72,7 @@ class AppTheme {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           elevation: 2,
-          shadowColor: primaryColor.withOpacity(0.3),
+          shadowColor: primaryColor.withValues(alpha: 0.3),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -88,7 +88,7 @@ class AppTheme {
         style: IconButton.styleFrom(
           foregroundColor: primaryColor,
           backgroundColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.1),
+          hoverColor: primaryColor.withValues(alpha: 0.1),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -127,8 +127,7 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        surface: const Color(0xFF1F2937),
-        background: const Color(0xFF111827),
+        surface: const Color(0xFF111827),
         error: const Color(0xFFF87171),
       ),
       useMaterial3: true,
@@ -167,7 +166,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         filled: true,
         fillColor: const Color(0xFF374151),
         isDense: false,

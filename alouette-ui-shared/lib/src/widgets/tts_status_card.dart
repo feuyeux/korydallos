@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../themes/app_theme.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 import 'modern_button.dart';
 
 /// TTS状态指示卡片 - 紧凑版本，类似翻译应用的配置状态组件
@@ -24,12 +24,12 @@ class TTSStatusCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(UISizes.spacingS),
+      padding: EdgeInsets.all(SpacingTokens.s),
       decoration: BoxDecoration(
-        color: _getStatusColor().withOpacity(0.1),
-        borderRadius: BorderRadius.circular(UISizes.borderRadiusM),
+        color: _getStatusColor().withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(DimensionTokens.radiusM),
         border: Border.all(
-          color: _getStatusColor().withOpacity(0.3),
+          color: _getStatusColor().withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -57,7 +57,7 @@ class TTSStatusCard extends StatelessWidget {
                   Text(
                     'Engine: ${currentEngine!.name}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: _getStatusColor().withOpacity(0.8),
+                      color: _getStatusColor().withValues(alpha: 0.8),
                     ),
                   ),
               ],

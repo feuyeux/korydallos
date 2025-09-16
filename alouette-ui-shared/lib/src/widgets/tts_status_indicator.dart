@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../themes/app_theme.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 import '../widgets/modern_card.dart';
 
 /// TTS status indicator component with modern design
@@ -20,19 +20,19 @@ class TTSStatusIndicator extends StatelessWidget {
         ? AppTheme.primaryColor
         : (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600);
     final backgroundColor = isPlaying
-        ? AppTheme.primaryColor.withOpacity(isDarkMode ? 0.2 : 0.1)
+        ? AppTheme.primaryColor.withValues(alpha: isDarkMode ? 0.2 : 0.1)
         : (isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100);
     final borderColor = isPlaying
-        ? AppTheme.primaryColor.withOpacity(isDarkMode ? 0.4 : 0.3)
+        ? AppTheme.primaryColor.withValues(alpha: isDarkMode ? 0.4 : 0.3)
         : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300);
 
     return ModernCard(
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(UISizes.spacingM),
+        padding: EdgeInsets.all(SpacingTokens.l),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(UISizes.borderRadiusM),
+          borderRadius: BorderRadius.circular(DimensionTokens.radiusM),
           border: Border.all(color: borderColor),
         ),
         child: Row(
@@ -43,16 +43,16 @@ class TTSStatusIndicator extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: statusColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+                color: statusColor.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                 border: Border.all(
-                  color: statusColor.withOpacity(isDarkMode ? 0.4 : 0.3),
+                  color: statusColor.withValues(alpha: isDarkMode ? 0.4 : 0.3),
                   width: 2,
                 ),
               ),
               child: Icon(
                 isPlaying ? Icons.volume_up : Icons.volume_off,
                 color: statusColor,
-                size: UISizes.iconSizeMedium,
+                size: DimensionTokens.iconM,
               ),
             ),
 
@@ -71,14 +71,14 @@ class TTSStatusIndicator extends StatelessWidget {
                       color: statusColor,
                     ),
                   ),
-                  const SizedBox(height: UISizes.spacingXs),
+                  SizedBox(height: SpacingTokens.xs),
                   Text(
                     isPlaying
                         ? 'Tap pause to stop speaking'
                         : 'Enter text and tap play to start',
                     style: TextStyle(
                       fontSize: 13,
-                      color: statusColor.withOpacity(0.8),
+                      color: statusColor.withValues(alpha: 0.8),
                     ),
                   ),
                 ],

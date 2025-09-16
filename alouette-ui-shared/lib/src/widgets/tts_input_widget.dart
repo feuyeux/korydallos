@@ -3,7 +3,7 @@ import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/modern_text_field.dart';
 import '../widgets/modern_dropdown.dart';
-import '../constants/ui_constants.dart';
+import '../tokens/dimension_tokens.dart';
 
 /// TTS输入组件 - 包含文本输入和语音选择
 class TTSInputWidget extends StatelessWidget {
@@ -30,7 +30,7 @@ class TTSInputWidget extends StatelessWidget {
         Expanded(
           flex: 2,
           child: ModernCard(
-            padding: const EdgeInsets.all(UISizes.spacingS),
+            padding: EdgeInsets.all(SpacingTokens.s),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -47,7 +47,7 @@ class TTSInputWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: UISizes.spacingM),
+                SizedBox(height: SpacingTokens.l),
                 Expanded(
                   child: ModernTextField(
                     controller: textController,
@@ -67,7 +67,7 @@ class TTSInputWidget extends StatelessWidget {
         Expanded(
           flex: 1,
           child: ModernCard(
-            padding: const EdgeInsets.all(UISizes.spacingS),
+            padding: EdgeInsets.all(SpacingTokens.s),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -86,7 +86,7 @@ class TTSInputWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: UISizes.spacingM),
+                SizedBox(height: SpacingTokens.l),
                 Expanded(
                   child: _buildVoiceSelector(),
                 ),
