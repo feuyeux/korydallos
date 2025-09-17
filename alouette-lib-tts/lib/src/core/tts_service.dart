@@ -1,25 +1,26 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import '../engines/base_processor.dart';
+import '../engines/edge_tts_processor.dart';
 import '../platform/platform_factory.dart';
-import '../utils/platform_utils.dart';
 import '../utils/error_handler.dart';
 import '../utils/tts_logger.dart';
 import '../models/voice.dart';
 import '../models/tts_error.dart';
 import '../enums/tts_engine_type.dart';
- 
+
 class TTSService {
   BaseTTSProcessor? _processor;
   TTSEngineType? _currentEngine;
   bool _initialized = false;
- 
+
   TTSEngineType? get currentEngine => _currentEngine;
- 
-  String? get currentBackend => _processor?.backend; 
+
+  String? get currentBackend => _processor?.backend;
   bool get isInitialized => _initialized && _processor != null;
 
- 
   Future<void> initialize({
     TTSEngineType? preferredEngine,
     bool autoFallback = true,
@@ -32,18 +33,50 @@ class TTSService {
       if (preferredEngine != null) {
         // 尝试使用指定的引擎
         try {
-      _processor = await PlatformTTSFactory.instance.createForEngine(preferredEngine);
+          _processor = await PlatformTTSFactory.instance
+              .createForEngine(preferredEngine);
           _currentEngine = preferredEngine;
-          TTSLogger.engine('Initialized', preferredEngine.name, 'Using preferred engine');
+          TTSLogger.engine(
+              'Initialized', preferredEngine.name, 'Using preferred engine');
         } catch (e) {
-          if (!autoFallback) {
-            rethrow; // 不允许回退时直接抛出错误
+          TTSLogger.warning(
+              'Preferred engine ${preferredEngine.name} failed: $e');
+
+          // Special handling for macOS Edge TTS - try to force it even if detection failed
+          if (!kIsWeb &&
+              Platform.isMacOS &&
+              preferredEngine == TTSEngineType.edge) {
+            try {
+              TTSLogger.debug(
+                  'macOS detected, forcing Edge TTS creation despite detection failure');
+              _processor = EdgeTTSProcessor();
+              _currentEngine = TTSEngineType.edge;
+              TTSLogger.engine('Forced', 'edge',
+                  'Forced Edge TTS on macOS despite detection failure');
+            } catch (forceError) {
+              TTSLogger.warning(
+                  'Force Edge TTS creation also failed: $forceError');
+              if (!autoFallback) {
+                rethrow; // 不允许回退时直接抛出错误
+              }
+
+              // 回退到平台推荐的引擎
+              _processor =
+                  await PlatformTTSFactory.instance.createForPlatform();
+              _currentEngine =
+                  PlatformTTSFactory.instance.recommendedEngineType;
+            }
+          } else {
+            if (!autoFallback) {
+              rethrow; // 不允许回退时直接抛出错误
+            }
+
+            TTSLogger.warning(
+                'Preferred engine ${preferredEngine.name} failed, trying platform default: $e');
+            // 回退到平台推荐的引擎
+            _processor = await PlatformTTSFactory.instance.createForPlatform();
+            _currentEngine = PlatformTTSFactory.instance.recommendedEngineType;
           }
-          
-          TTSLogger.warning('Preferred engine ${preferredEngine.name} failed, trying platform default: $e');
-          // 回退到平台推荐的引擎
-          _processor = await PlatformTTSFactory.instance.createForPlatform();
-          _currentEngine = PlatformTTSFactory.instance.recommendedEngineType;
         }
       } else {
         // 自动选择最适合的引擎
@@ -52,11 +85,13 @@ class TTSService {
       }
 
       _initialized = true;
-      TTSLogger.initialization('TTS service', 'completed', 'Using ${_currentEngine?.name} engine');
+      TTSLogger.initialization(
+          'TTS service', 'completed', 'Using ${_currentEngine?.name} engine');
     } catch (e) {
       throw ErrorHandler.handleInitializationError(e, 'TTS service');
     }
-  } 
+  }
+
   Future<void> switchEngine(
     TTSEngineType engineType, {
     bool disposeOld = true,
@@ -69,9 +104,11 @@ class TTSService {
 
     try {
       // 创建新的处理器
-      _processor = await PlatformTTSFactory.instance.createForEngine(engineType);
+      _processor =
+          await PlatformTTSFactory.instance.createForEngine(engineType);
       _currentEngine = engineType;
-      TTSLogger.engine('Switched', engineType.name, 'Engine switch completed successfully');
+      TTSLogger.engine(
+          'Switched', engineType.name, 'Engine switch completed successfully');
 
       // 释放旧的处理器
       if (disposeOld && oldProcessor != null) {
@@ -85,21 +122,23 @@ class TTSService {
     } catch (e) {
       // 切换失败时恢复旧的处理器
       _processor = oldProcessor;
-      
-      throw ErrorHandler.handleInitializationError(e, '${engineType.name} engine');
+
+      throw ErrorHandler.handleInitializationError(
+          e, '${engineType.name} engine');
     }
   }
- 
+
   Future<List<Voice>> getVoices() async {
     _ensureInitialized();
-    
+
     try {
       return await _processor!.getVoices();
     } catch (e) {
-      throw ErrorHandler.handleVoiceError(e, 'retrieval from ${_currentEngine?.name} engine');
+      throw ErrorHandler.handleVoiceError(
+          e, 'retrieval from ${_currentEngine?.name} engine');
     }
   }
- 
+
   Future<Uint8List> synthesizeText(
     String text,
     String voiceName, {
@@ -121,7 +160,7 @@ class TTSService {
       );
     }
   }
- 
+
   Future<void> stop() async {
     _ensureInitialized();
 
@@ -139,7 +178,7 @@ class TTSService {
   /// 获取当前平台和引擎信息
   Future<Map<String, dynamic>> getPlatformInfo() async {
     final platformInfo = await PlatformTTSFactory.instance.getPlatformInfo();
-    
+
     return {
       ...platformInfo,
       'currentEngine': _currentEngine?.name,
@@ -157,7 +196,7 @@ class TTSService {
   Future<List<TTSEngineType>> getAvailableEngines() async {
     return await PlatformTTSFactory.instance.getAvailableEngines();
   }
- 
+
   Future<void> reinitialize({
     TTSEngineType? preferredEngine,
     bool autoFallback = true,

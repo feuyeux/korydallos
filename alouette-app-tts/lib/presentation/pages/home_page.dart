@@ -11,7 +11,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _textController = TextEditingController(
-    text: '你好，我可以为你朗读。Hello, I can read for you.',
+    text: 'Hello, I can read for you.',
   );
 
   bool _isPlaying = false;
@@ -136,10 +136,6 @@ class _HomePageState extends State<HomePage> {
     if (!_isInitialized || _currentVoice == null) return;
 
     try {
-      // 设置语音和参数
-      // 设置完成回调
-      // Note: Callback will need to be handled differently with shared manager
-
       // 更新播放状态
       if (mounted) {
         setState(() {
@@ -152,7 +148,20 @@ class _HomePageState extends State<HomePage> {
         _textController.text,
         voiceName: _currentVoice,
       );
+
+      // Speech completed successfully
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
     } catch (e) {
+      // Reset playing state on error
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
       _showError('Failed to speak: ${e.toString()}');
     }
   }
