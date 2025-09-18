@@ -2,9 +2,8 @@ import 'dart:convert';
 import '../models/llm_config.dart';
 import '../models/connection_status.dart';
 import '../exceptions/translation_exceptions.dart';
-import '../network/http_client.dart';
-import 'translation_provider.dart';
-import 'dart:io';
+import '../network/http_client_interface.dart';
+import 'base_translation_provider.dart';
 import 'dart:async';
 
 /// Ollama translation provider implementation

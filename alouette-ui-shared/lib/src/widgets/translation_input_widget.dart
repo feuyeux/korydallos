@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../constants/language_constants.dart';
-import 'simple_components.dart';
-import 'translation/translation_text_input.dart';
-import 'translation/language_selection_section.dart';
-import 'translation/translation_action_button.dart';
+import '../components/organisms/translation_panel.dart';
 
-/// 翻译输入组件 - 重构后的精简版本
-/// 支持标准和紧凑两种布局模式
+/// Translation Input Widget - Migrated to use Atomic Design
+/// 
+/// This widget now uses the new TranslationPanel organism component
+/// for consistent UI across all applications.
 class TranslationInputWidget extends StatefulWidget {
   final TextEditingController textController;
   final List<String> selectedLanguages;
@@ -43,128 +42,48 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: _isCompactMode ? _buildCompactLayout() : _buildStandardLayout(),
-      ),
+    // Convert string language codes to LanguageOption objects
+    final selectedLanguageOptions = widget.selectedLanguages
+        .map((code) => LanguageConstants.supportedLanguages
+            .firstWhere((lang) => lang.code == code || lang.name == code,
+                orElse: () => LanguageOption(code: code, name: code, nativeName: code, flag: '🌐')))
+        .toList();
+
+    return TranslationPanel(
+      textController: widget.textController,
+      selectedLanguages: selectedLanguageOptions,
+      onLanguagesChanged: _onLanguagesChanged,
+      onTranslate: widget.onTranslate,
+      onClear: _onClear,
+      isTranslating: widget.isTranslating,
+      isCompactMode: _isCompactMode,
     );
   }
 
-  /// 标准布局 - 用于主要翻译应用
-  Widget _buildStandardLayout() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 标题
-        const SimpleCardHeader(
-          title: 'Text Input',
-          icon: Icons.edit,
-        ),
-        const SizedBox(height: 6),
-
-        // 文本输入
-        TranslationTextInput(
-          controller: widget.textController,
-          hintText: 'Enter text to translate...',
-          multiLine: true,
-        ),
-        const SizedBox(height: 6),
-
-        // 语言选择
-        Flexible(
-          fit: FlexFit.loose,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 110.0, // AppSpecificSizes.languageSelectionHeight
-            ),
-            child: LanguageSelectionSection(
-              selectedLanguages: widget.selectedLanguages,
-              onLanguageToggle: _onLanguageToggle,
-              onSelectAll: widget.onSelectAll,
-              onClearAll: widget.onReset,
-              showCompactButtons: false,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // 翻译按钮
-        TranslationActionButton(
-          onTranslate: widget.onTranslate,
-          isTranslating: widget.isTranslating,
-          isConfigured: widget.isConfigured,
-          hasSelectedLanguages: widget.selectedLanguages.isNotEmpty,
-          hasText: widget.textController.text.isNotEmpty,
-        ),
-      ],
-    );
-  }
-
-  /// 紧凑布局 - 用于专门的翻译应用
-  Widget _buildCompactLayout() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 文本输入
-        TranslationTextInput(
-          controller: widget.textController,
-          hintText: 'Enter text to translate...',
-          multiLine: true,
-        ),
-        const SizedBox(height: 8),
-
-        // 语言选择
-        Expanded(
-          flex: 4,
-          child: LanguageSelectionSection(
-            selectedLanguages: widget.selectedLanguages,
-            onLanguageToggle: _onLanguageToggle,
-            onSelectAll: _selectAllLanguages,
-            onClearAll: _clearAllLanguages,
-            showCompactButtons: true,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // 翻译按钮
-        TranslationActionButton(
-          onTranslate: widget.onTranslate,
-          isTranslating: widget.isTranslating,
-          isConfigured: widget.isConfigured,
-          hasSelectedLanguages: widget.selectedLanguages.isNotEmpty,
-          hasText: widget.textController.text.isNotEmpty,
-        ),
-      ],
-    );
-  }
-
-  void _onLanguageToggle(String language, bool selected) {
-    if (widget.onLanguageToggle != null) {
-      widget.onLanguageToggle!(language, selected);
-    } else if (widget.onLanguagesChanged != null) {
-      final newLanguages = List<String>.from(widget.selectedLanguages);
-      if (selected) {
-        newLanguages.add(language);
-      } else {
-        newLanguages.remove(language);
+  void _onLanguagesChanged(List<LanguageOption> languages) {
+    if (widget.onLanguagesChanged != null) {
+      // Convert back to string codes for backward compatibility
+      final languageCodes = languages.map((lang) => lang.code).toList();
+      widget.onLanguagesChanged!(languageCodes);
+    } else if (widget.onLanguageToggle != null) {
+      // Handle individual language toggles for backward compatibility
+      final currentCodes = widget.selectedLanguages.toSet();
+      final newCodes = languages.map((lang) => lang.code).toSet();
+      
+      // Find added languages
+      for (final code in newCodes.difference(currentCodes)) {
+        widget.onLanguageToggle!(code, true);
       }
-      widget.onLanguagesChanged!(newLanguages);
+      
+      // Find removed languages
+      for (final code in currentCodes.difference(newCodes)) {
+        widget.onLanguageToggle!(code, false);
+      }
     }
   }
 
-  void _selectAllLanguages() {
-    if (widget.onLanguagesChanged != null) {
-      final allLanguages = LanguageConstants.supportedLanguages
-          .map((lang) => lang.name)
-          .toList();
-      widget.onLanguagesChanged!(allLanguages);
-    }
-  }
-
-  void _clearAllLanguages() {
-    if (widget.onLanguagesChanged != null) {
-      widget.onLanguagesChanged!([]);
-    }
+  void _onClear() {
+    widget.textController.clear();
+    widget.onReset?.call();
   }
 }

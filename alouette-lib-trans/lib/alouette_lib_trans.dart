@@ -11,20 +11,24 @@ export 'src/models/translation_request.dart';
 export 'src/models/translation_result.dart';
 export 'src/models/connection_status.dart';
 
-// Services
-export 'src/services/translation_service.dart';
-export 'src/services/llm_config_service.dart';
+// Core Services
+export 'src/core/translation_service.dart';
+export 'src/core/llm_config_service.dart';
 
 // Providers
-export 'src/providers/translation_provider.dart';
+export 'src/providers/base_translation_provider.dart';
 export 'src/providers/ollama_provider.dart';
-export 'src/providers/lmstudio_provider.dart';
+export 'src/providers/lm_studio_provider.dart';
 
 // Exceptions
 export 'src/exceptions/translation_exceptions.dart';
 
+// Error Recovery
+export 'src/core/error_recovery_service.dart';
+
 // Utils
 export 'src/utils/translation_constants.dart';
+export 'src/utils/text_processor.dart';
 
 // Network
-export 'src/network/http_client.dart';
+export 'src/network/http_client_interface.dart';

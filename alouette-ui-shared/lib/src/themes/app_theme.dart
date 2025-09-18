@@ -1,231 +1,382 @@
 import 'package:flutter/material.dart';
+import '../tokens/color_tokens.dart';
+import '../tokens/typography_tokens.dart';
+import '../tokens/dimension_tokens.dart';
+import '../tokens/motion_tokens.dart';
+import '../tokens/elevation_tokens.dart';
+import '../tokens/effect_tokens.dart';
+import '../services/theme_service.dart';
 
 /// App theme for Alouette applications
+/// 
+/// This class provides theme configurations using design tokens
+/// for consistent styling across all applications.
 class AppTheme {
-  // 品牌颜色 - 蓝色调
-  static const Color primaryColor = Color(0xFF3B82F6); // 明亮的蓝色
-  static const Color secondaryColor = Color(0xFF10B981); // 绿松石色
-  static const Color accentColor = Color(0xFFF59E0B); // 琥珀色
+  // Brand colors using design tokens
+  static const Color primaryColor = ColorTokens.primary;
+  static const Color secondaryColor = ColorTokens.secondary;
+  static const Color accentColor = ColorTokens.tertiary;
 
-  // 动画持续时间
-  static const Duration animationDuration = Duration(milliseconds: 250);
+  // Animation duration using motion tokens
+  static const Duration animationDuration = MotionTokens.normal;
 
+  /// Get light theme using design tokens
+  /// 
+  /// For new applications, prefer using ThemeService.getLightTheme()
+  /// which provides more customization options.
   static ThemeData get lightTheme {
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.light,
-        primary: primaryColor,
-        secondary: secondaryColor,
-        tertiary: accentColor,
-        surface: const Color(0xFFF8FAFC),
-        error: const Color(0xFFEF4444),
+      colorScheme: ColorScheme.light(
+        primary: ColorTokens.primary,
+        onPrimary: ColorTokens.onPrimary,
+        primaryContainer: ColorTokens.primaryContainer,
+        onPrimaryContainer: ColorTokens.onPrimaryContainer,
+        secondary: ColorTokens.secondary,
+        onSecondary: ColorTokens.onSecondary,
+        secondaryContainer: ColorTokens.secondaryContainer,
+        onSecondaryContainer: ColorTokens.onSecondaryContainer,
+        tertiary: ColorTokens.tertiary,
+        onTertiary: ColorTokens.onTertiary,
+        tertiaryContainer: ColorTokens.tertiaryContainer,
+        onTertiaryContainer: ColorTokens.onTertiaryContainer,
+        error: ColorTokens.error,
+        onError: ColorTokens.onError,
+        errorContainer: ColorTokens.errorContainer,
+        onErrorContainer: ColorTokens.onErrorContainer,
+        surface: ColorTokens.surface,
+        onSurface: ColorTokens.onSurface,
+        surfaceVariant: ColorTokens.surfaceVariant,
+        onSurfaceVariant: ColorTokens.onSurfaceVariant,
+        background: ColorTokens.background,
+        onBackground: ColorTokens.onBackground,
+        outline: ColorTokens.outline,
+        outlineVariant: ColorTokens.outlineVariant,
       ),
       useMaterial3: true,
       appBarTheme: AppBarTheme(
         centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: primaryColor,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
-        titleTextStyle: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2937),
+        elevation: ElevationTokens.level0,
+        backgroundColor: ColorTokens.surface,
+        foregroundColor: ColorTokens.onSurface,
+        shadowColor: ColorTokens.shadow,
+        titleTextStyle: TypographyTokens.titleLargeStyle.copyWith(
+          color: ColorTokens.onSurface,
         ),
-        iconTheme: IconThemeData(color: primaryColor),
+        iconTheme: IconThemeData(
+          color: ColorTokens.onSurface,
+          size: DimensionTokens.iconL,
+        ),
       ),
       cardTheme: CardThemeData(
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
+        elevation: ElevationTokens.level1,
+        shadowColor: ColorTokens.shadow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: EffectTokens.radiusLarge,
         ),
+        color: ColorTokens.surface,
         clipBehavior: Clip.antiAlias,
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: EffectTokens.borderDefault,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: EffectTokens.borderDefault,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor, width: 2),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: EffectTokens.borderPrimaryThick,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: SpacingTokens.l,
+          vertical: SpacingTokens.m,
+        ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: ColorTokens.surfaceVariant,
         isDense: false,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
+        hintStyle: TypographyTokens.bodyMediumStyle.copyWith(
+          color: ColorTokens.onSurfaceVariant,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: ColorTokens.primary,
+          foregroundColor: ColorTokens.onPrimary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: EffectTokens.radiusMedium,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          elevation: 2,
-          shadowColor: primaryColor.withValues(alpha: 0.3),
+          padding: const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.xl,
+            vertical: SpacingTokens.m,
+          ),
+          elevation: ElevationTokens.level1,
+          shadowColor: ColorTokens.shadow,
+          minimumSize: const Size(
+            DimensionTokens.buttonMinWidth,
+            DimensionTokens.buttonL,
+          ),
+          textStyle: TypographyTokens.labelLargeStyle,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: ColorTokens.primary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: EffectTokens.radiusSmall,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.l,
+            vertical: SpacingTokens.s,
+          ),
+          textStyle: TypographyTokens.labelLargeStyle,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: ColorTokens.onSurface,
           backgroundColor: Colors.transparent,
-          hoverColor: primaryColor.withValues(alpha: 0.1),
+          hoverColor: ColorTokens.surfaceHover,
+          iconSize: DimensionTokens.iconL,
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
+        backgroundColor: ColorTokens.primary,
+        foregroundColor: ColorTokens.onPrimary,
+        elevation: ElevationTokens.level3,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: EffectTokens.radiusLarge,
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: Colors.grey.shade200,
+        color: ColorTokens.outline,
         thickness: 1,
-        space: 24,
+        space: SpacingTokens.l,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF1F2937),
-        contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: ColorTokens.gray800,
+        contentTextStyle: TypographyTokens.bodyMediumStyle.copyWith(
+          color: ColorTokens.gray100,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: EffectTokens.radiusSmall,
+        ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
         },
       ),
+      extensions: [
+        AlouetteThemeExtension(
+          success: ColorTokens.success,
+          onSuccess: ColorTokens.onSuccess,
+          successContainer: ColorTokens.successContainer,
+          onSuccessContainer: ColorTokens.onSuccessContainer,
+          warning: ColorTokens.warning,
+          onWarning: ColorTokens.onWarning,
+          warningContainer: ColorTokens.warningContainer,
+          onWarningContainer: ColorTokens.onWarningContainer,
+          info: ColorTokens.info,
+          onInfo: ColorTokens.onInfo,
+          infoContainer: ColorTokens.infoContainer,
+          onInfoContainer: ColorTokens.onInfoContainer,
+          scrim: ColorTokens.scrim,
+          backdrop: ColorTokens.backdrop,
+          shadow: ColorTokens.shadow,
+          shadowStrong: ColorTokens.shadowStrong,
+        ),
+      ],
     );
   }
 
+  /// Get dark theme using design tokens
+  /// 
+  /// For new applications, prefer using ThemeService.getDarkTheme()
+  /// which provides more customization options.
   static ThemeData get darkTheme {
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.dark,
-        primary: primaryColor,
-        secondary: secondaryColor,
-        tertiary: accentColor,
-        surface: const Color(0xFF111827),
-        error: const Color(0xFFF87171),
+      colorScheme: ColorScheme.dark(
+        primary: ColorTokens.darkPrimary,
+        onPrimary: ColorTokens.darkOnPrimary,
+        primaryContainer: ColorTokens.darkPrimaryContainer,
+        onPrimaryContainer: ColorTokens.darkOnPrimaryContainer,
+        secondary: ColorTokens.darkSecondary,
+        onSecondary: ColorTokens.darkOnSecondary,
+        secondaryContainer: ColorTokens.darkSecondaryContainer,
+        onSecondaryContainer: ColorTokens.darkOnSecondaryContainer,
+        tertiary: ColorTokens.darkTertiary,
+        onTertiary: ColorTokens.darkOnTertiary,
+        tertiaryContainer: ColorTokens.darkTertiaryContainer,
+        onTertiaryContainer: ColorTokens.darkOnTertiaryContainer,
+        error: ColorTokens.darkError,
+        onError: ColorTokens.darkOnError,
+        errorContainer: ColorTokens.darkErrorContainer,
+        onErrorContainer: ColorTokens.darkOnErrorContainer,
+        surface: ColorTokens.darkSurface,
+        onSurface: ColorTokens.darkOnSurface,
+        surfaceVariant: ColorTokens.darkSurfaceVariant,
+        onSurfaceVariant: ColorTokens.darkOnSurfaceVariant,
+        background: ColorTokens.darkBackground,
+        onBackground: ColorTokens.darkOnBackground,
+        outline: ColorTokens.darkOutline,
+        outlineVariant: ColorTokens.darkOutlineVariant,
       ),
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFF111827),
-      appBarTheme: const AppBarTheme(
+      scaffoldBackgroundColor: ColorTokens.darkBackground,
+      appBarTheme: AppBarTheme(
         centerTitle: true,
-        elevation: 0,
-        backgroundColor: Color(0xFF1F2937),
-        foregroundColor: Colors.white,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
+        elevation: ElevationTokens.level0,
+        backgroundColor: ColorTokens.darkSurface,
+        foregroundColor: ColorTokens.darkOnSurface,
+        shadowColor: ColorTokens.shadow,
+        titleTextStyle: TypographyTokens.titleLargeStyle.copyWith(
+          color: ColorTokens.darkOnSurface,
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(
+          color: ColorTokens.darkOnSurface,
+          size: DimensionTokens.iconL,
+        ),
       ),
       cardTheme: CardThemeData(
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.3),
+        elevation: ElevationTokens.level2,
+        shadowColor: ColorTokens.shadowStrong,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: EffectTokens.radiusLarge,
         ),
-        color: const Color(0xFF1F2937),
+        color: ColorTokens.darkSurface,
         clipBehavior: Clip.antiAlias,
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF4B5563)),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: BorderSide(color: ColorTokens.darkOutline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF4B5563)),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: BorderSide(color: ColorTokens.darkOutline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor, width: 2),
+          borderRadius: EffectTokens.radiusMedium,
+          borderSide: BorderSide(color: ColorTokens.darkPrimary, width: 2),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: SpacingTokens.l,
+          vertical: SpacingTokens.m,
+        ),
         filled: true,
-        fillColor: const Color(0xFF374151),
+        fillColor: ColorTokens.darkSurfaceVariant,
         isDense: false,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+        hintStyle: TypographyTokens.bodyMediumStyle.copyWith(
+          color: ColorTokens.darkOnSurfaceVariant,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: ColorTokens.darkPrimary,
+          foregroundColor: ColorTokens.darkOnPrimary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: EffectTokens.radiusMedium,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.3),
+          padding: const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.xl,
+            vertical: SpacingTokens.m,
+          ),
+          elevation: ElevationTokens.level1,
+          shadowColor: ColorTokens.shadowStrong,
+          minimumSize: const Size(
+            DimensionTokens.buttonMinWidth,
+            DimensionTokens.buttonL,
+          ),
+          textStyle: TypographyTokens.labelLargeStyle,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: ColorTokens.darkPrimary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: EffectTokens.radiusSmall,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.l,
+            vertical: SpacingTokens.s,
+          ),
+          textStyle: TypographyTokens.labelLargeStyle,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: Colors.white,
+          foregroundColor: ColorTokens.darkOnSurface,
           backgroundColor: Colors.transparent,
-          hoverColor: Colors.white.withOpacity(0.1),
+          hoverColor: ColorTokens.darkOnSurface.withOpacity(0.1),
+          iconSize: DimensionTokens.iconL,
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
+        backgroundColor: ColorTokens.darkPrimary,
+        foregroundColor: ColorTokens.darkOnPrimary,
+        elevation: ElevationTokens.level3,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: EffectTokens.radiusLarge,
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFF374151),
+      dividerTheme: DividerThemeData(
+        color: ColorTokens.darkOutline,
         thickness: 1,
-        space: 24,
+        space: SpacingTokens.l,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF374151),
-        contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        backgroundColor: ColorTokens.gray200,
+        contentTextStyle: TypographyTokens.bodyMediumStyle.copyWith(
+          color: ColorTokens.gray800,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: EffectTokens.radiusSmall,
+        ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
         },
       ),
+      extensions: [
+        AlouetteThemeExtension(
+          success: ColorTokens.success,
+          onSuccess: ColorTokens.onSuccess,
+          successContainer: ColorTokens.successContainer,
+          onSuccessContainer: ColorTokens.onSuccessContainer,
+          warning: ColorTokens.warning,
+          onWarning: ColorTokens.onWarning,
+          warningContainer: ColorTokens.warningContainer,
+          onWarningContainer: ColorTokens.onWarningContainer,
+          info: ColorTokens.info,
+          onInfo: ColorTokens.onInfo,
+          infoContainer: ColorTokens.infoContainer,
+          onInfoContainer: ColorTokens.onInfoContainer,
+          scrim: ColorTokens.scrim,
+          backdrop: ColorTokens.backdrop,
+          shadow: ColorTokens.shadow,
+          shadowStrong: ColorTokens.shadowStrong,
+        ),
+      ],
     );
+  }
+
+  /// Create a theme service instance for advanced theme management
+  /// 
+  /// This provides theme switching, customization, and persistence.
+  static ThemeService createThemeService() {
+    return ThemeService();
   }
 }

@@ -2,30 +2,32 @@ import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
 
-import 'base_processor.dart';
-import '../models/voice.dart';
+import 'base_tts_processor.dart';
+import '../models/voice_model.dart';
 import '../models/tts_error.dart';
+import '../enums/voice_gender.dart';
+import '../enums/voice_quality.dart';
+import '../exceptions/tts_exceptions.dart';
 import '../utils/resource_manager.dart';
 import '../utils/tts_logger.dart';
 
-/// Flutter TTS 处理器实现
-/// 实现 TTSProcessor 接口，与 EdgeTTSProcessor 保持对称
-/// 使用 FlutterTts 库进行语音合成，实现音频数据返回功能
-class FlutterTTSProcessor extends BaseTTSProcessorImpl {
+/// Flutter TTS processor implementation following Flutter naming conventions
+/// Provides Flutter TTS functionality using system TTS engines
+class FlutterTTSProcessor extends BaseTTSProcessor {
   final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
 
   @override
-  String get backend => 'flutter';
+  String get engineName => 'flutter';
 
-  /// 初始化 Flutter TTS
+  /// Initialize Flutter TTS
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
 
-    // 配置 Flutter TTS
+    // Configure Flutter TTS
     await _tts.awaitSpeakCompletion(true);
 
-    // 在支持的平台上设置音频会话
+    // Set audio session on supported platforms
     try {
       if (!kIsWeb) {
         await _tts.setSharedInstance(true);
@@ -38,7 +40,7 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
   }
 
   @override
-  Future<List<Voice>> getVoices() async {
+  Future<List<VoiceModel>> getAvailableVoices() async {
     await _ensureInitialized();
 
     return getVoicesWithCache(() async {
@@ -54,17 +56,17 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
       final parsedVoices = voices
           .map((v) => _parseVoice(v))
           .where((voice) => voice != null)
-          .cast<Voice>()
+          .cast<VoiceModel>()
           .toList();
 
-      // Remove duplicates based on name to avoid dropdown issues
-      final uniqueVoices = <Voice>[];
-      final seenNames = <String>{};
+      // Remove duplicates based on id to avoid dropdown issues
+      final uniqueVoices = <VoiceModel>[];
+      final seenIds = <String>{};
 
       for (final voice in parsedVoices) {
-        if (!seenNames.contains(voice.name)) {
+        if (!seenIds.contains(voice.id)) {
           uniqueVoices.add(voice);
-          seenNames.add(voice.name);
+          seenIds.add(voice.id);
         }
       }
 
@@ -80,7 +82,7 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
   }
 
   @override
-  Future<Uint8List> synthesizeText(
+  Future<Uint8List> synthesizeToAudio(
     String text,
     String voiceName, {
     String format = 'mp3',
@@ -139,9 +141,9 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
     TTSLogger.debug(
         'TTS: Using direct playback mode for text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."');
 
-    // 在 Web 平台上，先检查语音可用性
+    // On Web platform, check voice availability first
     if (kIsWeb) {
-      final voices = await getVoices();
+      final voices = await getAvailableVoices();
 
       // 检查是否是阿拉伯语
       final isArabic = voiceName.toLowerCase().contains('ar-') ||
@@ -151,8 +153,7 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         // 检查浏览器是否支持阿拉伯语
         final arabicVoices = voices
             .where((v) =>
-                v.language.toLowerCase() == 'ar' ||
-                v.locale.toLowerCase().startsWith('ar-'))
+                v.languageCode.toLowerCase().startsWith('ar-'))
             .toList();
 
         if (arabicVoices.isEmpty) {
@@ -165,10 +166,10 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         // 尝试使用第一个可用的阿拉伯语语音
         final arabicVoice = arabicVoices.first;
 
-        // 设置阿拉伯语语音
+        // Set Arabic voice
         await _tts.setVoice({
-          "name": arabicVoice.name,
-          "locale": arabicVoice.locale,
+          "name": arabicVoice.id,
+          "locale": arabicVoice.languageCode,
         });
       } else {
         // 非阿拉伯语，正常设置
@@ -241,42 +242,42 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
     return Uint8List.fromList([0x00, 0x01, 0x02, 0x03]);
   }
 
-  /// 设置语音
+  /// Set voice
   Future<void> _setVoice(String voiceName) async {
     try {
-      // Flutter TTS 需要使用语音对象来设置语音
-      final voices = await getVoices();
+      // Flutter TTS needs to use voice object to set voice
+      final voices = await getAvailableVoices();
 
-      // 首先尝试精确匹配
-      Voice? targetVoice;
+      // First try exact match
+      VoiceModel? targetVoice;
       try {
         targetVoice = voices.firstWhere(
-          (voice) => voice.name == voiceName,
+          (voice) => voice.id == voiceName,
         );
       } catch (e) {
         targetVoice = null;
       }
 
-      // 如果精确匹配失败，尝试模糊匹配
+      // If exact match fails, try fuzzy matching
       if (targetVoice == null) {
-        // 尝试通过 locale 匹配
+        // Try matching by language code
         final locale = _extractLocaleFromVoiceName(voiceName);
         if (locale != null) {
           try {
             targetVoice = voices.firstWhere(
-              (voice) => voice.locale.toLowerCase() == locale.toLowerCase(),
+              (voice) => voice.languageCode.toLowerCase() == locale.toLowerCase(),
             );
           } catch (e) {
             targetVoice = null;
           }
         }
 
-        // 如果还是没找到，尝试语言匹配
+        // If still not found, try language matching
         if (targetVoice == null && locale != null) {
           final language = locale.split('-')[0];
           try {
             targetVoice = voices.firstWhere(
-              (voice) => voice.language.toLowerCase() == language.toLowerCase(),
+              (voice) => voice.languageCode.toLowerCase().startsWith(language.toLowerCase()),
             );
           } catch (e) {
             targetVoice = null;
@@ -296,7 +297,7 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         }
 
         final availableVoices =
-            voices.map((v) => '${v.name} (${v.locale})').take(5).join(', ');
+            voices.map((v) => '${v.id} (${v.languageCode})').take(5).join(', ');
         throw TTSError(
           'Voice "$voiceName" not available. '
           'Available voices: $availableVoices${voices.length > 5 ? '...' : ''}',
@@ -304,10 +305,10 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         );
       }
 
-      // 设置语音
+      // Set voice
       await _tts.setVoice({
-        "name": targetVoice.name,
-        "locale": targetVoice.locale,
+        "name": targetVoice.id,
+        "locale": targetVoice.languageCode,
       });
     } catch (e) {
       if (e is TTSError) rethrow;
@@ -421,8 +422,8 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
     // Flutter TTS 不需要显式释放资源
   }
 
-  /// 解析语音信息
-  Voice? _parseVoice(dynamic raw) {
+  /// Parse voice information
+  VoiceModel? _parseVoice(dynamic raw) {
     try {
       // 处理不同类型的 Map
       Map<String, dynamic> voice;
@@ -448,25 +449,21 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         return null;
       }
 
-      // 从 locale 提取语言代码
-      final language = locale.split('-')[0];
-
-      // 生成显示名称
+      // Generate display name
       final displayName = _generateDisplayName(name, locale);
 
-      // 解析性别信息（优先使用返回的 gender 字段）
+      // Parse gender information (prioritize returned gender field)
       final parsedGender = gender.isNotEmpty
           ? _normalizeGender(gender)
           : _parseGenderFromName(name);
 
-      return Voice(
-        name: name,
+      return VoiceModel(
+        id: name,
         displayName: displayName,
-        language: language,
+        languageCode: locale,
         gender: parsedGender,
-        locale: locale,
-        isNeural: false, // Flutter TTS 通常使用系统语音，不区分神经网络
-        isStandard: true,
+        quality: VoiceQuality.standard, // Flutter TTS usually uses system voices
+        isNeural: false,
       );
     } catch (e) {
       return null;
@@ -492,22 +489,22 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
     return '$displayName ($locale)';
   }
 
-  /// 标准化性别字符串
-  String _normalizeGender(String gender) {
+  /// Normalize gender string
+  VoiceGender _normalizeGender(String gender) {
     final lower = gender.toLowerCase();
     if (lower == 'female' || lower == 'f') {
-      return 'Female';
+      return VoiceGender.female;
     } else if (lower == 'male' || lower == 'm') {
-      return 'Male';
+      return VoiceGender.male;
     }
-    return 'Unknown';
+    return VoiceGender.unknown;
   }
 
-  /// 从语音名称解析性别信息
-  String _parseGenderFromName(String name) {
+  /// Parse gender information from voice name
+  VoiceGender _parseGenderFromName(String name) {
     final lower = name.toLowerCase();
 
-    // 常见的女性语音名称模式
+    // Common female voice name patterns
     if (lower.contains('female') ||
         lower.contains('woman') ||
         lower.contains('zira') ||
@@ -522,10 +519,10 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         lower.contains('tessa') ||
         lower.contains('veena') ||
         lower.contains('fiona')) {
-      return 'Female';
+      return VoiceGender.female;
     }
 
-    // 常见的男性语音名称模式
+    // Common male voice name patterns
     if (lower.contains('male') ||
         lower.contains('man') ||
         lower.contains('david') ||
@@ -538,9 +535,9 @@ class FlutterTTSProcessor extends BaseTTSProcessorImpl {
         lower.contains('thomas') ||
         lower.contains('rishi') ||
         lower.contains('aaron')) {
-      return 'Male';
+      return VoiceGender.male;
     }
 
-    return 'Unknown';
+    return VoiceGender.unknown;
   }
 }

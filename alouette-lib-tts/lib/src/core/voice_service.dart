@@ -1,20 +1,21 @@
 import 'package:flutter/foundation.dart';
-import '../models/voice.dart';
+import '../models/voice_model.dart';
 import '../models/tts_error.dart';
 import '../enums/voice_gender.dart';
 import '../enums/voice_quality.dart';
+import '../exceptions/tts_exceptions.dart';
 import '../utils/cache_manager.dart';
-import 'tts_service.dart';
+import 'tts_service_interface.dart';
 
 /// Service for managing TTS voices and voice selection
 /// 
 /// Provides advanced voice discovery, filtering, and selection capabilities
 /// with caching and preference management.
 class VoiceService extends ChangeNotifier {
-  final TTSService _ttsService;
+  final TTSServiceInterface _ttsService;
   final CacheManager _cacheManager = CacheManager.instance;
-  List<Voice> _cachedVoices = [];
-  Map<String, List<Voice>> _languageVoiceCache = {};
+  List<VoiceModel> _cachedVoices = [];
+  Map<String, List<VoiceModel>> _languageVoiceCache = {};
   bool _isLoading = false;
   String? _preferredVoice;
 
@@ -24,7 +25,7 @@ class VoiceService extends ChangeNotifier {
   VoiceService(this._ttsService);
 
   /// Get all cached voices
-  List<Voice> get cachedVoices => List.unmodifiable(_cachedVoices);
+  List<VoiceModel> get cachedVoices => List.unmodifiable(_cachedVoices);
 
   /// Check if voices are currently being loaded
   bool get isLoading => _isLoading;
@@ -33,7 +34,7 @@ class VoiceService extends ChangeNotifier {
   String? get preferredVoice => _preferredVoice;
 
   /// Get all available voices with caching
-  Future<List<Voice>> getAllVoices({bool forceRefresh = false}) async {
+  Future<List<VoiceModel>> getAllVoices({bool forceRefresh = false}) async {
     // 检查统一缓存管理器中的缓存
     if (!forceRefresh && _cachedVoices.isEmpty && _ttsService.currentBackend != null) {
       final cachedVoices = _cacheManager.getCachedVoices(_ttsService.currentBackend!);
@@ -77,7 +78,7 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Get voices for a specific language
-  Future<List<Voice>> getVoicesByLanguage(
+  Future<List<VoiceModel>> getVoicesByLanguage(
     String languageCode, {
     bool exactMatch = false,
   }) async {
@@ -88,17 +89,17 @@ class VoiceService extends ChangeNotifier {
     }
 
     final allVoices = await getAllVoices();
-    List<Voice> filteredVoices;
+    List<VoiceModel> filteredVoices;
 
     if (exactMatch) {
       filteredVoices = allVoices
-          .where((voice) => voice.locale.toLowerCase() == languageCode.toLowerCase())
+          .where((voice) => voice.languageCode.toLowerCase() == languageCode.toLowerCase())
           .toList();
     } else {
       // Match language prefix (e.g., 'en' matches 'en-US', 'en-GB')
       final langPrefix = languageCode.toLowerCase().split('-')[0];
       filteredVoices = allVoices
-          .where((voice) => voice.locale.toLowerCase().startsWith(langPrefix))
+          .where((voice) => voice.languageCode.toLowerCase().startsWith(langPrefix))
           .toList();
     }
 
@@ -107,7 +108,7 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Find the best voice for a language based on quality preferences
-  Future<Voice?> findBestVoice(
+  Future<VoiceModel?> findBestVoice(
     String languageCode,
     VoiceQuality preferredQuality, {
     VoiceGender? preferredGender,
@@ -121,7 +122,7 @@ class VoiceService extends ChangeNotifier {
     if (voices.isEmpty) return null;
 
     // Sort voices by preference
-    final sortedVoices = List<Voice>.from(voices);
+    final sortedVoices = List<VoiceModel>.from(voices);
     sortedVoices.sort((a, b) {
       // Quality preference (neural > standard)
       if (preferredQuality == VoiceQuality.neural) {
@@ -134,16 +135,16 @@ class VoiceService extends ChangeNotifier {
 
       // Gender preference
       if (preferredGender != null) {
-        final aGenderMatch = a.gender.toLowerCase() == preferredGender.name.toLowerCase();
-        final bGenderMatch = b.gender.toLowerCase() == preferredGender.name.toLowerCase();
+        final aGenderMatch = a.gender == preferredGender;
+        final bGenderMatch = b.gender == preferredGender;
         if (aGenderMatch && !bGenderMatch) return -1;
         if (!aGenderMatch && bGenderMatch) return 1;
       }
 
       // Exact locale match preference
       final exactLocale = languageCode.toLowerCase();
-      final aExactMatch = a.locale.toLowerCase() == exactLocale;
-      final bExactMatch = b.locale.toLowerCase() == exactLocale;
+      final aExactMatch = a.languageCode.toLowerCase() == exactLocale;
+      final bExactMatch = b.languageCode.toLowerCase() == exactLocale;
       if (aExactMatch && !bExactMatch) return -1;
       if (!aExactMatch && bExactMatch) return 1;
 
@@ -155,7 +156,7 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Get default voice for a language
-  Future<Voice?> getDefaultVoice(String languageCode) async {
+  Future<VoiceModel?> getDefaultVoice(String languageCode) async {
     // Try to find a neural voice first
     final bestNeural = await findBestVoice(
       languageCode,
@@ -172,8 +173,8 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Filter voices by criteria
-  List<Voice> filterVoices({
-    List<Voice>? voices,
+  List<VoiceModel> filterVoices({
+    List<VoiceModel>? voices,
     String? languageCode,
     VoiceGender? gender,
     VoiceQuality? quality,
@@ -185,30 +186,22 @@ class VoiceService extends ChangeNotifier {
       // Language filter
       if (languageCode != null) {
         final langPrefix = languageCode.toLowerCase().split('-')[0];
-        if (!voice.locale.toLowerCase().startsWith(langPrefix)) {
+        if (!voice.languageCode.toLowerCase().startsWith(langPrefix)) {
           return false;
         }
       }
 
       // Gender filter
       if (gender != null) {
-        if (voice.gender.toLowerCase() != gender.name.toLowerCase()) {
+        if (voice.gender != gender) {
           return false;
         }
       }
 
       // Quality filter
       if (quality != null) {
-        switch (quality) {
-          case VoiceQuality.neural:
-            if (!voice.isNeural) return false;
-            break;
-          case VoiceQuality.standard:
-            if (!voice.isStandard) return false;
-            break;
-          case VoiceQuality.other:
-            if (voice.isNeural || voice.isStandard) return false;
-            break;
+        if (voice.quality != quality) {
+          return false;
         }
       }
 
@@ -216,8 +209,8 @@ class VoiceService extends ChangeNotifier {
       if (searchTerm != null && searchTerm.isNotEmpty) {
         final term = searchTerm.toLowerCase();
         return voice.displayName.toLowerCase().contains(term) ||
-               voice.name.toLowerCase().contains(term) ||
-               voice.locale.toLowerCase().contains(term);
+               voice.id.toLowerCase().contains(term) ||
+               voice.languageCode.toLowerCase().contains(term);
       }
 
       return true;
@@ -225,12 +218,12 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Group voices by language
-  Map<String, List<Voice>> groupVoicesByLanguage([List<Voice>? voices]) {
+  Map<String, List<VoiceModel>> groupVoicesByLanguage([List<VoiceModel>? voices]) {
     final voicesToGroup = voices ?? _cachedVoices;
-    final grouped = <String, List<Voice>>{};
+    final grouped = <String, List<VoiceModel>>{};
 
     for (final voice in voicesToGroup) {
-      final langCode = voice.language;
+      final langCode = voice.languageCode;
       grouped.putIfAbsent(langCode, () => []).add(voice);
     }
 
@@ -262,7 +255,7 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Get voice statistics
-  Map<String, dynamic> getVoiceStatistics([List<Voice>? voices]) {
+  Map<String, dynamic> getVoiceStatistics([List<VoiceModel>? voices]) {
     final voicesToAnalyze = voices ?? _cachedVoices;
     
     final totalVoices = voicesToAnalyze.length;
@@ -274,7 +267,7 @@ class VoiceService extends ChangeNotifier {
     
     final genderCounts = <String, int>{};
     for (final voice in voicesToAnalyze) {
-      genderCounts[voice.gender] = (genderCounts[voice.gender] ?? 0) + 1;
+      genderCounts[voice.gender.name] = (genderCounts[voice.gender.name] ?? 0) + 1;
     }
 
     return {
@@ -315,20 +308,20 @@ class VoiceService extends ChangeNotifier {
 
   /// Check if a voice exists
   bool hasVoice(String voiceName) {
-    return _cachedVoices.any((voice) => voice.name == voiceName);
+    return _cachedVoices.any((voice) => voice.id == voiceName);
   }
 
   /// Find voice by name
-  Voice? findVoice(String voiceName) {
+  VoiceModel? findVoice(String voiceName) {
     try {
-      return _cachedVoices.firstWhere((voice) => voice.name == voiceName);
+      return _cachedVoices.firstWhere((voice) => voice.id == voiceName);
     } catch (e) {
       return null;
     }
   }
 
   /// Get recommended voices for a language
-  Future<List<Voice>> getRecommendedVoices(
+  Future<List<VoiceModel>> getRecommendedVoices(
     String languageCode, {
     int maxCount = 3,
   }) async {
@@ -337,7 +330,7 @@ class VoiceService extends ChangeNotifier {
     if (voices.isEmpty) return [];
 
     // Sort by recommendation criteria
-    final sortedVoices = List<Voice>.from(voices);
+    final sortedVoices = List<VoiceModel>.from(voices);
     sortedVoices.sort((a, b) {
       // Neural voices first
       if (a.isNeural && !b.isNeural) return -1;
@@ -345,8 +338,8 @@ class VoiceService extends ChangeNotifier {
       
       // Exact locale match
       final exactLocale = languageCode.toLowerCase();
-      final aExact = a.locale.toLowerCase() == exactLocale;
-      final bExact = b.locale.toLowerCase() == exactLocale;
+      final aExact = a.languageCode.toLowerCase() == exactLocale;
+      final bExact = b.languageCode.toLowerCase() == exactLocale;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
       

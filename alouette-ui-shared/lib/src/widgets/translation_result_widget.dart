@@ -8,7 +8,7 @@ import '../tokens/typography_tokens.dart';
 
 class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
-  final TTSService? ttsService;
+  final UnifiedTTSService? ttsService;
   final bool isCompactMode;
   final bool isTTSInitialized;
 

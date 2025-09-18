@@ -1,197 +1,307 @@
-/// Base exception for all translation-related errors
-class TranslationException implements Exception {
+/// Base error class for all Alouette translation-related errors
+abstract class AlouetteTranslationError extends Error {
   /// The error message
   final String message;
   
-  /// Optional error code for programmatic handling
-  final String? code;
+  /// Consistent error code for programmatic handling
+  final String code;
   
   /// Optional additional details about the error
   final Map<String, dynamic>? details;
+  
+  /// The original error that caused this error (if any)
+  final dynamic originalError;
+  
+  /// Timestamp when the error occurred
+  final DateTime timestamp;
 
-  const TranslationException(
-    this.message, {
-    this.code,
+  AlouetteTranslationError(
+    this.message,
+    this.code, {
     this.details,
-  });
+    this.originalError,
+  }) : timestamp = DateTime.now();
+
+  /// Get user-friendly error message
+  String get userMessage => _getUserMessage();
+  
+  /// Get technical error message for logging
+  String get technicalMessage => _getTechnicalMessage();
+  
+  /// Check if this error is recoverable
+  bool get isRecoverable => _isRecoverable();
+  
+  /// Get suggested recovery actions
+  List<String> get recoveryActions => _getRecoveryActions();
+
+  String _getUserMessage() {
+    switch (code) {
+      case TranslationErrorCodes.connectionFailed:
+        return 'Unable to connect to translation service. Please check your internet connection.';
+      case TranslationErrorCodes.authenticationFailed:
+        return 'Authentication failed. Please check your credentials.';
+      case TranslationErrorCodes.modelNotFound:
+        return 'The selected translation model is not available.';
+      case TranslationErrorCodes.requestTimeout:
+        return 'Translation request timed out. Please try again.';
+      case TranslationErrorCodes.invalidTranslation:
+        return 'Translation failed to complete successfully.';
+      case TranslationErrorCodes.configurationError:
+        return 'Translation service configuration error.';
+      case TranslationErrorCodes.unsupportedProvider:
+        return 'The selected translation provider is not supported.';
+      case TranslationErrorCodes.rateLimitExceeded:
+        return 'Too many requests. Please wait before trying again.';
+      default:
+        return message;
+    }
+  }
+  
+  String _getTechnicalMessage() {
+    final buffer = StringBuffer();
+    buffer.write('[$code] $message');
+    if (originalError != null) {
+      buffer.write(' | Original: $originalError');
+    }
+    if (details != null && details!.isNotEmpty) {
+      buffer.write(' | Details: $details');
+    }
+    return buffer.toString();
+  }
+  
+  bool _isRecoverable() {
+    switch (code) {
+      case TranslationErrorCodes.connectionFailed:
+      case TranslationErrorCodes.requestTimeout:
+      case TranslationErrorCodes.rateLimitExceeded:
+        return true;
+      case TranslationErrorCodes.authenticationFailed:
+      case TranslationErrorCodes.modelNotFound:
+      case TranslationErrorCodes.configurationError:
+      case TranslationErrorCodes.unsupportedProvider:
+        return false;
+      default:
+        return false;
+    }
+  }
+  
+  List<String> _getRecoveryActions() {
+    switch (code) {
+      case TranslationErrorCodes.connectionFailed:
+        return ['Check internet connection', 'Verify server URL', 'Try again'];
+      case TranslationErrorCodes.requestTimeout:
+        return ['Try again with shorter text', 'Check network speed'];
+      case TranslationErrorCodes.rateLimitExceeded:
+        return ['Wait before retrying', 'Reduce request frequency'];
+      case TranslationErrorCodes.modelNotFound:
+        return ['Select a different model', 'Check model availability'];
+      case TranslationErrorCodes.authenticationFailed:
+        return ['Check credentials', 'Verify API key'];
+      case TranslationErrorCodes.configurationError:
+        return ['Review configuration settings', 'Reset to defaults'];
+      default:
+        return ['Contact support'];
+    }
+  }
 
   @override
-  String toString() {
-    if (code != null) {
-      return 'TranslationException [$code]: $message';
-    }
-    return 'TranslationException: $message';
-  }
+  String toString() => technicalMessage;
+}
+
+/// Standard error codes for translation errors
+class TranslationErrorCodes {
+  static const String connectionFailed = 'TRANS_CONNECTION_FAILED';
+  static const String authenticationFailed = 'TRANS_AUTH_FAILED';
+  static const String modelNotFound = 'TRANS_MODEL_NOT_FOUND';
+  static const String requestTimeout = 'TRANS_REQUEST_TIMEOUT';
+  static const String invalidTranslation = 'TRANS_INVALID_RESULT';
+  static const String configurationError = 'TRANS_CONFIG_ERROR';
+  static const String unsupportedProvider = 'TRANS_UNSUPPORTED_PROVIDER';
+  static const String rateLimitExceeded = 'TRANS_RATE_LIMIT';
+  static const String networkError = 'TRANS_NETWORK_ERROR';
+  static const String serverError = 'TRANS_SERVER_ERROR';
+}
+
+/// Base exception for all translation-related errors (for backward compatibility)
+class TranslationException extends AlouetteTranslationError {
+  TranslationException(
+    String message, {
+    String? code,
+    Map<String, dynamic>? details,
+    dynamic originalError,
+  }) : super(
+    message,
+    code ?? TranslationErrorCodes.networkError,
+    details: details,
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when there are network/connection issues with the LLM provider
-class LLMConnectionException extends TranslationException {
-  const LLMConnectionException(
+class LLMConnectionException extends AlouetteTranslationError {
+  LLMConnectionException(
     String message, {
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'LLMConnectionException [$code]: $message';
-    }
-    return 'LLMConnectionException: $message';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.connectionFailed,
+    details: details,
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when authentication with the LLM provider fails
-class LLMAuthenticationException extends TranslationException {
-  const LLMAuthenticationException(
+class LLMAuthenticationException extends AlouetteTranslationError {
+  LLMAuthenticationException(
     String message, {
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'LLMAuthenticationException [$code]: $message';
-    }
-    return 'LLMAuthenticationException: $message';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.authenticationFailed,
+    details: details,
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when the requested model is not found or available
-class LLMModelNotFoundException extends TranslationException {
+class LLMModelNotFoundException extends AlouetteTranslationError {
   /// The model name that was not found
   final String modelName;
 
-  const LLMModelNotFoundException(
+  LLMModelNotFoundException(
     String message,
     this.modelName, {
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'LLMModelNotFoundException [$code]: $message (Model: $modelName)';
-    }
-    return 'LLMModelNotFoundException: $message (Model: $modelName)';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.modelNotFound,
+    details: {
+      'modelName': modelName,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when a translation request times out
-class TranslationTimeoutException extends TranslationException {
+class TranslationTimeoutException extends AlouetteTranslationError {
   /// The timeout duration that was exceeded
   final Duration? timeout;
 
-  const TranslationTimeoutException(
+  TranslationTimeoutException(
     String message, {
     this.timeout,
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'TranslationTimeoutException [$code]: $message${timeout != null ? ' (Timeout: ${timeout!.inSeconds}s)' : ''}';
-    }
-    return 'TranslationTimeoutException: $message${timeout != null ? ' (Timeout: ${timeout!.inSeconds}s)' : ''}';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.requestTimeout,
+    details: {
+      if (timeout != null) 'timeoutSeconds': timeout.inSeconds,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when the translation result is invalid or empty
-class InvalidTranslationException extends TranslationException {
+class InvalidTranslationException extends AlouetteTranslationError {
   /// The original text that failed to translate
   final String originalText;
   
   /// The target language that failed
   final String targetLanguage;
 
-  const InvalidTranslationException(
+  InvalidTranslationException(
     String message,
     this.originalText,
     this.targetLanguage, {
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'InvalidTranslationException [$code]: $message (Language: $targetLanguage)';
-    }
-    return 'InvalidTranslationException: $message (Language: $targetLanguage)';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.invalidTranslation,
+    details: {
+      'originalText': originalText,
+      'targetLanguage': targetLanguage,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when there are configuration-related errors
-class ConfigurationException extends TranslationException {
+class ConfigurationException extends AlouetteTranslationError {
   /// The configuration field that caused the error
   final String? field;
 
-  const ConfigurationException(
+  ConfigurationException(
     String message, {
     this.field,
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'ConfigurationException [$code]: $message${field != null ? ' (Field: $field)' : ''}';
-    }
-    return 'ConfigurationException: $message${field != null ? ' (Field: $field)' : ''}';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.configurationError,
+    details: {
+      if (field != null) 'field': field,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when a provider is not supported
-class UnsupportedProviderException extends TranslationException {
+class UnsupportedProviderException extends AlouetteTranslationError {
   /// The provider name that is not supported
   final String providerName;
   
   /// List of supported providers
   final List<String> supportedProviders;
 
-  const UnsupportedProviderException(
+  UnsupportedProviderException(
     String message,
     this.providerName,
     this.supportedProviders, {
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'UnsupportedProviderException [$code]: $message (Provider: $providerName, Supported: ${supportedProviders.join(', ')})';
-    }
-    return 'UnsupportedProviderException: $message (Provider: $providerName, Supported: ${supportedProviders.join(', ')})';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.unsupportedProvider,
+    details: {
+      'providerName': providerName,
+      'supportedProviders': supportedProviders,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }
 
 /// Exception thrown when rate limits are exceeded
-class RateLimitException extends TranslationException {
+class RateLimitException extends AlouetteTranslationError {
   /// When the rate limit will reset (if available)
   final DateTime? resetTime;
   
   /// Number of requests remaining (if available)
   final int? remainingRequests;
 
-  const RateLimitException(
+  RateLimitException(
     String message, {
     this.resetTime,
     this.remainingRequests,
-    String? code,
     Map<String, dynamic>? details,
-  }) : super(message, code: code, details: details);
-
-  @override
-  String toString() {
-    if (code != null) {
-      return 'RateLimitException [$code]: $message${resetTime != null ? ' (Reset: $resetTime)' : ''}';
-    }
-    return 'RateLimitException: $message${resetTime != null ? ' (Reset: $resetTime)' : ''}';
-  }
+    dynamic originalError,
+  }) : super(
+    message,
+    TranslationErrorCodes.rateLimitExceeded,
+    details: {
+      if (resetTime != null) 'resetTime': resetTime.toIso8601String(),
+      if (remainingRequests != null) 'remainingRequests': remainingRequests,
+      ...?details,
+    },
+    originalError: originalError,
+  );
 }

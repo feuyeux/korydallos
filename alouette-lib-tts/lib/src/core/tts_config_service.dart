@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/tts_config.dart';
 import '../models/tts_error.dart';
-import '../models/voice.dart';
 import '../utils/config_validator.dart';
+import '../exceptions/tts_exceptions.dart';
 import 'config_manager.dart';
 
 /// Service for managing TTS configuration

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:alouette_app_trans/main.dart';
+import 'package:alouette_app_trans/app/translation_app.dart';
 
 void main() {
   testWidgets('应用程序加载测试', (WidgetTester tester) async {
     // 构建应用程序并触发一个帧
-    await tester.pumpWidget(const AlouetteAppTrans());
+    await tester.pumpWidget(const TranslationApp());
 
     // 验证应用程序标题是否存在
     expect(find.text('Alouette Translator'), findsOneWidget);

@@ -8,4 +8,7 @@ enum VoiceGender {
 
   /// Neutral/unknown gender
   neutral,
+
+  /// Unknown gender
+  unknown,
 }

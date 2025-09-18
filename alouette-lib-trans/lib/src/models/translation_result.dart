@@ -1,6 +1,9 @@
 import 'llm_config.dart';
 
 /// Translation result model containing the original text and all translations
+/// 
+/// This is the standardized data model used across all Alouette applications
+/// for translation results. It includes comprehensive validation and serialization.
 class TranslationResult {
   /// The original text that was translated
   final String original;
@@ -19,6 +22,12 @@ class TranslationResult {
   
   /// Optional metadata about the translation process
   final Map<String, dynamic>? metadata;
+  
+  /// Whether the translation was successful
+  final bool isSuccessful;
+  
+  /// Error message if translation failed
+  final String? errorMessage;
 
   const TranslationResult({
     required this.original,
@@ -27,7 +36,48 @@ class TranslationResult {
     required this.timestamp,
     required this.config,
     this.metadata,
+    this.isSuccessful = true,
+    this.errorMessage,
   });
+
+  /// Create a successful translation result
+  factory TranslationResult.success({
+    required String original,
+    required Map<String, String> translations,
+    required List<String> languages,
+    required LLMConfig config,
+    Map<String, dynamic>? metadata,
+  }) {
+    return TranslationResult(
+      original: original,
+      translations: translations,
+      languages: languages,
+      timestamp: DateTime.now(),
+      config: config,
+      metadata: metadata,
+      isSuccessful: true,
+    );
+  }
+
+  /// Create a failed translation result
+  factory TranslationResult.failure({
+    required String original,
+    required List<String> languages,
+    required LLMConfig config,
+    required String errorMessage,
+    Map<String, dynamic>? metadata,
+  }) {
+    return TranslationResult(
+      original: original,
+      translations: {},
+      languages: languages,
+      timestamp: DateTime.now(),
+      config: config,
+      metadata: metadata,
+      isSuccessful: false,
+      errorMessage: errorMessage,
+    );
+  }
 
   /// Create from JSON representation
   factory TranslationResult.fromJson(Map<String, dynamic> json, LLMConfig config) {
@@ -40,6 +90,8 @@ class TranslationResult {
       metadata: json['metadata'] != null
           ? Map<String, dynamic>.from(json['metadata'])
           : null,
+      isSuccessful: json['is_successful'] ?? true,
+      errorMessage: json['error_message'],
     );
   }
 
@@ -52,6 +104,8 @@ class TranslationResult {
       'timestamp': timestamp.toIso8601String(),
       'config': config.toJson(),
       'metadata': metadata,
+      'is_successful': isSuccessful,
+      'error_message': errorMessage,
     };
   }
 
@@ -63,6 +117,8 @@ class TranslationResult {
     DateTime? timestamp,
     LLMConfig? config,
     Map<String, dynamic>? metadata,
+    bool? isSuccessful,
+    String? errorMessage,
   }) {
     return TranslationResult(
       original: original ?? this.original,
@@ -71,6 +127,8 @@ class TranslationResult {
       timestamp: timestamp ?? this.timestamp,
       config: config ?? this.config,
       metadata: metadata ?? this.metadata,
+      isSuccessful: isSuccessful ?? this.isSuccessful,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
@@ -92,8 +150,47 @@ class TranslationResult {
 
   /// Check if all requested languages have translations
   bool get isComplete {
-    return languages.every((lang) => hasTranslation(lang));
+    return isSuccessful && languages.every((lang) => hasTranslation(lang));
   }
+
+  /// Validate the translation result
+  Map<String, dynamic> validate() {
+    final errors = <String>[];
+    final warnings = <String>[];
+
+    if (original.trim().isEmpty) {
+      errors.add('Original text cannot be empty');
+    }
+
+    if (languages.isEmpty) {
+      errors.add('Target languages list cannot be empty');
+    }
+
+    if (isSuccessful) {
+      if (translations.isEmpty) {
+        errors.add('Successful translation must have at least one translation');
+      }
+
+      // Check for missing translations
+      final missingLanguages = languages.where((lang) => !hasTranslation(lang)).toList();
+      if (missingLanguages.isNotEmpty) {
+        warnings.add('Missing translations for languages: ${missingLanguages.join(", ")}');
+      }
+    } else {
+      if (errorMessage == null || errorMessage!.trim().isEmpty) {
+        errors.add('Failed translation must have an error message');
+      }
+    }
+
+    return {
+      'isValid': errors.isEmpty,
+      'errors': errors,
+      'warnings': warnings,
+    };
+  }
+
+  /// Check if the result is valid (no validation errors)
+  bool get isValid => validate()['isValid'] as bool;
 
   @override
   bool operator ==(Object other) {
@@ -104,7 +201,9 @@ class TranslationResult {
         other.translations.keys.every((key) => translations[key] == other.translations[key]) &&
         other.languages.length == languages.length &&
         other.languages.every((lang) => languages.contains(lang)) &&
-        other.timestamp == timestamp;
+        other.timestamp == timestamp &&
+        other.isSuccessful == isSuccessful &&
+        other.errorMessage == errorMessage;
   }
 
   @override
@@ -114,12 +213,14 @@ class TranslationResult {
       Object.hashAll(translations.entries.map((e) => Object.hash(e.key, e.value))),
       Object.hashAll(languages),
       timestamp,
+      isSuccessful,
+      errorMessage,
     );
   }
 
   @override
   String toString() {
     return 'TranslationResult(original: ${original.length > 30 ? '${original.substring(0, 30)}...' : original}, '
-           'languages: $languages, translations: ${translations.length})';
+           'languages: $languages, translations: ${translations.length}, successful: $isSuccessful)';
   }
 }

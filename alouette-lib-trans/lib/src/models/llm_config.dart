@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// LLM Provider configuration model
 class LLMConfig {
   /// The LLM provider type ('ollama', 'lmstudio', etc.)

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import '../widgets/modern_card.dart';
-import '../widgets/modern_button.dart';
-import '../widgets/compact_slider.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
+import '../components/organisms/tts_control_panel.dart';
+import '../components/molecules/voice_selector.dart';
 
-/// TTS控制组件 - 包含参数调节和播放控制
+/// TTS Control Widget - Migrated to use Atomic Design
+/// 
+/// This widget now uses the new TTSControlPanel organism component
+/// for consistent UI across all applications.
 class TTSControlWidget extends StatelessWidget {
   final double rate;
   final double pitch;
@@ -32,133 +35,33 @@ class TTSControlWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Parameters area
-        Expanded(
-          flex: 2,
-          child: ModernCard(
-            padding: const EdgeInsets.all(8.0), // SpacingTokens.s
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.tune, size: 20),
-                    const SizedBox(width: 4), // Reduced spacing
-                    Text(
-                      'Voice Parameters',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0), // SpacingTokens.l
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CompactSlider(
-                          label: 'Speed',
-                          value: rate,
-                          min: 0.1,
-                          max: 2.0,
-                          divisions: 19,
-                          onChanged: onRateChanged,
-                        ),
-                      ),
-                      const SizedBox(width: 4), // Reduced spacing
-                      Expanded(
-                        child: CompactSlider(
-                          label: 'Pitch',
-                          value: pitch,
-                          min: 0.5,
-                          max: 2.0,
-                          divisions: 15,
-                          onChanged: onPitchChanged,
-                        ),
-                      ),
-                      const SizedBox(width: 4), // Reduced spacing
-                      Expanded(
-                        child: CompactSlider(
-                          label: 'Volume',
-                          value: volume,
-                          min: 0.0,
-                          max: 1.0,
-                          divisions: 10,
-                          onChanged: onVolumeChanged,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    // Create a default voice model for backward compatibility
+    final defaultVoice = VoiceModel(
+      id: 'default',
+      displayName: 'Default Voice',
+      languageCode: 'en-US',
+      gender: VoiceGender.neutral,
+      quality: VoiceQuality.standard,
+    );
 
-        const SizedBox(width: 8), // Reduced spacing to prevent overflow
-
-        // Controls area
-        Expanded(
-          flex: 1,
-          child: ModernCard(
-            padding: const EdgeInsets.all(8.0), // SpacingTokens.s
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.play_circle_outline, size: 20),
-                    const SizedBox(width: 4), // Reduced spacing
-                    Expanded(
-                      child: Text(
-                        'Controls',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0), // SpacingTokens.l
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ModernButton(
-                          text: isPlaying ? 'Pause' : 'Speak',
-                          icon: isPlaying ? Icons.pause : Icons.play_arrow,
-                          onPressed: isInitialized
-                              ? (isPlaying ? onStop : onSpeak)
-                              : null,
-                          type: ModernButtonType.primary,
-                          size: ModernButtonSize.large,
-                        ),
-                      ),
-                      const SizedBox(height: 16.0), // SpacingTokens.l
-                      SizedBox(
-                        width: double.infinity,
-                        child: ModernButton(
-                          text: 'Stop',
-                          icon: Icons.stop,
-                          onPressed: isInitialized && isPlaying ? onStop : null,
-                          type: ModernButtonType.outline,
-                          size: ModernButtonSize.medium,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return TTSControlPanel(
+      selectedVoice: defaultVoice,
+      availableVoices: [defaultVoice],
+      onVoiceChanged: null, // Not used in this legacy widget
+      currentText: null, // Not provided in legacy interface
+      onPlay: onSpeak,
+      onPause: onStop, // Legacy widget doesn't distinguish pause/stop
+      onStop: onStop,
+      isPlaying: isPlaying,
+      isPaused: false, // Legacy widget doesn't track pause state
+      isLoading: !isInitialized,
+      volume: volume,
+      onVolumeChanged: onVolumeChanged,
+      speechRate: rate,
+      onSpeechRateChanged: onRateChanged,
+      pitch: pitch,
+      onPitchChanged: onPitchChanged,
+      showAdvancedControls: true, // Show all controls for legacy compatibility
     );
   }
 }

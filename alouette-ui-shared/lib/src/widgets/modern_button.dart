@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../tokens/dimension_tokens.dart';
 import '../tokens/color_tokens.dart';
+import '../tokens/typography_tokens.dart';
+import '../tokens/motion_tokens.dart';
+import '../tokens/elevation_tokens.dart';
+import '../tokens/effect_tokens.dart';
 
 /// 按钮类型枚举
 enum ModernButtonType {
@@ -74,12 +78,11 @@ class _ModernButtonState extends State<ModernButton> {
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: MotionTokens.fast,
         height: buttonSize.height,
         decoration: BoxDecoration(
           color: _getEffectiveBackgroundColor(buttonStyle),
-          borderRadius: widget.borderRadius ??
-              BorderRadius.circular(DimensionTokens.radiusL),
+          borderRadius: widget.borderRadius ?? EffectTokens.radiusMedium,
           border: widget.type == ModernButtonType.outline
               ? Border.all(color: buttonStyle.borderColor, width: 1.0)
               : null,
@@ -91,8 +94,7 @@ class _ModernButtonState extends State<ModernButton> {
             onTap: widget.onPressed,
             splashColor: buttonStyle.splashColor,
             highlightColor: buttonStyle.highlightColor,
-            borderRadius: widget.borderRadius ??
-                BorderRadius.circular(DimensionTokens.radiusL),
+            borderRadius: widget.borderRadius ?? EffectTokens.radiusMedium,
             child: Container(
               padding: widget.padding ?? buttonSize.padding,
               width: widget.fullWidth ? double.infinity : null,
@@ -138,9 +140,8 @@ class _ModernButtonState extends State<ModernButton> {
           Flexible(
             child: Text(
               widget.text!,
-              style: TextStyle(
+              style: TypographyTokens.labelLargeStyle.copyWith(
                 color: style.textColor,
-                fontWeight: FontWeight.w500,
                 fontSize: size.fontSize,
               ),
               overflow: TextOverflow.ellipsis,
@@ -166,14 +167,9 @@ class _ModernButtonState extends State<ModernButton> {
     if (widget.type == ModernButtonType.primary &&
         widget.onPressed != null &&
         !widget.loading) {
-      return [
-        BoxShadow(
-          color: style.backgroundColor.withValues(alpha: 0.15),
-          blurRadius: _isHovering ? 4 : 2,
-          spreadRadius: 0,
-          offset: const Offset(0, 1),
-        ),
-      ];
+      return _isHovering 
+          ? ElevationTokens.shadowMedium 
+          : ElevationTokens.shadowSubtle;
     }
     return null;
   }
@@ -257,28 +253,37 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
         return _ButtonSize(
           height: DimensionTokens.buttonS,
           iconSize: DimensionTokens.iconS,
-          fontSize: 11.0,
+          fontSize: TypographyTokens.labelSmall,
           padding: widget.iconOnly
-              ? const EdgeInsets.all(4.0)
-              : const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+              ? const EdgeInsets.all(SpacingTokens.xs)
+              : const EdgeInsets.symmetric(
+                  horizontal: SpacingTokens.s, 
+                  vertical: SpacingTokens.xxs,
+                ),
         );
       case ModernButtonSize.medium:
         return _ButtonSize(
           height: DimensionTokens.buttonM,
           iconSize: DimensionTokens.iconM,
-          fontSize: 12.0,
+          fontSize: TypographyTokens.labelMedium,
           padding: widget.iconOnly
-              ? const EdgeInsets.all(6.0)
-              : const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
+              ? const EdgeInsets.all(SpacingTokens.s)
+              : const EdgeInsets.symmetric(
+                  horizontal: SpacingTokens.m, 
+                  vertical: SpacingTokens.xs,
+                ),
         );
       case ModernButtonSize.large:
         return _ButtonSize(
           height: DimensionTokens.buttonL,
           iconSize: DimensionTokens.iconL,
-          fontSize: 14.0,
+          fontSize: TypographyTokens.labelLarge,
           padding: widget.iconOnly
-              ? const EdgeInsets.all(8.0)
-              : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+              ? const EdgeInsets.all(SpacingTokens.m)
+              : const EdgeInsets.symmetric(
+                  horizontal: SpacingTokens.l, 
+                  vertical: SpacingTokens.s,
+                ),
         );
     }
   }

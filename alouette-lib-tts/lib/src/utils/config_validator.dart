@@ -1,5 +1,5 @@
 import '../models/tts_config.dart';
-import '../models/voice.dart';
+import '../models/voice_model.dart';
 import '../utils/tts_logger.dart';
 
 /// 配置验证结果
@@ -255,7 +255,7 @@ class FormatValidationRule extends ValidationRule<String> {
 
 /// 语音验证规则
 class VoiceValidationRule extends ValidationRule<String> {
-  final List<Voice>? availableVoices;
+  final List<VoiceModel>? availableVoices;
   
   VoiceValidationRule({this.availableVoices});
   
@@ -278,9 +278,9 @@ class VoiceValidationRule extends ValidationRule<String> {
     }
     
     // 检查语音是否存在
-    final voice = availableVoices!.where((v) => v.name == voiceName).firstOrNull;
+    final voice = availableVoices!.where((v) => v.id == voiceName).firstOrNull;
     if (voice == null) {
-      final availableNames = availableVoices!.take(5).map((v) => v.name).join(', ');
+      final availableNames = availableVoices!.take(5).map((v) => v.id).join(', ');
       return ValidationResult.invalid([
         'Voice "$voiceName" is not available. Available voices include: $availableNames${availableVoices!.length > 5 ? '...' : ''}'
       ]);
@@ -291,12 +291,12 @@ class VoiceValidationRule extends ValidationRule<String> {
     // 语音质量建议
     if (voice.isNeural) {
       suggestions.add('Neural voice selected - high quality synthesis');
-    } else if (voice.isStandard) {
+    } else {
       // 查找是否有同语言的神经网络语音
       final neuralAlternatives = availableVoices!
-          .where((v) => v.language == voice.language && v.isNeural)
+          .where((v) => v.languageCode == voice.languageCode && v.isNeural)
           .take(2)
-          .map((v) => v.name)
+          .map((v) => v.id)
           .toList();
       
       if (neuralAlternatives.isNotEmpty) {
@@ -310,7 +310,7 @@ class VoiceValidationRule extends ValidationRule<String> {
 
 /// TTS 配置验证器
 class TTSConfigValidator {
-  final List<Voice>? availableVoices;
+  final List<VoiceModel>? availableVoices;
   
   TTSConfigValidator({this.availableVoices});
   
@@ -416,10 +416,10 @@ class TTSConfigValidator {
     
     // 检查语音和格式的兼容性
     if (availableVoices != null) {
-      final voice = availableVoices!.where((v) => v.name == config.defaultVoice).firstOrNull;
+      final voice = availableVoices!.where((v) => v.id == config.defaultVoice).firstOrNull;
       if (voice != null) {
         // Web平台建议
-        if (voice.locale.startsWith('ar-') && config.defaultFormat != 'mp3') {
+        if (voice.languageCode.startsWith('ar-') && config.defaultFormat != 'mp3') {
           warnings.add('Arabic voices may have better compatibility with MP3 format');
         }
         
@@ -491,14 +491,14 @@ class TTSConfigValidator {
     
     // 基于语音的建议
     if (availableVoices != null) {
-      final voice = availableVoices!.where((v) => v.name == config.defaultVoice).firstOrNull;
+      final voice = availableVoices!.where((v) => v.id == config.defaultVoice).firstOrNull;
       if (voice != null) {
-        if (voice.isStandard) {
+        if (!voice.isNeural) {
           final neuralAlternatives = availableVoices!
-              .where((v) => v.language == voice.language && v.isNeural)
+              .where((v) => v.languageCode == voice.languageCode && v.isNeural)
               .length;
           if (neuralAlternatives > 0) {
-            recommendations.add('$neuralAlternatives neural voice(s) available for ${voice.language} - consider upgrading for better quality');
+            recommendations.add('$neuralAlternatives neural voice(s) available for ${voice.languageCode} - consider upgrading for better quality');
           }
         }
       }

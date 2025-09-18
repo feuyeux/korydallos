@@ -109,7 +109,7 @@ class TTSInputWidget extends StatelessWidget {
       );
     }
 
-    return FutureBuilder<List<Voice>>(
+    return FutureBuilder<List<VoiceModel>>(
       future: voiceService!.getAllVoices(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -138,21 +138,21 @@ class TTSInputWidget extends StatelessWidget {
         }
 
         return ModernDropdown<String>(
-          value: currentVoice ?? voices.first.name,
+          value: currentVoice ?? voices.first.id,
           items: voices
               .map((voice) => DropdownMenuItem<String>(
-                    value: voice.name,
+                    value: voice.id,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          voice.name,
+                          voice.displayName,
                           style: const TextStyle(fontWeight: FontWeight.w500),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          voice.locale,
+                          voice.languageCode,
                           style:
                               const TextStyle(fontSize: 11, color: Colors.grey),
                         ),

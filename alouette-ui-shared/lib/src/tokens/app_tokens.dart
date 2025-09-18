@@ -11,6 +11,8 @@ export 'color_tokens.dart';
 export 'dimension_tokens.dart';
 export 'typography_tokens.dart';
 export 'motion_tokens.dart';
+export 'elevation_tokens.dart';
+export 'effect_tokens.dart';
 
 /// Legacy support - mapping to old constant names
 ///

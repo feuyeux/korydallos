@@ -20,16 +20,9 @@ if (-not (Test-Path "pubspec.yaml")) {
 Write-Host "📂 Running from: $(Get-Location)" -ForegroundColor Green
 Write-Host "🎯 Platform: $Platform" -ForegroundColor Green
 
-# 修复 NUGET.EXE 路径问题
+# Platform-specific setup (if needed in the future)
 if ($Platform.ToLower() -eq "windows") {
-    Write-Host "🔧 Setting up NUGET environment..." -ForegroundColor Yellow
-    $nugetPath = Join-Path $PSScriptRoot "nuget.exe"
-    if (Test-Path $nugetPath) {
-        $env:PATH = "$PSScriptRoot;$env:PATH"
-        Write-Host "✅ NUGET.EXE path added to environment" -ForegroundColor Green
-    } else {
-        Write-Host "⚠️  NUGET.EXE not found at $nugetPath" -ForegroundColor Yellow
-    }
+    Write-Host "🖥️  Preparing Windows environment..." -ForegroundColor Yellow
 }
 
 # 获取依赖并运行应用

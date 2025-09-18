@@ -19,6 +19,15 @@ class TTSConfig {
   
   /// Default volume (0.0 to 1.0)
   final double defaultVolume;
+
+  /// Current speech rate (0.1 to 3.0)
+  final double speechRate;
+  
+  /// Current pitch (0.5 to 2.0)
+  final double pitch;
+  
+  /// Current volume (0.0 to 1.0)
+  final double volume;
   
   /// Directory for output files
   final String outputDirectory;
@@ -35,6 +44,9 @@ class TTSConfig {
     this.defaultRate = 1.0,
     this.defaultPitch = 1.0,
     this.defaultVolume = 1.0,
+    this.speechRate = 1.0,
+    this.pitch = 1.0,
+    this.volume = 1.0,
     this.outputDirectory = 'output',
     this.enableCaching = true,
     this.enablePlayback = false,
@@ -50,6 +62,9 @@ class TTSConfig {
       defaultRate: _validateDouble(json['defaultRate'], 1.0),
       defaultPitch: _validateDouble(json['defaultPitch'], 1.0),
       defaultVolume: _validateDouble(json['defaultVolume'], 1.0),
+      speechRate: _validateDouble(json['speechRate'], 1.0),
+      pitch: _validateDouble(json['pitch'], 1.0),
+      volume: _validateDouble(json['volume'], 1.0),
       outputDirectory: _validateString(json['outputDirectory'], 'output'),
       enableCaching: _validateBool(json['enableCaching'], true),
       enablePlayback: _validateBool(json['enablePlayback'], false),
@@ -74,11 +89,17 @@ class TTSConfig {
       'defaultRate': defaultRate,
       'defaultPitch': defaultPitch,
       'defaultVolume': defaultVolume,
+      'speechRate': speechRate,
+      'pitch': pitch,
+      'volume': volume,
       'outputDirectory': outputDirectory,
       'enableCaching': enableCaching,
       'enablePlayback': enablePlayback,
     };
   }
+
+  /// Convert TTSConfig to map (alias for toJson)
+  Map<String, dynamic> toMap() => toJson();
 
   /// Convert TTSConfig to JSON string
   String toJsonString() {
@@ -92,6 +113,9 @@ class TTSConfig {
     double? defaultRate,
     double? defaultPitch,
     double? defaultVolume,
+    double? speechRate,
+    double? pitch,
+    double? volume,
     String? outputDirectory,
     bool? enableCaching,
     bool? enablePlayback,
@@ -102,6 +126,9 @@ class TTSConfig {
       defaultRate: defaultRate ?? this.defaultRate,
       defaultPitch: defaultPitch ?? this.defaultPitch,
       defaultVolume: defaultVolume ?? this.defaultVolume,
+      speechRate: speechRate ?? this.speechRate,
+      pitch: pitch ?? this.pitch,
+      volume: volume ?? this.volume,
       outputDirectory: outputDirectory ?? this.outputDirectory,
       enableCaching: enableCaching ?? this.enableCaching,
       enablePlayback: enablePlayback ?? this.enablePlayback,
@@ -137,6 +164,18 @@ class TTSConfig {
     if (!_isValidVolume(defaultVolume)) {
       errors.add('defaultVolume must be a number between 0.0 and 1.0');
     }
+
+    if (!_isValidRate(speechRate)) {
+      errors.add('speechRate must be a number between 0.1 and 3.0');
+    }
+    
+    if (!_isValidPitch(pitch)) {
+      errors.add('pitch must be a number between 0.5 and 2.0');
+    }
+    
+    if (!_isValidVolume(volume)) {
+      errors.add('volume must be a number between 0.0 and 1.0');
+    }
     
     if (outputDirectory.isEmpty) {
       errors.add('outputDirectory cannot be empty');
@@ -158,6 +197,9 @@ class TTSConfig {
         other.defaultRate == defaultRate &&
         other.defaultPitch == defaultPitch &&
         other.defaultVolume == defaultVolume &&
+        other.speechRate == speechRate &&
+        other.pitch == pitch &&
+        other.volume == volume &&
         other.outputDirectory == outputDirectory &&
         other.enableCaching == enableCaching &&
         other.enablePlayback == enablePlayback;
@@ -171,6 +213,9 @@ class TTSConfig {
       defaultRate,
       defaultPitch,
       defaultVolume,
+      speechRate,
+      pitch,
+      volume,
       outputDirectory,
       enableCaching,
       enablePlayback,
@@ -185,9 +230,12 @@ class TTSConfig {
         'defaultRate: $defaultRate, '
         'defaultPitch: $defaultPitch, '
         'defaultVolume: $defaultVolume, '
+        'speechRate: $speechRate, '
+        'pitch: $pitch, '
+        'volume: $volume, '
         'outputDirectory: $outputDirectory, '
         'enableCaching: $enableCaching, '
-        'enablePlayback: $enablePlayback'
+        'enablePlaybook: $enablePlayback'
         ')';
   }
 

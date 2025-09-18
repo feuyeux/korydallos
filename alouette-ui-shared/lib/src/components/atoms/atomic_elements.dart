@@ -229,3 +229,235 @@ class AtomicDivider extends AtomicWidget {
 
 /// Divider type enumeration
 enum AtomicDividerType { horizontal, vertical }
+
+/// Atomic Card Component
+///
+/// Provides consistent card styling with elevation and borders.
+class AtomicCard extends AtomicWidget {
+  final Widget child;
+  final EdgeInsets? padding;
+  final Color? backgroundColor;
+  final double? elevation;
+  final BorderRadius? borderRadius;
+  final Border? border;
+  final VoidCallback? onTap;
+
+  const AtomicCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.backgroundColor,
+    this.elevation,
+    this.borderRadius,
+    this.border,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = getColorScheme(context);
+    final cardBorderRadius = borderRadius ?? BorderRadius.circular(DimensionTokens.radiusL);
+
+    Widget card = Card(
+      color: backgroundColor ?? colorScheme.surface,
+      elevation: elevation ?? 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: cardBorderRadius,
+        side: border?.top ?? BorderSide.none,
+      ),
+      child: padding != null
+          ? Padding(padding: padding!, child: child)
+          : child,
+    );
+
+    if (onTap != null) {
+      card = InkWell(
+        onTap: onTap,
+        borderRadius: cardBorderRadius,
+        child: card,
+      );
+    }
+
+    return card;
+  }
+}
+
+/// Atomic Badge Component
+///
+/// Small status or count indicator.
+class AtomicBadge extends AtomicWidget {
+  final String? text;
+  final Widget? child;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final AtomicBadgeSize size;
+
+  const AtomicBadge({
+    super.key,
+    this.text,
+    this.child,
+    this.backgroundColor,
+    this.textColor,
+    this.size = AtomicBadgeSize.medium,
+  }) : assert(text != null || child != null, 'Either text or child must be provided');
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = getColorScheme(context);
+    final bgColor = backgroundColor ?? colorScheme.primary;
+    final fgColor = textColor ?? colorScheme.onPrimary;
+
+    return Container(
+      padding: size.padding,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(size.borderRadius),
+      ),
+      child: child ?? AtomicText(
+        text!,
+        variant: size.textVariant,
+        color: fgColor,
+      ),
+    );
+  }
+}
+
+/// Badge size enumeration
+enum AtomicBadgeSize {
+  small(
+    EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    8.0,
+    AtomicTextVariant.caption,
+  ),
+  medium(
+    EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    12.0,
+    AtomicTextVariant.labelSmall,
+  ),
+  large(
+    EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    16.0,
+    AtomicTextVariant.labelMedium,
+  );
+
+  const AtomicBadgeSize(this.padding, this.borderRadius, this.textVariant);
+
+  final EdgeInsets padding;
+  final double borderRadius;
+  final AtomicTextVariant textVariant;
+}
+
+/// Atomic Chip Component
+///
+/// Interactive chip for selections and filters.
+class AtomicChip extends AtomicWidget {
+  final String label;
+  final IconData? icon;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelected;
+  final VoidCallback? onDeleted;
+  final Color? backgroundColor;
+  final Color? selectedColor;
+
+  const AtomicChip({
+    super.key,
+    required this.label,
+    this.icon,
+    this.isSelected = false,
+    this.onSelected,
+    this.onDeleted,
+    this.backgroundColor,
+    this.selectedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = getColorScheme(context);
+
+    if (onDeleted != null) {
+      return Chip(
+        avatar: icon != null ? AtomicIcon(icon!, size: AtomicIconSize.small) : null,
+        label: AtomicText(label, variant: AtomicTextVariant.labelMedium),
+        onDeleted: onDeleted,
+        backgroundColor: backgroundColor ?? colorScheme.surfaceContainerHighest,
+        deleteIconColor: colorScheme.onSurfaceVariant,
+      );
+    }
+
+    return FilterChip(
+      avatar: icon != null ? AtomicIcon(icon!, size: AtomicIconSize.small) : null,
+      label: AtomicText(label, variant: AtomicTextVariant.labelMedium),
+      selected: isSelected,
+      onSelected: onSelected,
+      backgroundColor: backgroundColor ?? colorScheme.surfaceContainerHighest,
+      selectedColor: selectedColor ?? colorScheme.primaryContainer,
+      checkmarkColor: colorScheme.primary,
+    );
+  }
+}
+
+/// Atomic Progress Indicator Component
+///
+/// Shows loading or progress state.
+class AtomicProgressIndicator extends AtomicWidget {
+  final double? value;
+  final AtomicProgressType type;
+  final AtomicProgressSize size;
+  final Color? color;
+  final Color? backgroundColor;
+
+  const AtomicProgressIndicator({
+    super.key,
+    this.value,
+    this.type = AtomicProgressType.circular,
+    this.size = AtomicProgressSize.medium,
+    this.color,
+    this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = getColorScheme(context);
+    final progressColor = color ?? colorScheme.primary;
+    final bgColor = backgroundColor ?? colorScheme.surfaceContainerHighest;
+
+    switch (type) {
+      case AtomicProgressType.circular:
+        return SizedBox(
+          width: size.circularSize,
+          height: size.circularSize,
+          child: CircularProgressIndicator(
+            value: value,
+            strokeWidth: size.strokeWidth,
+            valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            backgroundColor: bgColor,
+          ),
+        );
+      case AtomicProgressType.linear:
+        return SizedBox(
+          height: size.linearHeight,
+          child: LinearProgressIndicator(
+            value: value,
+            valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+            backgroundColor: bgColor,
+          ),
+        );
+    }
+  }
+}
+
+/// Progress indicator type enumeration
+enum AtomicProgressType { circular, linear }
+
+/// Progress indicator size enumeration
+enum AtomicProgressSize {
+  small(16.0, 2.0, 2.0),
+  medium(24.0, 3.0, 4.0),
+  large(32.0, 4.0, 6.0);
+
+  const AtomicProgressSize(this.circularSize, this.strokeWidth, this.linearHeight);
+
+  final double circularSize;
+  final double strokeWidth;
+  final double linearHeight;
+}

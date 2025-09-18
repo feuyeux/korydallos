@@ -120,9 +120,9 @@ class TTSServiceImpl implements ITTSService {
       final voices = await _voiceService!.getAllVoices();
       return voices
           .map((voice) => TTSVoice(
-                name: voice.name,
-                language: voice.language,
-                gender: voice.gender,
+                name: voice.id,
+                language: voice.languageCode,
+                gender: voice.gender.name,
                 isDefault: false, // Library may not have this property
               ))
           .toList();

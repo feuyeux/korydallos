@@ -5,7 +5,7 @@ import '../tokens/typography_tokens.dart';
 import '../widgets/modern_button.dart';
 
 class TTSConfigDialog extends StatefulWidget {
-  final TTSService? ttsService;
+  final UnifiedTTSService? ttsService;
 
   const TTSConfigDialog({super.key, this.ttsService});
 
@@ -15,7 +15,7 @@ class TTSConfigDialog extends StatefulWidget {
 
 class _TTSConfigDialogState extends State<TTSConfigDialog> {
   bool _isInitialized = false;
-  List<Voice> _voices = [];
+  List<VoiceModel> _voices = [];
   String? _currentVoice;
   AudioPlayer? _audioPlayer;
   TTSEngineType? _currentEngine;

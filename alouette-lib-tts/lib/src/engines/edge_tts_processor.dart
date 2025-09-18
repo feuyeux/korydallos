@@ -1,23 +1,24 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'base_processor.dart';
-import '../models/voice.dart';
+import 'base_tts_processor.dart';
+import '../models/voice_model.dart';
 import '../models/tts_error.dart';
-import '../utils/file_utils.dart';
+import '../enums/voice_gender.dart';
+import '../enums/voice_quality.dart';
+import '../exceptions/tts_exceptions.dart';
 import '../utils/resource_manager.dart';
 
-/// Edge TTS 处理器实现
-/// 参照 hello-tts-dart 的 TTSProcessor 设计模式
-/// 简化命令行调用逻辑，移除复杂的环境变量处理
-class EdgeTTSProcessor extends BaseTTSProcessorImpl {
+/// Edge TTS processor implementation following Flutter naming conventions
+/// Provides Edge TTS functionality through command line interface
+class EdgeTTSProcessor extends BaseTTSProcessor {
   @override
-  String get backend => 'edge';
+  String get engineName => 'edge';
 
   @override
-  Future<List<Voice>> getVoices() async {
+  Future<List<VoiceModel>> getAvailableVoices() async {
     return getVoicesWithCache(() async {
-      // 简化的命令行调用，不依赖复杂的环境变量处理
+      // Simplified command line call
       final result = await Process.run('edge-tts', ['--list-voices']);
       
       if (result.exitCode != 0) {
@@ -34,7 +35,7 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
   }
 
   @override
-  Future<Uint8List> synthesizeText(
+  Future<Uint8List> synthesizeToAudio(
     String text,
     String voiceName, {
     String format = 'mp3',
@@ -104,10 +105,10 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
     // 这里不需要存储状态，因为每次合成时都会传入新的参数
   }
 
-  /// 解析 edge-tts --list-voices 的输出
-  /// Edge TTS 输出格式为表格形式:
+  /// Parse edge-tts --list-voices output
+  /// Edge TTS output format is tabular:
   /// Name                               Gender    ContentCategories      VoicePersonalities
-  /// 支持的语言列表（基于 hello-tts README 中的描述）
+  /// Supported languages list
   static const Set<String> _supportedLanguages = {
     'zh-CN', // 🇨🇳 Chinese
     'en-US', // 🇺🇸 English
@@ -123,10 +124,9 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
     'ko-KR', // 🇰🇷 Korean
   };
 
-  /// ---------------------------------  --------  ---------------------  --------------------------------------
-  /// af-ZA-AdriNeural                   Female    General                Friendly, Positive
-  List<Voice> _parseVoicesFromOutput(String output) {
-    final voices = <Voice>[];
+  /// Parse voices from edge-tts output
+  List<VoiceModel> _parseVoicesFromOutput(String output) {
+    final voices = <VoiceModel>[];
     final lines = output.split('\n');
     
     bool headerPassed = false;
@@ -135,7 +135,7 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
       final trimmedLine = line.trim();
       if (trimmedLine.isEmpty) continue;
       
-      // 跳过表头和分隔线
+      // Skip header and separator lines
       if (trimmedLine.startsWith('Name') || trimmedLine.startsWith('-')) {
         headerPassed = true;
         continue;
@@ -145,11 +145,11 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
 
       try {
         final voice = _parseVoiceLine(trimmedLine);
-        if (voice != null && _supportedLanguages.contains(voice.locale)) {
+        if (voice != null && _supportedLanguages.contains(voice.languageCode)) {
           voices.add(voice);
         }
       } catch (e) {
-        // 忽略解析失败的行，继续处理其他行
+        // Ignore failed parsing lines, continue with others
         continue;
       }
     }
@@ -157,57 +157,62 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
     return voices;
   }
 
-  /// 解析单行语音信息
-  /// Edge TTS 表格格式: "af-ZA-AdriNeural                   Female    General                Friendly, Positive"
-  Voice? _parseVoiceLine(String line) {
+  /// Parse single voice line
+  /// Edge TTS table format: "af-ZA-AdriNeural                   Female    General                Friendly, Positive"
+  VoiceModel? _parseVoiceLine(String line) {
     try {
-      // 使用正则表达式解析表格行
-      // 匹配: 语音名称 + 空格 + 性别 + 空格 + 其他信息
-      final parts = line.split(RegExp(r'\s{2,}')); // 使用多个空格作为分隔符
+      // Use regex to parse table row
+      // Match: voice name + spaces + gender + spaces + other info
+      final parts = line.split(RegExp(r'\s{2,}')); // Use multiple spaces as separator
       
       if (parts.length < 2) return null;
       
       final name = parts[0].trim();
-      final gender = parts[1].trim();
+      final genderStr = parts[1].trim();
       
       if (name.isEmpty) return null;
       
-      // 从语音名称中提取 locale
-      // 例如: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
-      final locale = _extractLocaleFromName(name);
-      final language = locale.split('-')[0];
+      // Extract locale from voice name
+      // Example: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
+      final languageCode = _extractLocaleFromName(name);
       
-      // 生成显示名称
-      final displayName = _generateDisplayName(name, locale, gender);
+      // Generate display name
+      final displayName = _generateDisplayName(name, languageCode, genderStr);
 
-      return Voice(
-        name: name,
+      // Parse gender
+      final gender = _parseGender(genderStr);
+      
+      // Determine quality
+      final isNeural = name.toLowerCase().contains('neural');
+      final quality = isNeural ? VoiceQuality.neural : VoiceQuality.standard;
+
+      return VoiceModel(
+        id: name,
         displayName: displayName,
-        language: language,
+        languageCode: languageCode,
         gender: gender,
-        locale: locale,
-        isNeural: name.toLowerCase().contains('neural'),
-        isStandard: !name.toLowerCase().contains('neural'),
+        quality: quality,
+        isNeural: isNeural,
       );
     } catch (e) {
       return null;
     }
   }
   
-  /// 从语音名称中提取 locale
-  /// 例如: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
+  /// Extract locale from voice name
+  /// Example: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
   String _extractLocaleFromName(String name) {
     final parts = name.split('-');
     if (parts.length >= 2) {
       return '${parts[0]}-${parts[1]}';
     }
-    return 'en-US'; // 默认值
+    return 'en-US'; // Default value
   }
 
-  /// 生成友好的显示名称
-  String _generateDisplayName(String name, String locale, String gender) {
-    // 从语音名称中提取有意义的部分
-    // 例如: "zh-CN-XiaoxiaoNeural" -> "Xiaoxiao (Chinese, Female, Neural)"
+  /// Generate friendly display name
+  String _generateDisplayName(String name, String languageCode, String gender) {
+    // Extract meaningful parts from voice name
+    // Example: "zh-CN-XiaoxiaoNeural" -> "Xiaoxiao (Chinese, Female, Neural)"
     
     final parts = name.split('-');
     if (parts.length >= 3) {
@@ -215,9 +220,21 @@ class EdgeTTSProcessor extends BaseTTSProcessorImpl {
       final isNeural = name.toLowerCase().contains('neural');
       final qualityType = isNeural ? 'Neural' : 'Standard';
       
-      return '$voiceName ($locale, $gender, $qualityType)';
+      return '$voiceName ($languageCode, $gender, $qualityType)';
     }
     
     return name;
+  }
+
+  /// Parse gender from string
+  VoiceGender _parseGender(String genderStr) {
+    switch (genderStr.toLowerCase()) {
+      case 'male':
+        return VoiceGender.male;
+      case 'female':
+        return VoiceGender.female;
+      default:
+        return VoiceGender.unknown;
+    }
   }
 }

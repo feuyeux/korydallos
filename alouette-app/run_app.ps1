@@ -31,16 +31,9 @@ if (!(Test-Path "pubspec.yaml")) {
 Write-ColorOutput "📂 Running from: $(Get-Location)" "Green"
 Write-ColorOutput "🎯 Platform: $Platform" "Green"
 
-# 修复 NUGET.EXE 路径问题
+# Platform-specific setup (if needed in the future)
 if ($Platform.ToLower() -eq "windows") {
-    Write-ColorOutput "🔧 Setting up NUGET environment..." "Yellow"
-    $nugetPath = Join-Path $ScriptDir "nuget.exe"
-    if (Test-Path $nugetPath) {
-        $env:PATH = "$ScriptDir;$env:PATH"
-        Write-ColorOutput "✅ NUGET.EXE path added to environment" "Green"
-    } else {
-        Write-ColorOutput "⚠️  NUGET.EXE not found at $nugetPath" "Yellow"
-    }
+    Write-ColorOutput "🖥️  Preparing Windows environment..." "Yellow"
 }
 
 # 清理并获取依赖

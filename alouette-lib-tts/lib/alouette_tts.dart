@@ -1,4 +1,4 @@
-/// Alouette TTS - Multi-platform TTS library
+/// Alouette TTS - Multi-platform TTS library following Flutter naming conventions
 ///
 /// This library provides text-to-speech functionality through multiple implementations:
 /// - Edge TTS: Microsoft Edge's TTS engine via command line
@@ -19,7 +19,7 @@
 /// final voices = await ttsService.getVoices();
 ///
 /// // Synthesize text to audio data
-/// final audioData = await ttsService.synthesizeText('Hello world', voices.first.name);
+/// final audioData = await ttsService.synthesizeText('Hello world', voices.first.id);
 ///
 /// // Play audio using the built-in player
 /// final audioPlayer = AudioPlayer();
@@ -28,33 +28,43 @@
 ///
 /// ## Platform-Specific Engine Selection
 ///
-/// You can also manually select engines or use the unified platform factory:
+/// You can also manually select engines or use the unified engine factory:
 ///
 /// ```dart
 /// // Automatic platform-based selection
-/// final processor = await PlatformTTSFactory.instance.createForPlatform();
+/// final processor = await TTSEngineFactory.instance.createForPlatform();
 ///
 /// // Manual engine selection
-/// final edgeProcessor = await PlatformTTSFactory.instance.createForEngine(TTSEngineType.edge);
-/// final flutterProcessor = await PlatformTTSFactory.instance.createForEngine(TTSEngineType.flutter);
+/// final edgeProcessor = await TTSEngineFactory.instance.createForEngine(TTSEngineType.edge);
+/// final flutterProcessor = await TTSEngineFactory.instance.createForEngine(TTSEngineType.flutter);
 /// ```
-library alouette_tts;
+library alouette_lib_tts;
 
 // Core Services (Main API)
-export 'src/core/services.dart';
+export 'src/core/tts_service_interface.dart';
+export 'src/core/tts_service.dart';
+export 'src/core/unified_tts_service.dart';
+export 'src/core/tts_engine_factory.dart';
+export 'src/core/platform_detector.dart';
+export 'src/core/voice_service.dart';
+export 'src/core/audio_player.dart';
 
-// TTS Engines (Consolidated)
-export 'src/engines/base_processor.dart';
+// TTS Engines
+export 'src/engines/base_tts_processor.dart';
 export 'src/engines/edge_tts_processor.dart';
 export 'src/engines/flutter_tts_processor.dart';
 
-// Platform Management (Factory Pattern)
-export 'src/platform/platform_factory.dart';
-
 // Models
-export 'src/models/voice.dart';
-export 'src/models/tts_error.dart';
+export 'src/models/voice_model.dart';
 export 'src/models/tts_config.dart';
+export 'src/models/tts_status.dart';
+export 'src/models/tts_error.dart';
+
+// Exceptions (includes TTSError and TTSErrorCodes)
+export 'src/exceptions/tts_exceptions.dart';
+
+// Error Recovery
+export 'src/core/error_recovery_service.dart';
 
 // Enums
 export 'src/enums/voice_gender.dart';

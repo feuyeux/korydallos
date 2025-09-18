@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import '../models/voice.dart';
+import '../models/voice_model.dart';
 import '../utils/tts_logger.dart';
 
 /// 缓存条目基类
@@ -23,9 +23,9 @@ abstract class CacheEntry {
   int get sizeInBytes;
 }
 
-/// 语音列表缓存条目
+/// Voice list cache entry
 class VoiceCacheEntry extends CacheEntry {
-  final List<Voice> voices;
+  final List<VoiceModel> voices;
   final String engineType;
   
   VoiceCacheEntry({
@@ -37,15 +37,13 @@ class VoiceCacheEntry extends CacheEntry {
   
   @override
   int get sizeInBytes {
-    // 估算语音列表的内存大小
+    // Estimate memory size of voice list
     int totalSize = 0;
     for (final voice in voices) {
-      totalSize += voice.name.length * 2; // UTF-16
+      totalSize += voice.id.length * 2; // UTF-16
       totalSize += voice.displayName.length * 2;
-      totalSize += voice.language.length * 2;
-      totalSize += voice.gender.length * 2;
-      totalSize += voice.locale.length * 2;
-      totalSize += 16; // 布尔值和其他字段
+      totalSize += voice.languageCode.length * 2;
+      totalSize += 16; // Enums and other fields
     }
     totalSize += engineType.length * 2;
     return totalSize;
@@ -155,8 +153,8 @@ class CacheManager {
   
   // ============ 语音缓存管理 ============
   
-  /// 缓存语音列表
-  void cacheVoices(String engineType, List<Voice> voices) {
+  /// Cache voice list
+  void cacheVoices(String engineType, List<VoiceModel> voices) {
     if (!_config.enableVoiceCache) return;
     
     final key = _generateVoiceCacheKey(engineType);
@@ -172,8 +170,8 @@ class CacheManager {
     _enforceSize();
   }
   
-  /// 获取缓存的语音列表
-  List<Voice>? getCachedVoices(String engineType) {
+  /// Get cached voice list
+  List<VoiceModel>? getCachedVoices(String engineType) {
     if (!_config.enableVoiceCache) return null;
     
     final key = _generateVoiceCacheKey(engineType);

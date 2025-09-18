@@ -4,13 +4,16 @@ version: 1.0.0
 homepage: https://github.com/your-org/alouette-lib-trans
 
 environment:
-  sdk: ^3.8.1
-  flutter: ">=3.8.1"
+  sdk: ">=3.8.1 <4.0.0"
+  flutter: ">=3.24.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  # HTTP client for LLM provider communication
   http: ^1.1.0
+  # Meta annotations for better code analysis
+  meta: ^1.9.0
 
 dev_dependencies:
   flutter_test:

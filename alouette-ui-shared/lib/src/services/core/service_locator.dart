@@ -1,3 +1,5 @@
+import 'logging_service.dart';
+
 /// Service Locator for Dependency Injection
 ///
 /// Provides a simple service locator pattern for managing dependencies
@@ -6,6 +8,21 @@
 class ServiceLocator {
   static final Map<Type, dynamic> _services = {};
   static final Map<Type, dynamic Function()> _factories = {};
+  static bool _initialized = false;
+
+  /// Initialize the service locator with core services
+  static void initialize() {
+    if (_initialized) return;
+    
+    // Register core services
+    registerSingleton<LoggingService>(() => LoggingService.instance);
+    
+    _initialized = true;
+    
+    // Log initialization
+    final logger = get<LoggingService>();
+    logger.info('ServiceLocator initialized with core services', tag: 'ServiceLocator');
+  }
 
   /// Register a service instance
   ///
@@ -13,6 +30,16 @@ class ServiceLocator {
   /// Type T will be used as the key for retrieval
   static void register<T>(T service) {
     _services[T] = service;
+    
+    // Log service registration
+    if (_initialized) {
+      try {
+        final logger = get<LoggingService>();
+        logger.debug('Service registered: ${T.toString()}', tag: 'ServiceLocator');
+      } catch (e) {
+        // Ignore logging errors during registration
+      }
+    }
   }
 
   /// Register a factory function for lazy service creation
@@ -21,6 +48,16 @@ class ServiceLocator {
   /// The service will be created when first accessed
   static void registerFactory<T>(T Function() factory) {
     _factories[T] = factory;
+    
+    // Log factory registration
+    if (_initialized) {
+      try {
+        final logger = get<LoggingService>();
+        logger.debug('Factory registered: ${T.toString()}', tag: 'ServiceLocator');
+      } catch (e) {
+        // Ignore logging errors during registration
+      }
+    }
   }
 
   /// Register a singleton factory
@@ -33,6 +70,16 @@ class ServiceLocator {
       instance ??= factory();
       return instance!;
     };
+    
+    // Log singleton registration
+    if (_initialized) {
+      try {
+        final logger = get<LoggingService>();
+        logger.debug('Singleton registered: ${T.toString()}', tag: 'ServiceLocator');
+      } catch (e) {
+        // Ignore logging errors during registration
+      }
+    }
   }
 
   /// Get a service instance
@@ -81,8 +128,24 @@ class ServiceLocator {
   ///
   /// Useful for testing or when resetting the application state
   static void clear() {
+    if (_initialized) {
+      try {
+        final logger = get<LoggingService>();
+        logger.info('ServiceLocator cleared', tag: 'ServiceLocator');
+      } catch (e) {
+        // Ignore logging errors during clear
+      }
+    }
+    
     _services.clear();
     _factories.clear();
+    _initialized = false;
+  }
+
+  /// Get the logging service (convenience method)
+  static LoggingService get logger {
+    if (!_initialized) initialize();
+    return get<LoggingService>();
   }
 
   /// Get all registered service types
