@@ -80,26 +80,25 @@ class LanguageGridSelector extends StatelessWidget {
           ),
           const AtomicSpacer(AtomicSpacing.small),
         ],
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 3,
-            crossAxisSpacing: SpacingTokens.s,
-            mainAxisSpacing: SpacingTokens.s,
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 100,
+            maxHeight: 200, // 增加最大高度
           ),
-          itemCount: LanguageConstants.supportedLanguages.length,
-          itemBuilder: (context, index) {
-            final language = LanguageConstants.supportedLanguages[index];
-            final isSelected = selectedLanguages.contains(language);
-
-            return LanguageChip(
-              language: language,
-              isSelected: isSelected,
-              onTap: () => _handleLanguageTap(language),
-            );
-          },
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: LanguageConstants.supportedLanguages.map((language) {
+                final isSelected = selectedLanguages.contains(language);
+                return LanguageChip(
+                  language: language,
+                  isSelected: isSelected,
+                  onTap: () => _handleLanguageTap(language),
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );
@@ -139,53 +138,37 @@ class LanguageChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Material(
-      color: isSelected
-          ? colorScheme.primaryContainer
-          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: SpacingTokens.s,
-            vertical: SpacingTokens.xs,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
-            border: Border.all(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outline.withValues(alpha: 0.5),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                language.flag,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const AtomicSpacer(
-                AtomicSpacing.xs,
-                direction: AtomicSpacerDirection.horizontal,
-              ),
-              Expanded(
-                child: AtomicText(
-                  language.name,
-                  variant: AtomicTextVariant.labelSmall,
-                  color: isSelected
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurface,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+    return FilterChip(
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      avatar: Text(
+        language.flag,
+        style: const TextStyle(fontSize: 14),
+      ),
+      label: Text(
+        language.name,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
         ),
       ),
+      backgroundColor: colorScheme.surface,
+      selectedColor: colorScheme.primaryContainer,
+      checkmarkColor: colorScheme.onPrimaryContainer,
+      labelStyle: TextStyle(
+        color: isSelected
+            ? colorScheme.onPrimaryContainer
+            : colorScheme.onSurface,
+      ),
+      side: BorderSide(
+        color: isSelected
+            ? colorScheme.primary
+            : colorScheme.outline.withValues(alpha: 0.4),
+        width: 1,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
     );
   }
 }

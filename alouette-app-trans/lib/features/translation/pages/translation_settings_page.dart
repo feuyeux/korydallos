@@ -39,7 +39,7 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
       appBar: AppBar(
         title: const Text('Translation Settings'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

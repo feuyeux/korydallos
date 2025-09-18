@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../constants/language_constants.dart';
 import '../../tokens/app_tokens.dart';
 import '../atoms/atomic_elements.dart';
@@ -9,10 +10,9 @@ import '../molecules/status_indicator.dart';
 
 /// Translation Panel Organism
 ///
-/// Complex component that handles translation input, language selection,
-/// and translation controls in a cohesive interface.
+/// Complex component for translation input, language selection, and results display
 class TranslationPanel extends StatefulWidget {
-  final TextEditingController? textController;
+  final TextEditingController textController;
   final List<LanguageOption> selectedLanguages;
   final ValueChanged<List<LanguageOption>>? onLanguagesChanged;
   final VoidCallback? onTranslate;
@@ -24,7 +24,7 @@ class TranslationPanel extends StatefulWidget {
 
   const TranslationPanel({
     super.key,
-    this.textController,
+    required this.textController,
     required this.selectedLanguages,
     this.onLanguagesChanged,
     this.onTranslate,
@@ -40,20 +40,12 @@ class TranslationPanel extends StatefulWidget {
 }
 
 class _TranslationPanelState extends State<TranslationPanel> {
-  late final TextEditingController _textController;
+  late TextEditingController _textController;
 
   @override
   void initState() {
     super.initState();
-    _textController = widget.textController ?? TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    if (widget.textController == null) {
-      _textController.dispose();
-    }
-    super.dispose();
+    _textController = widget.textController;
   }
 
   @override
@@ -63,19 +55,96 @@ class _TranslationPanelState extends State<TranslationPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           _buildHeader(),
-          const AtomicSpacer(AtomicSpacing.medium),
+          const SizedBox(height: 16),
+          
+          // Text input
           _buildTextInput(),
-          const AtomicSpacer(AtomicSpacing.medium),
-          _buildLanguageSelection(),
-          const AtomicSpacer(AtomicSpacing.medium),
+          const SizedBox(height: 16),
+          
+          // Language selection
+          const Text(
+            'Target Languages',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          
+          // Language buttons
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: _selectAllLanguages,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: const Size(0, 32),
+                ),
+                child: const Text('Select All', style: TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: _clearLanguages,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: const Size(0, 32),
+                ),
+                child: const Text('Clear', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Language chips - scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: LanguageConstants.supportedLanguages.map((language) {
+                  final isSelected = widget.selectedLanguages.contains(language);
+                  return FilterChip(
+                    selected: isSelected,
+                    onSelected: (_) => _handleLanguageTap(language),
+                    avatar: Text(
+                      language.flag,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    label: Text(
+                      language.name,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                    checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    side: BorderSide(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Action buttons
           _buildActionBar(),
+          
+          // Error display
           if (widget.errorMessage != null) ...[
-            const AtomicSpacer(AtomicSpacing.medium),
+            const SizedBox(height: 12),
             _buildErrorDisplay(),
           ],
+          
+          // Results
           if (widget.translationResults != null && widget.translationResults!.isNotEmpty) ...[
-            const AtomicSpacer(AtomicSpacing.medium),
+            const SizedBox(height: 16),
             _buildResults(),
           ],
         ],
@@ -89,76 +158,32 @@ class _TranslationPanelState extends State<TranslationPanel> {
         const AtomicIcon(
           Icons.translate,
           size: AtomicIconSize.medium,
+          color: Colors.blue,
         ),
-        const AtomicSpacer(
-          AtomicSpacing.small,
-          direction: AtomicSpacerDirection.horizontal,
-        ),
-        const AtomicText(
+        const SizedBox(width: 8),
+        const Text(
           'Translation Input',
-          variant: AtomicTextVariant.titleMedium,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const Spacer(),
-        if (widget.isCompactMode)
-          AlouetteButton(
-            icon: Icons.settings,
-            onPressed: () => _showSettings(),
-            variant: AlouetteButtonVariant.tertiary,
-            size: AlouetteButtonSize.small,
-          ),
       ],
     );
   }
 
   Widget _buildTextInput() {
-    return AlouetteTextField(
-      controller: _textController,
-      labelText: 'Text to translate',
-      hintText: 'Enter text to translate...',
-      type: AlouetteTextFieldType.multiline,
-      size: AlouetteTextFieldSize.large,
-      maxLines: widget.isCompactMode ? 3 : 5,
-      isEnabled: !widget.isTranslating,
-    );
-  }
-
-  Widget _buildLanguageSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const AtomicText(
-              'Target Languages',
-              variant: AtomicTextVariant.labelLarge,
-            ),
-            const Spacer(),
-            AlouetteButton(
-              text: 'Select All',
-              onPressed: _selectAllLanguages,
-              variant: AlouetteButtonVariant.tertiary,
-              size: AlouetteButtonSize.small,
-            ),
-            const AtomicSpacer(
-              AtomicSpacing.xs,
-              direction: AtomicSpacerDirection.horizontal,
-            ),
-            AlouetteButton(
-              text: 'Clear',
-              onPressed: _clearLanguages,
-              variant: AlouetteButtonVariant.tertiary,
-              size: AlouetteButtonSize.small,
-            ),
-          ],
+    return SizedBox(
+      height: 120,
+      child: TextField(
+        controller: _textController,
+        maxLines: null,
+        expands: true,
+        decoration: const InputDecoration(
+          labelText: 'Text to translate',
+          hintText: 'Enter text to translate...',
+          border: OutlineInputBorder(),
         ),
-        const AtomicSpacer(AtomicSpacing.small),
-        LanguageGridSelector(
-          selectedLanguages: widget.selectedLanguages,
-          onLanguagesChanged: widget.onLanguagesChanged ?? (_) {},
-          multiSelect: true,
-          crossAxisCount: widget.isCompactMode ? 2 : 3,
-        ),
-      ],
+        enabled: !widget.isTranslating,
+      ),
     );
   }
 
@@ -168,37 +193,50 @@ class _TranslationPanelState extends State<TranslationPanel> {
     final canTranslate = hasText && hasLanguages && !widget.isTranslating;
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        AlouetteButton(
-          text: 'Clear',
-          icon: Icons.clear,
-          onPressed: hasText ? _handleClear : null,
-          variant: AlouetteButtonVariant.secondary,
-          size: AlouetteButtonSize.medium,
+        OutlinedButton.icon(
+          onPressed: widget.onClear,
+          icon: const Icon(Icons.clear, size: 18),
+          label: const Text('Clear'),
         ),
-        const AtomicSpacer(
-          AtomicSpacing.small,
-          direction: AtomicSpacerDirection.horizontal,
-        ),
-        AlouetteButton(
-          text: 'Translate',
-          icon: Icons.translate,
-          onPressed: canTranslate ? widget.onTranslate : null,
-          variant: AlouetteButtonVariant.primary,
-          size: AlouetteButtonSize.medium,
-          isLoading: widget.isTranslating,
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: canTranslate ? widget.onTranslate : null,
+            icon: widget.isTranslating
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.translate, size: 18),
+            label: Text(widget.isTranslating ? 'Translating...' : 'Translate'),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildErrorDisplay() {
-    return StatusIndicator(
-      status: StatusType.error,
-      message: widget.errorMessage!,
-      actionText: 'Retry',
-      onActionPressed: widget.onTranslate,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        border: Border.all(color: Colors.red.shade200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.errorMessage!,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -206,11 +244,11 @@ class _TranslationPanelState extends State<TranslationPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AtomicText(
+        const Text(
           'Translation Results',
-          variant: AtomicTextVariant.titleMedium,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        const AtomicSpacer(AtomicSpacing.small),
+        const SizedBox(height: 8),
         ...widget.translationResults!.entries.map((entry) => _buildResultItem(entry)),
       ],
     );
@@ -226,78 +264,68 @@ class _TranslationPanelState extends State<TranslationPanel> {
         ));
 
     return Container(
-      margin: const EdgeInsets.only(bottom: SpacingTokens.s),
-      child: AtomicCard(
-        padding: const EdgeInsets.all(SpacingTokens.m),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  language.flag,
-                  style: const TextStyle(fontSize: 20),
-                ),
-                const AtomicSpacer(
-                  AtomicSpacing.xs,
-                  direction: AtomicSpacerDirection.horizontal,
-                ),
-                AtomicText(
-                  language.name,
-                  variant: AtomicTextVariant.labelLarge,
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const AtomicIcon(Icons.copy, size: AtomicIconSize.small),
-                  onPressed: () => _copyToClipboard(entry.value),
-                  tooltip: 'Copy translation',
-                ),
-              ],
-            ),
-            const AtomicSpacer(AtomicSpacing.xs),
-            AtomicText(
-              entry.value,
-              variant: AtomicTextVariant.body,
-            ),
-          ],
-        ),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
       ),
-    );
-  }
-
-  void _handleClear() {
-    _textController.clear();
-    widget.onClear?.call();
-  }
-
-  void _selectAllLanguages() {
-    widget.onLanguagesChanged?.call(LanguageConstants.supportedLanguages);
-  }
-
-  void _clearLanguages() {
-    widget.onLanguagesChanged?.call([]);
-  }
-
-  void _showSettings() {
-    // Show settings dialog - implementation depends on app requirements
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const AtomicText('Translation Settings', variant: AtomicTextVariant.titleMedium),
-        content: const AtomicText('Settings panel would go here', variant: AtomicTextVariant.body),
-        actions: [
-          AlouetteButton(
-            text: 'Close',
-            onPressed: () => Navigator.of(context).pop(),
-            variant: AlouetteButtonVariant.tertiary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                language.flag,
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                language.name,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.copy, size: 18),
+                onPressed: () => _copyToClipboard(entry.value),
+                tooltip: 'Copy translation',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            entry.value,
+            style: const TextStyle(fontSize: 16),
           ),
         ],
       ),
     );
   }
 
+  void _handleLanguageTap(LanguageOption language) {
+    final currentSelection = List<LanguageOption>.from(widget.selectedLanguages);
+    
+    if (currentSelection.contains(language)) {
+      currentSelection.remove(language);
+    } else {
+      currentSelection.add(language);
+    }
+    
+    widget.onLanguagesChanged?.call(currentSelection);
+  }
+
+  void _selectAllLanguages() {
+    widget.onLanguagesChanged?.call(List.from(LanguageConstants.supportedLanguages));
+  }
+
+  void _clearLanguages() {
+    widget.onLanguagesChanged?.call([]);
+  }
+
   void _copyToClipboard(String text) {
-    // Copy to clipboard - implementation depends on platform
+    Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Translation copied to clipboard')),
     );

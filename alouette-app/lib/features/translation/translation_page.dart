@@ -64,7 +64,7 @@ class _TranslationPageState extends State<TranslationPage> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            flex: 3,
+            flex: 4,
             child: ValueListenableBuilder<bool>(
               valueListenable: _controller.isTranslatingNotifier,
               builder: (context, isTranslating, child) {
@@ -100,7 +100,7 @@ class _TranslationPageState extends State<TranslationPage> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),

@@ -114,7 +114,7 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
         ),
         const Spacer(),
         AlouetteButton(
-          icon: _showAdvanced ? Icons.expand_less : Icons.expand_more,
+          child: Icon(_showAdvanced ? Icons.expand_less : Icons.expand_more),
           onPressed: () => setState(() => _showAdvanced = !_showAdvanced),
           variant: AlouetteButtonVariant.tertiary,
           size: AlouetteButtonSize.small,
@@ -180,9 +180,9 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AlouetteButton(
-              icon: widget.isPlaying && !widget.isPaused
+              child: Icon(widget.isPlaying && !widget.isPaused
                   ? Icons.pause
-                  : Icons.play_arrow,
+                  : Icons.play_arrow),
               onPressed: canPlay
                   ? (widget.isPlaying && !widget.isPaused
                       ? widget.onPause
@@ -196,7 +196,7 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
               direction: AtomicSpacerDirection.horizontal,
             ),
             AlouetteButton(
-              icon: Icons.stop,
+              child: Icon(Icons.stop),
               onPressed: widget.isPlaying ? widget.onStop : null,
               variant: AlouetteButtonVariant.secondary,
               size: AlouetteButtonSize.large,

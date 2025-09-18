@@ -62,7 +62,7 @@ class _TranslationHomePageState extends State<TranslationHomePage> {
 
             // Translation input area
             Expanded(
-              flex: 3,
+              flex: 4,
               child: TranslationInputWidget(
                 textController: _controller.textController,
                 selectedLanguages: _controller.selectedLanguages,
@@ -78,7 +78,7 @@ class _TranslationHomePageState extends State<TranslationHomePage> {
 
             // Translation result area
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
