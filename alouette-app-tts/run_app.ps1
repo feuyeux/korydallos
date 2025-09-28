@@ -1,32 +1,32 @@
-# Alouette TTS 快速启动脚本 (PowerShell)
 # Quick start script for Alouette TTS
+# Alouette TTS PowerShell Launch Script
 
-Write-Host "🚀 Starting Alouette TTS" -ForegroundColor Blue
+Write-Host "[START] Starting Alouette TTS" -ForegroundColor Blue
 
-# 切换到脚本所在目录
+# Change to script directory
 Set-Location -Path $PSScriptRoot
 
-# 检查pubspec.yaml
+# Check pubspec.yaml
 if (-not (Test-Path "pubspec.yaml")) {
-    Write-Host "❌ Error: pubspec.yaml not found in $(Get-Location)" -ForegroundColor Red
+    Write-Host "[ERROR] pubspec.yaml not found in $(Get-Location)" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }
 
-Write-Host "📂 Running from: $(Get-Location)" -ForegroundColor Green
+Write-Host "[INFO] Running from: $(Get-Location)" -ForegroundColor Green
 
-# 默认在Windows上运行，如果有参数则使用参数指定的平台
+# Default to Windows platform, use argument if provided
 $Platform = if ($args[0]) { $args[0] } else { "windows" }
-Write-Host "🎯 Platform: $Platform" -ForegroundColor Green
+Write-Host "[INFO] Platform: $Platform" -ForegroundColor Green
 
 # Platform-specific setup (if needed in the future)
 if ($Platform.ToLower() -eq "windows") {
-    Write-Host "🖥️  Preparing Windows environment..." -ForegroundColor Yellow
+    Write-Host "[SETUP] Preparing Windows environment..." -ForegroundColor Yellow
 }
 
-# 获取依赖并运行应用
-Write-Host "📦 Getting dependencies..." -ForegroundColor Yellow
+# Get dependencies and run application
+Write-Host "[DEPS] Getting dependencies..." -ForegroundColor Yellow
 flutter pub get
 
-Write-Host "🚀 Launching Flutter app..." -ForegroundColor Green
+Write-Host "[LAUNCH] Launching Flutter app..." -ForegroundColor Green
 flutter run -d $Platform --debug

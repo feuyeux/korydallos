@@ -1,145 +1,117 @@
 # OS generated files
+.AppleDouble
 .DS_Store
 .DS_Store?
-._*
+.LSOverride
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+._*
+Icon?
 Thumbs.db
+ehthumbs.db
 
-# IDE
-.vscode/
+# IDE and editors
+.atom/
 .idea/
 .kiro/
 .qoder/
-*.iml
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-
-
-# Flutter/Dart
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
-build/
-.flutter-plugins
-.flutter-plugins-dependencies
-.metadata
-
-# Android
-# **/android/build/
-# **/android/.gradle/
-# **/android/captures/
-# **/android/gradlew
-# **/android/gradlew.bat
-# **/android/local.properties
-# **/android/**/GeneratedPluginRegistrant.java
-# **/android/key.properties
-# *.jks
-# .gradle/
-
-# Build reports
-**/build/reports/
-problems-report.html
-
-# iOS
-# **/ios/build/
-# **/ios/.symlinks/
-# **/ios/Flutter/App.framework
-# **/ios/Flutter/Flutter.framework
-# **/ios/Flutter/Flutter.podspec
-# **/ios/Flutter/Generated.xcconfig
-# **/ios/Flutter/app.flx
-# **/ios/Flutter/app.zip
-# **/ios/Flutter/flutter_assets/
-# **/ios/Flutter/flutter_export_environment.sh
-# **/ios/ServiceDefinitions.json
-# **/ios/Runner/GeneratedPluginRegistrant.*
-
-# Web
-**/web/build/
-
-# Windows
-# **/windows/flutter/generated_plugin_registrant.cc
-# **/windows/flutter/generated_plugin_registrant.h
-
-# macOS
-# **/macos/Flutter/GeneratedPluginRegistrant.swift
-
-# Coverage
-coverage/
-
-# Symbols
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Test reports
-test_reports/
-coverage_reports/
-# Flutter/Dart package files
-**/pubspec.lock
-
-# Exceptions for icons and logos
-!**/assets/icons/
-!**/web/icons/
-
-*.exe
-
-# Additional rules from subdirectories
-*.class
-*.pyc
-*.swp
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.idea/
-#.vscode/
-**/doc/api/
-**/ios/Flutter/.last_build_id
-/android/app/debug
-/android/app/profile
-/android/app/release
-*.tmp
+*.sublime-*
+
+# Temporary files
 *~
+*.backup
+*.bak
+*.temp
+*.tmp
 .#*
+
+# Logs
+*.log
+firebase-debug.log
+firebase-debug.*.log
+
+# Environment files
 .env
 .env.local
 .env.production
 .env.staging
-.vscode/settings.json
-.vscode/launch.json
-.vscode/tasks.json
-*.sublime-*
-.AppleDouble
-.LSOverride
-Icon?
-.Spotlight-V100
-.Trashes
-*.lcov
-.firebase/
-firebase-debug.log
-firebase-debug.*.log
-*.g.dart
-*.freezed.dart
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+.packages
+.pub-cache/
+.pub/
+build/
+**/pubspec.lock
+
+# Generated files
 *.config.dart
-*.arb~
-test/.test_coverage.dart
-*.backup
-*.bak
-dist/
+*.freezed.dart
+*.g.dart
+
+# Android
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS
+**/ios/Flutter/.last_build_id
+
+# Web
+**/web/build/
+
+# Build and distribution
 artifacts/
+build/
+dist/
+**/build/reports/
+
+# Coverage and testing
+coverage/
+coverage_reports/
+test_reports/
+*.lcov
+test/.test_coverage.dart
+
+# Version control
+.history
+.svn/
+
+# Other languages
+*.class
+*.pyc
+
+# Firebase
+.firebase/
+
+# Swift
+.swiftpm/
+
+# Flutter build artifacts
+app.*.map.json
+app.*.symbols
+migrate_working_dir/
+**/doc/api/
+problems-report.html
+
+# Translation files
+*.arb~
+
+# Executables
+*.exe
+
+# Tools
+.build/
+.buildlog/
+.codebuddy/
+
+# Exceptions (files to include)
+!**/assets/icons/
+!**/web/icons/

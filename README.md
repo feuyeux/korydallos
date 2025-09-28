@@ -43,19 +43,25 @@ Alouette supports 12+ languages with high-quality neural voices:
 ## 📱 Applications
 
 ### alouette-app
+
 **Combined Translation & TTS Application**
+
 - Full-featured application with both translation and TTS capabilities
 - Unified interface for seamless workflow between translation and speech synthesis
 - Ideal for users who need both functionalities
 
-### alouette-app-trans  
+### alouette-app-trans
+
 **Specialized Translation Application**
+
 - Focused on AI-powered translation using local LLM providers
 - Supports Ollama and LM Studio for privacy-focused translation
 - Batch translation to multiple languages simultaneously
 
 ### alouette-app-tts
+
 **Specialized Text-to-Speech Application**
+
 - High-quality speech synthesis with platform-specific optimization
 - Edge TTS for desktop platforms, Flutter TTS for mobile/web
 - Advanced voice controls and audio export capabilities
@@ -63,21 +69,27 @@ Alouette supports 12+ languages with high-quality neural voices:
 ## 📚 Libraries
 
 ### alouette-lib-trans
+
 **Translation Services Library**
+
 - Centralized AI translation functionality
 - Support for multiple LLM providers (Ollama, LM Studio)
 - Comprehensive error handling and connection management
 - Unified API for all translation operations
 
 ### alouette-lib-tts
+
 **Text-to-Speech Services Library**
+
 - Multi-platform TTS with automatic engine selection
 - Edge TTS integration for high-quality desktop synthesis
 - Flutter TTS for native mobile and web support
 - Cross-platform audio playback and file generation
 
 ### alouette-ui-shared
+
 **Shared UI Components & Services Library**
+
 - Atomic design component system (atoms, molecules, organisms)
 - Centralized service locator and dependency injection
 - Design token system for consistent theming
@@ -95,24 +107,27 @@ Alouette supports 12+ languages with high-quality neural voices:
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/feuyeux/alouette.git
    cd alouette
    ```
 
 2. **Install dependencies for all modules**
+
    ```bash
    # Install dependencies for all applications and libraries
    find . -name "pubspec.yaml" -not -path "./.*" -exec dirname {} \; | xargs -I {} sh -c 'cd "{}" && flutter pub get'
    ```
 
 3. **Set up AI translation (optional)**
+
    ```bash
    # Install and start Ollama
    # Visit https://ollama.ai for installation instructions
    ollama serve
    ollama pull llama3.2
-   
+
    # Or install LM Studio from https://lmstudio.ai
    ```
 
@@ -123,40 +138,122 @@ Alouette supports 12+ languages with high-quality neural voices:
 
 ### Running Applications
 
+Each application includes platform-specific run scripts for convenience:
+
+#### **macOS/Linux**
+
 ```bash
 # Run the main combined application
+cd alouette-app && ./run_app.sh
+# Or manually:
 cd alouette-app && flutter run
 
-# Run the translation-focused application  
+# Run the translation-focused application
+cd alouette-app-trans && ./run_app.sh
+# Or manually:
 cd alouette-app-trans && flutter run
 
 # Run the TTS-focused application
+cd alouette-app-tts && ./run_app.sh
+# Or manually:
 cd alouette-app-tts && flutter run
 ```
+
+#### **Windows (PowerShell)**
+
+**Option 1: Using the unified launcher (Recommended)**
+```powershell
+# Run the main combined application
+.\run_alouette.ps1 -App app
+
+# Run the translation-focused application
+.\run_alouette.ps1 -App trans
+
+# Run the TTS-focused application
+.\run_alouette.ps1 -App tts
+
+# Run with specific platform
+.\run_alouette.ps1 -App app -Platform chrome
+```
+
+**Option 2: Using individual scripts**
+```powershell
+# Run the main combined application
+cd alouette-app
+.\run_app.ps1
+
+# Run the translation-focused application
+cd ..\alouette-app-trans
+.\run_app.ps1
+
+# Run the TTS-focused application
+cd ..\alouette-app-tts
+.\run_app.ps1
+```
+
+**Option 3: Manual Flutter commands**
+```powershell
+# Run any application manually
+cd alouette-app
+flutter pub get
+flutter run
+```
+
+**PowerShell Troubleshooting:**
+- **Fixed encoding issues**: All scripts now use ASCII-compatible output (no emoji characters)
+- If execution policy blocks scripts, run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+- For best experience, use Windows Terminal or PowerShell 7+ instead of legacy Command Prompt
+- Use the unified launcher `run_alouette.ps1` for the most reliable experience
+- All output now uses `[TAG]` format instead of emoji for better compatibility
+
+#### **Windows (Command Prompt)**
+
+```cmd
+# Run the main combined application
+cd alouette-app & flutter run
+
+# Run the translation-focused application
+cd alouette-app-trans & flutter run
+
+# Run the TTS-focused application
+cd alouette-app-tts & flutter run
+```
+
+#### **Platform-Specific Notes**
+
+- **macOS**: Ensure Xcode is installed for iOS development
+- **Windows**: Ensure Visual Studio with C++ tools is installed for Windows development
+- **Linux**: Install required development packages: `sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev`
+- **All Platforms**: Use `flutter doctor` to verify your development environment setup
 
 ## 🏛️ Architecture Principles
 
 ### 1. **Separation of Concerns**
+
 - Applications focus on user experience and workflows
 - Libraries provide specialized functionality
 - Clear boundaries between translation, TTS, and UI concerns
 
 ### 2. **Code Deduplication**
+
 - Single implementation of each feature in appropriate library
 - Applications consume functionality rather than reimplementing
 - Shared UI components eliminate duplicate interface code
 
 ### 3. **Platform Optimization**
+
 - Automatic selection of best TTS engine per platform
 - Desktop: Edge TTS for high-quality neural voices
 - Mobile/Web: Flutter TTS for native integration
 
 ### 4. **Dependency Injection**
+
 - Service locator pattern for loose coupling
 - Easy testing with mock services
 - Centralized service lifecycle management
 
 ### 5. **Design Consistency**
+
 - Design token system for unified styling
 - Atomic design component hierarchy
 - Consistent user experience across all applications
@@ -218,16 +315,19 @@ cd alouette-ui-shared && flutter test
 ## 📖 Documentation
 
 ### Library Documentation
+
 - [Translation Library](alouette-lib-trans/README.md) - AI translation services
-- [TTS Library](alouette-lib-tts/README.md) - Text-to-speech services  
+- [TTS Library](alouette-lib-tts/README.md) - Text-to-speech services
 - [UI Shared Library](alouette-ui-shared/README.md) - UI components and services
 
 ### Application Documentation
+
 - [Main App](alouette-app/README.md) - Combined functionality
 - [Translation App](alouette-app-trans/README.md) - Translation specialist
 - [TTS App](alouette-app-tts/README.md) - TTS specialist
 
 ### Architecture Documentation
+
 - [Migration Guide](MIGRATION_GUIDE.md) - Upgrading from legacy architecture
 - [API Documentation](API_DOCUMENTATION.md) - Complete API reference
 - [Platform Guide](PLATFORM_GUIDE.md) - Platform-specific behavior
