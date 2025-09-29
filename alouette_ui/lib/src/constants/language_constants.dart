@@ -81,6 +81,12 @@ class LanguageConstants {
       flag: '🇷🇺',
     ),
     LanguageOption(
+      code: 'el-GR',
+      name: 'Greek',
+      nativeName: 'Ελληνικά',
+      flag: '🇬🇷',
+    ),
+    LanguageOption(
       code: 'ar-SA',
       name: 'Arabic',
       nativeName: 'العربية',
@@ -91,12 +97,6 @@ class LanguageConstants {
       name: 'Hindi',
       nativeName: 'हिन्दी',
       flag: '🇮🇳',
-    ),
-    LanguageOption(
-      code: 'el-GR',
-      name: 'Greek',
-      nativeName: 'Ελληνικά',
-      flag: '🇬🇷',
     ),
   ];
 

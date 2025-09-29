@@ -1,6 +1,7 @@
 name: alouette_ui
 description: Shared UI components, themes, and service management for Alouette applications
-version: 1.0.0
+publish_to: "none"
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.8.1 <4.0.0"

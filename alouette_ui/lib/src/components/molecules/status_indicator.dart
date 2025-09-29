@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../tokens/app_tokens.dart';
 import '../atoms/atomic_elements.dart';
-import '../atoms/alouette_button.dart';
+
 
 /// Status Indicator Molecule
 ///
@@ -64,11 +64,9 @@ class StatusIndicator extends StatelessWidget {
               AtomicSpacing.small,
               direction: AtomicSpacerDirection.horizontal,
             ),
-            AlouetteButton(
-              text: actionText!,
+            TextButton(
               onPressed: onActionPressed,
-              variant: AlouetteButtonVariant.tertiary,
-              size: AlouetteButtonSize.small,
+              child: Text(actionText!),
             ),
           ],
         ],

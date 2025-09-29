@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../tokens/app_tokens.dart';
 import '../atoms/atomic_elements.dart';
-import '../atoms/alouette_button.dart';
-import '../atoms/alouette_slider.dart';
+
 import '../molecules/voice_selector.dart';
 import '../molecules/status_indicator.dart';
 
@@ -113,11 +112,9 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
           variant: AtomicTextVariant.titleMedium,
         ),
         const Spacer(),
-        AlouetteButton(
-          child: Icon(_showAdvanced ? Icons.expand_less : Icons.expand_more),
+        IconButton(
+          icon: Icon(_showAdvanced ? Icons.expand_less : Icons.expand_more),
           onPressed: () => setState(() => _showAdvanced = !_showAdvanced),
-          variant: AlouetteButtonVariant.tertiary,
-          size: AlouetteButtonSize.small,
         ),
         if (widget.isLoading) ...[
           const AtomicSpacer(
@@ -179,27 +176,23 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AlouetteButton(
-              child: Icon(widget.isPlaying && !widget.isPaused
-                  ? Icons.pause
-                  : Icons.play_arrow),
+            ElevatedButton(
               onPressed: canPlay
                   ? (widget.isPlaying && !widget.isPaused
                       ? widget.onPause
                       : widget.onPlay)
                   : null,
-              variant: AlouetteButtonVariant.primary,
-              size: AlouetteButtonSize.large,
+              child: Icon(widget.isPlaying && !widget.isPaused
+                  ? Icons.pause
+                  : Icons.play_arrow),
             ),
             const AtomicSpacer(
               AtomicSpacing.medium,
               direction: AtomicSpacerDirection.horizontal,
             ),
-            AlouetteButton(
-              child: Icon(Icons.stop),
+            OutlinedButton(
               onPressed: widget.isPlaying ? widget.onStop : null,
-              variant: AlouetteButtonVariant.secondary,
-              size: AlouetteButtonSize.large,
+              child: Icon(Icons.stop),
             ),
           ],
         ),
@@ -208,18 +201,34 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
   }
 
   Widget _buildVolumeControl() {
-    return AlouetteSlider(
-      value: widget.volume,
-      onChanged: widget.onVolumeChanged,
-      min: 0.0,
-      max: 1.0,
-      divisions: 10,
-      labelText: 'Volume',
-      prefixIcon: Icons.volume_down,
-      suffixIcon: Icons.volume_up,
-      showValue: true,
-      valueFormatter: (value) => '${(value * 100).round()}%',
-      isEnabled: !widget.isLoading,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.volume_down),
+            const SizedBox(width: 8),
+            const AtomicText(
+              'Volume',
+              variant: AtomicTextVariant.labelLarge,
+            ),
+            const Spacer(),
+            AtomicText(
+              '${(widget.volume * 100).round()}%',
+              variant: AtomicTextVariant.labelMedium,
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.volume_up),
+          ],
+        ),
+        Slider(
+          value: widget.volume,
+          onChanged: widget.onVolumeChanged,
+          min: 0.0,
+          max: 1.0,
+          divisions: 10,
+        ),
+      ],
     );
   }
 
@@ -232,30 +241,60 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
           variant: AtomicTextVariant.labelLarge,
         ),
         const AtomicSpacer(AtomicSpacing.small),
-        AlouetteSlider(
-          value: widget.speechRate,
-          onChanged: widget.onSpeechRateChanged,
-          min: 0.5,
-          max: 2.0,
-          divisions: 15,
-          labelText: 'Speech Rate',
-          prefixIcon: Icons.speed,
-          showValue: true,
-          valueFormatter: (value) => '${value.toStringAsFixed(1)}x',
-          isEnabled: !widget.isLoading,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.speed),
+                const SizedBox(width: 8),
+                const AtomicText(
+                  'Speech Rate',
+                  variant: AtomicTextVariant.labelLarge,
+                ),
+                const Spacer(),
+                AtomicText(
+                  '${widget.speechRate.toStringAsFixed(1)}x',
+                  variant: AtomicTextVariant.labelMedium,
+                ),
+              ],
+            ),
+            Slider(
+              value: widget.speechRate,
+              onChanged: widget.onSpeechRateChanged,
+              min: 0.5,
+              max: 2.0,
+              divisions: 15,
+            ),
+          ],
         ),
         const AtomicSpacer(AtomicSpacing.medium),
-        AlouetteSlider(
-          value: widget.pitch,
-          onChanged: widget.onPitchChanged,
-          min: 0.5,
-          max: 2.0,
-          divisions: 15,
-          labelText: 'Pitch',
-          prefixIcon: Icons.tune,
-          showValue: true,
-          valueFormatter: (value) => '${value.toStringAsFixed(1)}x',
-          isEnabled: !widget.isLoading,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune),
+                const SizedBox(width: 8),
+                const AtomicText(
+                  'Pitch',
+                  variant: AtomicTextVariant.labelLarge,
+                ),
+                const Spacer(),
+                AtomicText(
+                  '${widget.pitch.toStringAsFixed(1)}x',
+                  variant: AtomicTextVariant.labelMedium,
+                ),
+              ],
+            ),
+            Slider(
+              value: widget.pitch,
+              onChanged: widget.onPitchChanged,
+              min: 0.5,
+              max: 2.0,
+              divisions: 15,
+            ),
+          ],
         ),
       ],
     );

@@ -58,12 +58,10 @@ export 'src/themes/app_theme.dart';
 export 'src/services/theme_service.dart';
 
 // Widgets (selected existing widgets)
-export 'src/widgets/alouette_app_bar.dart';
-export 'src/widgets/alouette_logo.dart';
-export 'src/widgets/compact_slider.dart';
+
 export 'src/widgets/config_status_widget.dart';
-export 'src/widgets/language_selection_grid.dart';
-export 'src/widgets/language_selector.dart' hide LanguageSelector; // Hide to avoid conflict with atomic version
+
+// Removed: export 'src/widgets/language_selector.dart' - Use components/molecules/language_selector.dart instead
 export 'src/widgets/modern_app_bar.dart';
 export 'src/widgets/modern_button.dart';
 export 'src/widgets/modern_card.dart';
@@ -71,18 +69,12 @@ export 'src/widgets/modern_dropdown.dart';
 export 'src/widgets/modern_text_field.dart';
 export 'src/widgets/translation_input_widget.dart';
 export 'src/widgets/translation_result_widget.dart';
-export 'src/widgets/tts_control_buttons.dart';
-export 'src/widgets/tts_control_widget.dart';
-export 'src/widgets/tts_input_widget.dart';
+
+// Removed: export 'src/widgets/tts_control_widget.dart' - Use components/organisms/tts_control_panel.dart instead
+// Removed: export 'src/widgets/tts_input_widget.dart' - Use refactored TTSInputSection instead
 export 'src/widgets/tts_status_card.dart';
 export 'src/widgets/tts_status_indicator.dart';
-export 'src/widgets/volume_slider.dart';
 
-// Theme Configuration Widgets
-export 'src/widgets/theme_configuration_widget.dart';
-
-// Design System Showcase (for development/testing)
-export 'src/widgets/design_token_showcase.dart';
 
 // Models
 export 'src/models/app_configuration.dart';

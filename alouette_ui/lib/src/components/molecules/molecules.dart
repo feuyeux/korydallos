@@ -5,20 +5,12 @@
 /// of UI elements functioning together as a unit.
 
 // Molecular components
-export 'molecular_components.dart';
+
 export 'language_selector.dart';
 export 'voice_selector.dart';
 export 'status_indicator.dart';
 
 // Re-export commonly used classes for convenience
-export 'molecular_components.dart' show
-    MolecularSearchBox,
-    MolecularLanguageChip,
-    MolecularActionBar,
-    MolecularActionBarItem,
-    MolecularStatusIndicator,
-    MolecularStatusType,
-    MolecularListTile;
 
 export 'language_selector.dart' show
     LanguageSelector,

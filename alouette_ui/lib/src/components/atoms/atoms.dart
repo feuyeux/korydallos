@@ -9,13 +9,7 @@
 export 'atomic_elements.dart';
 
 // Form components
-export 'alouette_button.dart';
-export 'alouette_text_field.dart';
-export 'alouette_slider.dart';
 export 'atomic_input.dart';
-
-// Legacy atomic components (for backward compatibility)
-export 'atomic_button.dart';
 
 // Re-export commonly used classes for convenience
 export 'atomic_elements.dart' show

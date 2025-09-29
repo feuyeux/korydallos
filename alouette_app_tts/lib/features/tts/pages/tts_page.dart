@@ -21,12 +21,12 @@ class _TTSPageState extends State<TTSPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.all(2.0),
       child: Column(
         children: [
-          // Text input and voice selection - Reduced height
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.28, // Reduced from 35% to 28%
+          // Text input and voice selection - Takes most space
+          Expanded(
+            flex: 3,
             child: ListenableBuilder(
               listenable: widget.controller,
               builder: (context, child) {
@@ -38,19 +38,17 @@ class _TTSPageState extends State<TTSPage> {
             ),
           ),
           
-          const SizedBox(height: 4), // Reduced from 8 to 4
+          const SizedBox(height: 2),
           
-          // TTS controls and parameters - Flexible remaining space
-          Expanded(
-            child: ListenableBuilder(
-              listenable: widget.controller,
-              builder: (context, child) {
-                return TTSControlSection(
-                  controller: widget.controller,
-                  textController: widget.textController,
-                );
-              },
-            ),
+          // TTS controls and parameters - Compact at bottom
+          ListenableBuilder(
+            listenable: widget.controller,
+            builder: (context, child) {
+              return TTSControlSection(
+                controller: widget.controller,
+                textController: widget.textController,
+              );
+            },
           ),
         ],
       ),
