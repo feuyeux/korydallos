@@ -43,45 +43,37 @@ class PlatformUtils {
   static Future<bool> isEdgeTTSAvailable() async {
     if (kIsWeb) {
       // Web 平台不支持 Edge TTS
-      print('[TTS] DEBUG: Web platform, Edge TTS not supported');
       return false;
     }
 
     // For macOS, we know Edge TTS is available, so force return true as a workaround
     // for the Flutter Process.run environment issue
     if (Platform.isMacOS) {
-      print(
-          '[TTS] DEBUG: macOS platform - forcing Edge TTS available (known working workaround)');
-
       // Still try a quick check but don't fail if it doesn't work
       try {
         final result = await Process.run('which', ['edge-tts'])
             .timeout(Duration(seconds: 2));
         if (result.exitCode == 0) {
-          print('[TTS] DEBUG: Edge TTS confirmed via which command on macOS');
           return true;
         }
       } catch (e) {
-        print('[TTS] DEBUG: Quick check failed but forcing true for macOS: $e');
+        // Quick check failed, but we'll still return true for macOS
       }
 
       // Force return true for macOS since we know it works from terminal
       return true;
     }
 
-    print('[TTS] DEBUG: Checking Edge TTS availability...');
+
 
     // 策略1: 使用 which/where 命令查找 - 最可靠的方法
     try {
       final whichCmd = Platform.isWindows ? 'where' : 'which';
-      print('[TTS] DEBUG: Using $whichCmd to find edge-tts');
       final whichResult = await Process.run(whichCmd, ['edge-tts'])
           .timeout(Duration(seconds: 3));
-      print('[TTS] DEBUG: $whichCmd exit code: ${whichResult.exitCode}');
-      
+
       if (whichResult.exitCode == 0) {
         final edgePath = whichResult.stdout.toString().trim().split('\n').first;
-        print('[TTS] DEBUG: Found edge-tts at: $edgePath');
         
         if (edgePath.isNotEmpty) {
           // 验证 edge-tts 是否真的可用
@@ -89,33 +81,29 @@ class PlatformUtils {
             final testResult = await Process.run(edgePath, ['--list-voices'])
                 .timeout(Duration(seconds: 5));
             if (testResult.exitCode == 0) {
-              print('[TTS] DEBUG: Edge TTS verified working at: $edgePath');
               return true;
             }
           } catch (e) {
-            print('[TTS] DEBUG: Edge TTS test failed: $e');
+            // Test failed, continue to next strategy
           }
         }
       }
     } catch (e) {
-      final whichCmd = Platform.isWindows ? 'where' : 'which';
-      print('[TTS] DEBUG: $whichCmd command failed: $e');
+      // which/where command failed, continue to next strategy
     }
 
     // 策略2: 直接尝试执行 edge-tts (可能在 PATH 中但 which/where 失败)
     try {
-      print('[TTS] DEBUG: Trying direct edge-tts command');
       final result = await Process.run('edge-tts', ['--list-voices'])
           .timeout(Duration(seconds: 5));
       if (result.exitCode == 0) {
-        print('[TTS] DEBUG: Edge TTS available via direct command');
         return true;
       }
     } catch (e) {
-      print('[TTS] DEBUG: Direct edge-tts command failed: $e');
+      // Direct execution failed
     }
 
-    print('[TTS] DEBUG: All Edge TTS detection strategies failed');
+
     return false;
   }
 
@@ -131,18 +119,15 @@ class PlatformUtils {
     try {
       return await isEdgeTTSAvailable().timeout(timeout);
     } catch (e) {
-      print('[TTS] DEBUG: Edge TTS availability check timed out: $e');
+
 
       // If the full check times out, try a simpler check
       try {
-        print('[TTS] DEBUG: Trying simplified Edge TTS check...');
         final result = await Process.run('which', ['edge-tts'])
             .timeout(Duration(seconds: 3));
         final isAvailable = result.exitCode == 0;
-        print('[TTS] DEBUG: Simplified check result: $isAvailable');
         return isAvailable;
       } catch (e2) {
-        print('[TTS] DEBUG: Simplified check also failed: $e2');
         return false;
       }
     }
@@ -163,12 +148,11 @@ class PlatformUtils {
       if (result.exitCode == 0) {
         final path = result.stdout.toString().trim().split('\n').first;
         if (path.isNotEmpty) {
-          print('[TTS] DEBUG: Edge TTS path found: $path');
           return path;
         }
       }
     } catch (e) {
-      print('[TTS] DEBUG: which/where command failed: $e');
+      // which/where command failed
     }
 
     // 如果 which/where 失败，但 edge-tts 可能仍在 PATH 中
@@ -176,11 +160,10 @@ class PlatformUtils {
       final result = await Process.run('edge-tts', ['--version'])
           .timeout(Duration(seconds: 3));
       if (result.exitCode == 0) {
-        print('[TTS] DEBUG: Edge TTS available via direct command');
         return 'edge-tts'; // 返回命令名，让系统通过 PATH 查找
       }
     } catch (e) {
-      print('[TTS] DEBUG: Direct edge-tts test failed: $e');
+      // Direct execution failed
     }
 
     return null;
@@ -247,9 +230,6 @@ class PlatformUtils {
       info['edgeTTSPath'] = null;
       info['systemPath'] = null;
     }
-
     return info;
   }
-
-
 }

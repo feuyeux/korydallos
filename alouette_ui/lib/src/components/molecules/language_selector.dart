@@ -154,7 +154,7 @@ class LanguageChip extends StatelessWidget {
       ),
       backgroundColor: colorScheme.surface,
       selectedColor: colorScheme.primaryContainer,
-      checkmarkColor: colorScheme.onPrimaryContainer,
+      showCheckmark: false, // 隐藏勾选标记
       labelStyle: TextStyle(
         color: isSelected
             ? colorScheme.onPrimaryContainer

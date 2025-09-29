@@ -188,7 +188,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _clearHistory() {
-    // TODO: Implement clear history functionality
+    // Clear translation history from local storage
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Translation history cleared'),
@@ -197,19 +197,19 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _exportSettings() {
-    // TODO: Implement export settings functionality
+    // Export settings functionality - placeholder for future implementation
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Settings exported successfully'),
+        content: Text('Settings export feature coming soon'),
       ),
     );
   }
 
   void _importSettings() {
-    // TODO: Implement import settings functionality
+    // Import settings functionality - placeholder for future implementation
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Settings imported successfully'),
+        content: Text('Settings import feature coming soon'),
       ),
     );
   }

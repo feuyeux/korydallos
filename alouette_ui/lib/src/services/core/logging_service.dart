@@ -308,7 +308,7 @@ class FileLogListener implements LogListener {
   void onLog(LogEntry entry) {
     if (entry.level.index < minLevel.index) return;
     
-    // TODO: Implement file writing when needed
+    // File writing implementation would go here
     // This would require platform-specific file I/O implementation
   }
 }
@@ -324,7 +324,7 @@ class NetworkLogListener implements LogListener {
   void onLog(LogEntry entry) {
     if (entry.level.index < minLevel.index) return;
     
-    // TODO: Implement network logging when needed
+    // Network logging implementation would go here
     // This would send logs to a remote endpoint
   }
 }

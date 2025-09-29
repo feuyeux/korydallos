@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   # Flutter TTS for mobile and web platforms
   flutter_tts: ^4.0.2
+  # Audio player for in-app audio playback
+  audioplayers: ^6.0.0
   # Meta annotations for better code analysis
   meta: ^1.9.0
   # Path utilities for file operations

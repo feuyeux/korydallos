@@ -27,8 +27,7 @@ void main() {
         );
         
         // Log result
-        print('Translation result: $result');
-        print('====');
+        // Translation completed successfully
         // Assert
         expect(result, isNotNull);
         expect(result, isNotEmpty);

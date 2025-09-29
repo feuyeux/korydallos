@@ -105,6 +105,7 @@ class LanguageSelectionSection extends StatelessWidget {
               padding: EdgeInsets.zero,
               selectedColor: Theme.of(context).colorScheme.primaryContainer,
               backgroundColor: Colors.grey.shade100,
+              showCheckmark: false, // 隐藏勾选标记
             );
           }).toList(),
         ),

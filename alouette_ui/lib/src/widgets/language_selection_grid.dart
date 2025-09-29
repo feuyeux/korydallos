@@ -52,6 +52,7 @@ class LanguageSelectionGrid extends StatelessWidget {
             onSelected: (selected) => onLanguageToggle(lang.name, selected),
             selectedColor: Theme.of(context).colorScheme.primaryContainer,
             backgroundColor: Colors.grey.shade100,
+            showCheckmark: false, // 隐藏勾选标记
           );
         },
       ),

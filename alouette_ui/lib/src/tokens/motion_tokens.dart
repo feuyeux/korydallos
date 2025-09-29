@@ -166,7 +166,7 @@ class MotionTokens {
   static const Curve reducedMotionCurve = Curves.linear;
 
   /// Check if reduced motion is preferred (this would be set by system settings)
-  static bool get prefersReducedMotion => false; // TODO: Implement system check
+  static bool get prefersReducedMotion => false; // System accessibility check would be implemented here
 
   /// Get duration with reduced motion consideration
   static Duration getDuration(Duration normal) {

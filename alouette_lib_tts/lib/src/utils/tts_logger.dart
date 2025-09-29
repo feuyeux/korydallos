@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// 统一的日志工具类
 /// 提供一致的日志格式和级别控制
 class TTSLogger {
@@ -12,31 +14,31 @@ class TTSLogger {
   /// 信息级别日志
   static void info(String message) {
     if (_debugEnabled) {
-      print('$_prefix INFO: $message');
+      // Use debugPrint for better Flutter integration
+      debugPrint('$_prefix INFO: $message');
     }
   }
   
   /// 警告级别日志
   static void warning(String message) {
     if (_debugEnabled) {
-      print('$_prefix WARNING: $message');
+      debugPrint('$_prefix WARNING: $message');
     }
   }
   
   /// 错误级别日志
   static void error(String message, [dynamic error]) {
-    if (_debugEnabled) {
-      print('$_prefix ERROR: $message');
-      if (error != null) {
-        print('$_prefix ERROR Details: $error');
-      }
+    // Always log errors, even in release mode
+    debugPrint('$_prefix ERROR: $message');
+    if (error != null) {
+      debugPrint('$_prefix ERROR Details: $error');
     }
   }
   
   /// 调试级别日志
   static void debug(String message) {
     if (_debugEnabled) {
-      print('$_prefix DEBUG: $message');
+      debugPrint('$_prefix DEBUG: $message');
     }
   }
   

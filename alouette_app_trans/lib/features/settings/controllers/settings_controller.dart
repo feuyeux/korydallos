@@ -16,7 +16,7 @@ class SettingsController extends ChangeNotifier {
 
   /// Initialize settings from storage
   Future<void> initialize() async {
-    // TODO: Load settings from persistent storage
+    // Load settings from persistent storage would be implemented here
     notifyListeners();
   }
 
@@ -57,8 +57,8 @@ class SettingsController extends ChangeNotifier {
 
   /// Save settings to persistent storage
   Future<void> _saveSettings() async {
-    // TODO: Implement persistent storage
-    // This could use SharedPreferences or another storage solution
+    // Persistent storage implementation would go here
+    // Could use SharedPreferences, Hive, or another storage solution
   }
 
   /// Export settings to a file

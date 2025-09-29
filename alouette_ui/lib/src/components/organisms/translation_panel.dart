@@ -311,34 +311,37 @@ class _TranslationPanelState extends State<TranslationPanel> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 1), // Minimal horizontal padding
             child: SizedBox(
-              height: 32, // Fixed height for consistency
+              height: 38, // 增加高度以容纳更大的字体
               width: double.infinity, // Ensure full width usage
               child: FilterChip(
                 selected: isSelected,
                 onSelected: (_) => _handleLanguageTap(language),
                 avatar: Text(
                   language.flag,
-                  style: const TextStyle(fontSize: 12), // Increased flag size
+                  style: const TextStyle(fontSize: 16), // 增大国旗字号
                 ),
                 label: SizedBox(
                   width: double.infinity, // Force label to take full available width
                   child: Text(
                     language.name,
-                    style: const TextStyle(fontSize: 11), // Increased text size
+                    style: const TextStyle(
+                      fontSize: 13, // 增大语种文字字号
+                      fontWeight: FontWeight.w500, // 增加字重
+                    ),
                     textAlign: TextAlign.center, // Center the text
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                showCheckmark: false, // 隐藏勾选标记
                 side: BorderSide(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
                   width: 1,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0), // Minimal padding
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // 增加内边距
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
