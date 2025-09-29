@@ -1,0 +1,52 @@
+name: alouette_app_trans
+description: "Alouette Translation Application - Specialized translation functionality using alouette_lib_trans."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.8.1 <4.0.0"
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+
+  # Alouette libraries - only translation and UI libraries needed
+  alouette_lib_trans:
+    path: ../alouette_lib_trans
+  alouette_ui:
+    path: ../alouette_ui
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+# Flutter launcher icons configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/alouette_rounded.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/icons/alouette_rounded.png"
+  windows:
+    generate: true
+    image_path: "assets/icons/alouette_rounded.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "assets/icons/alouette_rounded.png"
+  # 添加圆角配置
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/alouette_rounded.png"

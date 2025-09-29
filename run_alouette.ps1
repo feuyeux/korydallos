@@ -18,9 +18,9 @@ Write-Host "========================================" -ForegroundColor Blue
 
 # Determine target directory
 $targetDir = switch ($App) {
-    "app"   { "alouette-app" }
-    "trans" { "alouette-app-trans" }
-    "tts"   { "alouette-app-tts" }
+    "app"   { "alouette_app" }
+    "trans" { "alouette_app_trans" }
+    "tts"   { "alouette_app_tts" }
 }
 
 Write-Host "[TARGET] Launching: $targetDir" -ForegroundColor Green
@@ -30,7 +30,7 @@ Write-Host "[PLATFORM] Platform: $Platform" -ForegroundColor Green
 if (-not (Test-Path $targetDir)) {
     Write-Host "[ERROR] Directory not found: $targetDir" -ForegroundColor Red
     Write-Host "[INFO] Available directories:" -ForegroundColor Yellow
-    Get-ChildItem -Directory | Where-Object { $_.Name -like "alouette-app*" } | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Yellow }
+    Get-ChildItem -Directory | Where-Object { $_.Name -like "alouette_app*" } | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Yellow }
     exit 1
 }
 

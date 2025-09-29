@@ -31,12 +31,14 @@ class _TranslationPageState extends State<TranslationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 4,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 4,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
             child: ValueListenableBuilder<bool>(
               valueListenable: _controller.isTranslatingNotifier,
               builder: (context, isTranslating, child) {
@@ -70,28 +72,28 @@ class _TranslationPageState extends State<TranslationPage> {
               },
             ),
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            flex: 2,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: _controller.isTTSInitializedNotifier,
-                  builder: (context, isTTSInitialized, child) {
-                    return TranslationResultWidget(
-                      translationService: _controller.translationService,
-                      isCompactMode: true,
-                      ttsService: _controller.ttsService,
-                      isTTSInitialized: isTTSInitialized,
-                    );
-                  },
-                ),
+        ),
+        Expanded(
+          flex: 5,
+          child: Card(
+            margin: const EdgeInsets.fromLTRB(8.0, 0.5, 8.0, 1.0),
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _controller.isTTSInitializedNotifier,
+                builder: (context, isTTSInitialized, child) {
+                  return TranslationResultWidget(
+                    translationService: _controller.translationService,
+                    isCompactMode: true,
+                    ttsService: _controller.ttsService,
+                    isTTSInitialized: isTTSInitialized,
+                  );
+                },
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
