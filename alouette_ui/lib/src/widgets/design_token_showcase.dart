@@ -89,7 +89,7 @@ class DesignTokenShowcase extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(SpacingTokens.xs),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(DimensionTokens.radiusS),
                 bottomRight: Radius.circular(DimensionTokens.radiusS),

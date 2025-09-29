@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import '../tokens/color_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import '../tokens/dimension_tokens.dart';
-import '../tokens/motion_tokens.dart';
+
 
 /// Theme modes supported by the application
 enum AlouetteThemeMode {
@@ -147,10 +147,8 @@ class ThemeService extends ChangeNotifier {
       onErrorContainer: ColorTokens.onErrorContainer,
       surface: ColorTokens.surface,
       onSurface: ColorTokens.onSurface,
-      surfaceVariant: ColorTokens.surfaceVariant,
+      surfaceContainerHighest: ColorTokens.surfaceVariant,
       onSurfaceVariant: ColorTokens.onSurfaceVariant,
-      background: ColorTokens.background,
-      onBackground: ColorTokens.onBackground,
       outline: ColorTokens.outline,
       outlineVariant: ColorTokens.outlineVariant,
     );
@@ -177,10 +175,8 @@ class ThemeService extends ChangeNotifier {
       onErrorContainer: ColorTokens.darkOnErrorContainer,
       surface: ColorTokens.darkSurface,
       onSurface: ColorTokens.darkOnSurface,
-      surfaceVariant: ColorTokens.darkSurfaceVariant,
+      surfaceContainerHighest: ColorTokens.darkSurfaceVariant,
       onSurfaceVariant: ColorTokens.darkOnSurfaceVariant,
-      background: ColorTokens.darkBackground,
-      onBackground: ColorTokens.darkOnBackground,
       outline: ColorTokens.darkOutline,
       outlineVariant: ColorTokens.darkOutlineVariant,
     );
@@ -262,19 +258,19 @@ class ThemeService extends ChangeNotifier {
   ElevatedButtonThemeData _buildElevatedButtonTheme(bool isLight, Color primaryColor) {
     return ElevatedButtonThemeData(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(primaryColor),
-        foregroundColor: MaterialStateProperty.all(ColorTokens.onPrimary),
-        shape: MaterialStateProperty.all(RoundedRectangleBorder(
+        backgroundColor: WidgetStateProperty.all(primaryColor),
+        foregroundColor: WidgetStateProperty.all(ColorTokens.onPrimary),
+        shape: WidgetStateProperty.all(RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
         )),
-        padding: MaterialStateProperty.all(const EdgeInsets.symmetric(
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
           horizontal: SpacingTokens.xl,
           vertical: SpacingTokens.m,
         )),
-        elevation: MaterialStateProperty.all(2),
-        shadowColor: MaterialStateProperty.all(ColorTokens.shadow),
-        minimumSize: MaterialStateProperty.all(const Size(DimensionTokens.buttonMinWidth, DimensionTokens.buttonL)),
-        textStyle: MaterialStateProperty.all(TypographyTokens.labelLargeStyle),
+        elevation: WidgetStateProperty.all(2),
+        shadowColor: WidgetStateProperty.all(ColorTokens.shadow),
+        minimumSize: WidgetStateProperty.all(const Size(DimensionTokens.buttonMinWidth, DimensionTokens.buttonL)),
+        textStyle: WidgetStateProperty.all(TypographyTokens.labelLargeStyle),
       ),
     );
   }
@@ -283,15 +279,15 @@ class ThemeService extends ChangeNotifier {
   TextButtonThemeData _buildTextButtonTheme(bool isLight, Color primaryColor) {
     return TextButtonThemeData(
       style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.all(primaryColor),
-        shape: MaterialStateProperty.all(RoundedRectangleBorder(
+        foregroundColor: WidgetStateProperty.all(primaryColor),
+        shape: WidgetStateProperty.all(RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DimensionTokens.radiusM),
         )),
-        padding: MaterialStateProperty.all(const EdgeInsets.symmetric(
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
           horizontal: SpacingTokens.l,
           vertical: SpacingTokens.s,
         )),
-        textStyle: MaterialStateProperty.all(TypographyTokens.labelLargeStyle),
+        textStyle: WidgetStateProperty.all(TypographyTokens.labelLargeStyle),
       ),
     );
   }
@@ -300,10 +296,10 @@ class ThemeService extends ChangeNotifier {
   IconButtonThemeData _buildIconButtonTheme(bool isLight) {
     return IconButtonThemeData(
       style: ButtonStyle(
-        foregroundColor: MaterialStateProperty.all(isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface),
-        backgroundColor: MaterialStateProperty.all(Colors.transparent),
-        overlayColor: MaterialStateProperty.all(ColorTokens.surfaceHover),
-        iconSize: MaterialStateProperty.all(DimensionTokens.iconL),
+        foregroundColor: WidgetStateProperty.all(isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface),
+        backgroundColor: WidgetStateProperty.all(Colors.transparent),
+        overlayColor: WidgetStateProperty.all(ColorTokens.surfaceHover),
+        iconSize: WidgetStateProperty.all(DimensionTokens.iconL),
       ),
     );
   }

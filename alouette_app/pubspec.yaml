@@ -11,8 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-
-
   # Alouette libraries - all functionality comes from libraries
   alouette_lib_tts:
     path: ../alouette_lib_tts

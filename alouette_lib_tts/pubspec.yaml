@@ -10,15 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
   # Flutter TTS for mobile and web platforms
-  flutter_tts: ^4.0.2
+  flutter_tts: ^4.2.0
   # Audio player for in-app audio playback
-  audioplayers: ^6.0.0
+  audioplayers: ^6.1.0
   # Meta annotations for better code analysis
-  meta: ^1.9.0
+  meta: ^1.15.0
   # Path utilities for file operations
-  path: ^1.8.3
+  path: ^1.9.1
   # Path provider for temporary file storage
-  path_provider: ^2.1.1
+  path_provider: ^2.1.5
 
 platforms:
   android:
@@ -31,9 +31,9 @@ platforms:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   mockito: ^5.4.4
-  build_runner: ^2.4.7
+  build_runner: ^2.4.13
   test: ^1.25.15
 
 flutter:

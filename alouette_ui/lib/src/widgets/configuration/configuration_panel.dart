@@ -251,7 +251,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
                 labelText: 'Primary Language',
                 border: OutlineInputBorder(),
               ),
-              value: _currentConfig!.uiPreferences.primaryLanguage,
+              initialValue: _currentConfig!.uiPreferences.primaryLanguage,
               items: const [
                 DropdownMenuItem(value: 'en', child: Text('English')),
                 DropdownMenuItem(value: 'es', child: Text('Español')),
@@ -439,7 +439,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
 
   Future<void> _exportConfiguration() async {
     try {
-      final configJson = await _configManager.exportConfiguration();
+      await _configManager.exportConfiguration();
       // In a real implementation, you would save this to a file or share it
       // For now, we'll just show a success message
       if (mounted) {

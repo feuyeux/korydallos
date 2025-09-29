@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart' as ap;
-import 'package:path/path.dart' as path;
 import '../models/tts_error.dart';
 import '../utils/tts_logger.dart';
 import '../utils/resource_manager.dart';

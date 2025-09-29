@@ -175,150 +175,170 @@ class _TTSInputSectionState extends State<TTSInputSection> {
         }
         
         return ModernCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                Icons.text_fields,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Text Input',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Text input field
-          Expanded(
-            child: ModernTextField(
-              controller: widget.textController,
-              hintText: 'Enter text to speak...',
-              maxLines: null,
-              expands: true,
-              enabled: widget.controller.isInitialized,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Voice selection
-          if (widget.controller.isInitialized && widget.controller.availableVoices.isNotEmpty)
-            Column(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0), // Reduced from 12 to 8
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Voice Selection',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Language and Voice selection row
+                // Header
                 Row(
                   children: [
-                    // Language selection (left side)
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Language',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          ModernDropdown<String>(
-                            value: _selectedLanguage,
-                            items: _availableLanguages
-                                .map((languageCode) => DropdownMenuItem<String>(
-                                      value: languageCode,
-                                      child: Text(
-                                        _getLanguageDisplayName(languageCode),
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: widget.controller.isInitialized ? _onLanguageChanged : null,
-                            hint: 'Select Language',
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.text_fields,
+                      color: AppTheme.primaryColor,
+                      size: 16, // Reduced from 18 to 16
                     ),
-                    
-                    const SizedBox(width: 12),
-                    
-                    // Voice selection (right side)
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Voice',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          ModernDropdown<String>(
-                            value: _selectedVoice,
-                            items: _voicesForSelectedLanguage
-                                .map((voice) => DropdownMenuItem<String>(
-                                      value: voice.id,
-                                      child: Text(
-                                        _getVoiceDisplayName(voice),
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: widget.controller.isInitialized && _selectedLanguage != null 
-                                ? _onVoiceChanged 
-                                : null,
-                            hint: 'Select Voice',
-                          ),
-                        ],
+                    const SizedBox(width: 4), // Reduced from 6 to 4
+                    const Text(
+                      'Text Input',
+                      style: TextStyle(
+                        fontSize: 13, // Reduced from 14 to 13
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8), // Reduced from 12 to 8
+
+                // Text input field
+                Expanded(
+                  child: ModernTextField(
+                    controller: widget.textController,
+                    hintText: 'Enter text to speak...',
+                    maxLines: null,
+                    expands: true,
+                    enabled: widget.controller.isInitialized,
+                  ),
+                ),
+
+                const SizedBox(height: 8), // Reduced from 12 to 8
+
+                // Voice selection
+                if (widget.controller.isInitialized && widget.controller.availableVoices.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Voice Selection',
+                        style: TextStyle(
+                          fontSize: 11, // Reduced from 12 to 11
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4), // Reduced from 6 to 4
+                      
+                      // Language and Voice selection row
+                      Row(
+                        children: [
+                          // Language selection (left side)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Language',
+                                  style: TextStyle(
+                                    fontSize: 9, // Reduced from 10 to 9
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 1), // Reduced from 2 to 1
+                                ModernDropdown<String>(
+                                  value: _selectedLanguage,
+                                  items: _availableLanguages
+                                      .map((languageCode) => DropdownMenuItem<String>(
+                                            value: languageCode,
+                                            child: Text(
+                                              _getLanguageDisplayName(languageCode),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontSize: 11),
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: widget.controller.isInitialized ? _onLanguageChanged : null,
+                                  hint: 'Select Language',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical: 4.0, // Much smaller vertical padding
+                                  ),
+                                  isDense: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          const SizedBox(width: 6), // Reduced from 8 to 6
+                          
+                          // Voice selection (right side)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Voice',
+                                  style: TextStyle(
+                                    fontSize: 9, // Reduced from 10 to 9
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 1), // Reduced from 2 to 1
+                                ModernDropdown<String>(
+                                  value: _selectedVoice,
+                                  items: _voicesForSelectedLanguage
+                                      .map((voice) => DropdownMenuItem<String>(
+                                            value: voice.id,
+                                            child: Text(
+                                              _getVoiceDisplayName(voice),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontSize: 11),
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: widget.controller.isInitialized && _selectedLanguage != null 
+                                      ? _onVoiceChanged 
+                                      : null,
+                                  hint: 'Select Voice',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical: 4.0, // Much smaller vertical padding
+                                  ),
+                                  isDense: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                // Loading indicator when not initialized
+                if (!widget.controller.isInitialized)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0), // Reduced from 12 to 8
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: 16, // Smaller loading indicator
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(height: 4), // Reduced from 6 to 4
+                          Text(
+                            'Initializing TTS...',
+                            style: TextStyle(fontSize: 10), // Reduced from 12 to 10
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
-
-          // Loading indicator when not initialized
-          if (!widget.controller.isInitialized)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 8),
-                    Text('Initializing TTS...'),
-                  ],
-                ),
-              ),
-            ),
-            ],
           ),
         );
       },

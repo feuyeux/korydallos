@@ -104,8 +104,6 @@ class TTSErrorRecoveryService {
         return [TTSEngineType.edge, TTSEngineType.flutter];
       case TTSEngineType.flutter:
         return [TTSEngineType.flutter, TTSEngineType.edge];
-      default:
-        return [TTSEngineType.flutter, TTSEngineType.edge];
     }
   }
 
@@ -145,8 +143,7 @@ class TTSErrorRecoveryService {
           await Future.delayed(const Duration(seconds: 2));
           return await operationWithEngine(currentEngine);
           
-        default:
-          throw error;
+
       }
     }
     

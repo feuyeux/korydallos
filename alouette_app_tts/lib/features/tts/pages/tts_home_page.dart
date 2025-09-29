@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
 import '../controllers/tts_controller.dart' as local;
-import '../widgets/tts_input_section.dart';
-import '../widgets/tts_control_section.dart';
-import '../widgets/tts_status_section.dart';
+import 'tts_page.dart';
+import '../../../widgets/tts_status_widget.dart';
 import '../../../config/tts_app_config.dart';
 
 /// Home page for the TTS application
@@ -24,6 +23,7 @@ class _TTSHomePageState extends State<TTSHomePage> {
   void initState() {
     super.initState();
     _ttsController = local.TTSController();
+    _ttsController.addListener(_onControllerChanged);
     _initializeTTS();
   }
 
@@ -34,8 +34,15 @@ class _TTSHomePageState extends State<TTSHomePage> {
   @override
   void dispose() {
     _textController.dispose();
+    _ttsController.removeListener(_onControllerChanged);
     _ttsController.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _showError(String message) {
@@ -87,11 +94,9 @@ class _TTSHomePageState extends State<TTSHomePage> {
             ),
           ),
           actions: [
-            ModernButton(
+            TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              text: 'Close',
-              type: ModernButtonType.text,
-              size: ModernButtonSize.medium,
+              child: const Text('Close'),
             ),
           ],
         ),
@@ -101,67 +106,37 @@ class _TTSHomePageState extends State<TTSHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Show error if there's one
+    if (_ttsController.lastError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showError(_ttsController.lastError!);
+      });
+    }
+
     return Scaffold(
       appBar: ModernAppBar(
         title: TTSAppConfig.appTitle,
+        showLogo: true,
+        statusWidget: TTSStatusWidget(
+          isInitialized: _ttsController.isInitialized,
+          isPlaying: _ttsController.isPlaying,
+          currentEngine: _ttsController.currentEngine,
+          lastError: _ttsController.lastError,
+        ),
         actions: [
-          ThemeSwitcher(
-            onThemeChanged: () {
-              // Theme change is handled automatically by the ThemeService
-              // This callback can be used for additional actions if needed
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _showTTSSettings,
-            tooltip: 'TTS Settings',
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _showTTSSettings,
+              tooltip: 'TTS Settings',
+            ),
           ),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: _ttsController,
-        builder: (context, child) {
-          // Show error if there's one
-          if (_ttsController.lastError != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showError(_ttsController.lastError!);
-            });
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                // Status section
-                TTSStatusSection(
-                  controller: _ttsController,
-                  onConfigurePressed: _showTTSSettings,
-                ),
-                const SizedBox(height: 8),
-
-                // Text input and voice selection
-                Expanded(
-                  flex: 3,
-                  child: TTSInputSection(
-                    controller: _ttsController,
-                    textController: _textController,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // TTS controls and parameters
-                Expanded(
-                  flex: 2,
-                  child: TTSControlSection(
-                    controller: _ttsController,
-                    textController: _textController,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+      body: TTSPage(
+        controller: _ttsController,
+        textController: _textController,
       ),
     );
   }

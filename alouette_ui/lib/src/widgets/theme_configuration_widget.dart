@@ -145,7 +145,7 @@ class _ThemeConfigurationWidgetState extends State<ThemeConfigurationWidget> {
   }
 
   Widget _buildColorOption(Color color, String name) {
-    final isSelected = _themeService.customPrimaryColor.value == color.value;
+    final isSelected = _themeService.customPrimaryColor == color;
     
     return GestureDetector(
       onTap: () {

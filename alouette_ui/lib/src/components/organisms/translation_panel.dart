@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../constants/language_constants.dart';
-import '../../tokens/app_tokens.dart';
-import '../atoms/atomic_elements.dart';
-import '../atoms/alouette_button.dart';
-import '../atoms/alouette_text_field.dart';
-import '../molecules/language_selector.dart';
-import '../molecules/status_indicator.dart';
 
 /// Translation Panel Organism
 ///

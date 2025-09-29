@@ -203,28 +203,28 @@ class EffectTokens {
   // ============================================================================
 
   /// Light overlay (for modals)
-  static Color get overlayLight => Colors.black.withOpacity(0.3);
+  static Color get overlayLight => Colors.black.withValues(alpha: 0.3);
 
   /// Medium overlay
-  static Color get overlayMedium => Colors.black.withOpacity(0.5);
+  static Color get overlayMedium => Colors.black.withValues(alpha: 0.5);
 
   /// Dark overlay
-  static Color get overlayDark => Colors.black.withOpacity(0.7);
+  static Color get overlayDark => Colors.black.withValues(alpha: 0.7);
 
   /// Scrim overlay (for navigation)
-  static Color get overlayScrim => Colors.black.withOpacity(0.6);
+  static Color get overlayScrim => Colors.black.withValues(alpha: 0.6);
 
   /// Success overlay
-  static Color get overlaySuccess => ColorTokens.success.withOpacity(0.1);
+  static Color get overlaySuccess => ColorTokens.success.withValues(alpha: 0.1);
 
   /// Warning overlay
-  static Color get overlayWarning => ColorTokens.warning.withOpacity(0.1);
+  static Color get overlayWarning => ColorTokens.warning.withValues(alpha: 0.1);
 
   /// Error overlay
-  static Color get overlayError => ColorTokens.error.withOpacity(0.1);
+  static Color get overlayError => ColorTokens.error.withValues(alpha: 0.1);
 
   /// Info overlay
-  static Color get overlayInfo => ColorTokens.info.withOpacity(0.1);
+  static Color get overlayInfo => ColorTokens.info.withValues(alpha: 0.1);
 
   // ============================================================================
   // DECORATIONS
@@ -264,7 +264,7 @@ class EffectTokens {
         borderRadius: radiusMedium,
         boxShadow: [
           BoxShadow(
-            color: ColorTokens.primary.withOpacity(0.3),
+            color: ColorTokens.primary.withValues(alpha: 0.3),
             offset: const Offset(0, 2),
             blurRadius: 4,
             spreadRadius: 0,
@@ -286,7 +286,7 @@ class EffectTokens {
         border: Border.all(color: ColorTokens.primary, width: 2),
         boxShadow: [
           BoxShadow(
-            color: ColorTokens.primary.withOpacity(0.2),
+            color: ColorTokens.primary.withValues(alpha: 0.2),
             offset: const Offset(0, 0),
             blurRadius: 8,
             spreadRadius: 2,
@@ -348,7 +348,7 @@ class EffectTokens {
 
   /// Create overlay with custom opacity
   static Color createOverlay(Color color, double opacity) {
-    return color.withOpacity(opacity);
+    return color.withValues(alpha: opacity);
   }
 
   /// Create decoration with custom properties

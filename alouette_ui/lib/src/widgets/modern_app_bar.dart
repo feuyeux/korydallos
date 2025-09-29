@@ -76,7 +76,7 @@ class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: elevation > 0 ? elevation + 1 : 1,
       actions: actions,
       leading: leading,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       bottom: bottom,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(

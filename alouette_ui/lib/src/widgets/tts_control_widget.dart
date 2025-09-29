@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../components/organisms/tts_control_panel.dart';
-import '../components/molecules/voice_selector.dart';
+
 
 /// TTS Control Widget - Migrated to use Atomic Design
 /// 

@@ -129,7 +129,7 @@ class ElevationTokens {
   /// Glow effect (for focus states)
   static final List<BoxShadow> shadowGlow = [
     BoxShadow(
-      color: ColorTokens.primary.withOpacity(0.3),
+      color: ColorTokens.primary.withValues(alpha: 0.3),
       offset: const Offset(0, 0),
       blurRadius: 8,
       spreadRadius: 2,
@@ -139,7 +139,7 @@ class ElevationTokens {
   /// Strong glow effect (for active states)
   static final List<BoxShadow> shadowGlowStrong = [
     BoxShadow(
-      color: ColorTokens.primary.withOpacity(0.5),
+      color: ColorTokens.primary.withValues(alpha: 0.5),
       offset: const Offset(0, 0),
       blurRadius: 12,
       spreadRadius: 4,
@@ -186,7 +186,7 @@ class ElevationTokens {
   }) {
     return [
       BoxShadow(
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha: opacity),
         offset: const Offset(0, 0),
         blurRadius: blurRadius,
         spreadRadius: spreadRadius,

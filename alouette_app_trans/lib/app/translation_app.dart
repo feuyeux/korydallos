@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import '../features/translation/pages/translation_home_page.dart';
+import 'app_router.dart';
 
 class TranslationApp extends StatelessWidget {
   const TranslationApp({super.key});
@@ -11,7 +11,7 @@ class TranslationApp extends StatelessWidget {
       title: 'Alouette Translator',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const TranslationHomePage(),
+      home: const AppRouter(),
       debugShowCheckedModeBanner: false,
     );
   }

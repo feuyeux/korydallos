@@ -368,7 +368,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _availableModels.contains(_selectedModel) ? _selectedModel : null,
+                initialValue: _availableModels.contains(_selectedModel) ? _selectedModel : null,
                 items: _availableModels.toSet().map((model) {
                   return DropdownMenuItem(
                     value: model,

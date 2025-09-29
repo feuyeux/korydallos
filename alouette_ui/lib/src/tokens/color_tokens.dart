@@ -194,19 +194,19 @@ class ColorTokens {
   // ============================================================================
 
   /// Semi-transparent overlay colors
-  static Color get scrim => Colors.black.withOpacity(0.6);
-  static Color get backdrop => Colors.black.withOpacity(0.4);
-  static Color get shadow => Colors.black.withOpacity(0.1);
-  static Color get shadowStrong => Colors.black.withOpacity(0.25);
+  static Color get scrim => Colors.black.withValues(alpha: 0.6);
+  static Color get backdrop => Colors.black.withValues(alpha: 0.4);
+  static Color get shadow => Colors.black.withValues(alpha: 0.1);
+  static Color get shadowStrong => Colors.black.withValues(alpha: 0.25);
 
   /// Hover and focus states
-  static Color get primaryHover => primary.withOpacity(0.08);
-  static Color get primaryFocus => primary.withOpacity(0.12);
-  static Color get primaryPressed => primary.withOpacity(0.16);
+  static Color get primaryHover => primary.withValues(alpha: 0.08);
+  static Color get primaryFocus => primary.withValues(alpha: 0.12);
+  static Color get primaryPressed => primary.withValues(alpha: 0.16);
 
-  static Color get surfaceHover => onSurface.withOpacity(0.04);
-  static Color get surfaceFocus => onSurface.withOpacity(0.08);
-  static Color get surfacePressed => onSurface.withOpacity(0.12);
+  static Color get surfaceHover => onSurface.withValues(alpha: 0.04);
+  static Color get surfaceFocus => onSurface.withValues(alpha: 0.08);
+  static Color get surfacePressed => onSurface.withValues(alpha: 0.12);
 
   // ============================================================================
   // HELPER METHODS
@@ -219,8 +219,8 @@ class ColorTokens {
   }
 
   /// Create a disabled version of a color
-  static Color disabled(Color color) => color.withOpacity(0.38);
+  static Color disabled(Color color) => color.withValues(alpha: 0.38);
 
   /// Create a muted version of a color
-  static Color muted(Color color) => color.withOpacity(0.6);
+  static Color muted(Color color) => color.withValues(alpha: 0.6);
 }

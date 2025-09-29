@@ -209,7 +209,6 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
   }
 
   Widget _buildDetailedStatus() {
-    final isValid = _validationResult!['isValid'] as bool;
     final errors = List<String>.from(_validationResult!['errors'] ?? []);
     final warnings = List<String>.from(_validationResult!['warnings'] ?? []);
 
