@@ -101,10 +101,10 @@ class LanguageConstants {
   ];
 
   static const LanguageOption defaultLanguage = LanguageOption(
-    code: 'zh-CN',
-    name: 'Chinese',
-    nativeName: '中文',
-    flag: '🇨🇳',
+    code: 'en-US',
+    name: 'English',
+    nativeName: 'English',
+    flag: '🇺🇸',
   );
 
   /// Default selected languages for translation
@@ -136,9 +136,7 @@ class LanguageConstants {
   /// Get translation language names mapping
   static Map<String, String> get translationLanguageNames {
     return Map.fromEntries(
-      supportedLanguages.map(
-        (lang) => MapEntry(lang.code, lang.name),
-      ),
+      supportedLanguages.map((lang) => MapEntry(lang.code, lang.name)),
     );
   }
 

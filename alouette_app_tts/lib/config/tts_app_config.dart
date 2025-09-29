@@ -17,8 +17,9 @@ class TTSAppConfig {
 
   /// Application-specific constants
   static const String appTitle = 'Alouette TTS';
-  static const String defaultText = 'Hello, I can read for you.';
-  
+  static const String defaultText =
+      'Hello, I can read for you. This is a text-to-speech application.';
+
   /// TTS parameter ranges
   static const double minRate = 0.1;
   static const double maxRate = 3.0;

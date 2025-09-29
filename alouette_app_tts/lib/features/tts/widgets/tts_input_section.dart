@@ -33,70 +33,59 @@ class _TTSInputSectionState extends State<TTSInputSection> {
   }
 
   void _initializeSelection() {
-    if (widget.controller.isInitialized && widget.controller.availableVoices.isNotEmpty) {
-      // Find current voice
-      final currentVoice = widget.controller.availableVoices
-          .where((voice) => voice.id == widget.controller.currentVoice)
-          .firstOrNull;
-      
-      if (currentVoice != null) {
-        setState(() {
-          _selectedVoice = currentVoice;
-          // Find matching language option by comparing language prefixes
-          final voiceLanguagePrefix = currentVoice.languageCode.split('-').first.toLowerCase();
-          _selectedLanguageOption = LanguageConstants.supportedLanguages
-              .where((lang) {
-                final langPrefix = lang.code.split('-').first.toLowerCase();
-                return voiceLanguagePrefix == langPrefix;
-              })
-              .firstOrNull;
-          
-          if (_selectedLanguageOption != null) {
-            final languagePrefix = _selectedLanguageOption!.code.split('-').first.toLowerCase();
-            _availableVoicesForLanguage = widget.controller.availableVoices
-                .where((voice) => voice.languageCode.toLowerCase().startsWith(languagePrefix))
-                .toList();
-          }
-        });
-      } else {
-        // 强制默认选择英文
-        setState(() {
-          // 设置英文为默认语言选项 (第二个是英文)
-          _selectedLanguageOption = LanguageConstants.supportedLanguages[1]; // English
-          
-          // 查找英文语音
-          final englishVoices = widget.controller.availableVoices
-              .where((voice) => voice.languageCode.toLowerCase().startsWith('en'))
-              .toList();
-          
-          if (englishVoices.isNotEmpty) {
-            // 有英文语音，选择第一个英文语音
-            _selectedVoice = englishVoices.first;
-            _availableVoicesForLanguage = englishVoices;
-            widget.controller.changeVoice(_selectedVoice!.id);
-          } else {
-            // 没有英文语音，使用第一个可用语音
-            _selectedVoice = widget.controller.availableVoices.first;
-            final voiceLanguagePrefix = _selectedVoice!.languageCode.split('-').first.toLowerCase();
-            _selectedLanguageOption = LanguageConstants.supportedLanguages
-                .where((lang) {
-                  final langPrefix = lang.code.split('-').first.toLowerCase();
-                  return voiceLanguagePrefix == langPrefix;
-                })
-                .firstOrNull ?? _selectedLanguageOption;
-            
-            final languagePrefix = _selectedLanguageOption!.code.split('-').first.toLowerCase();
-            _availableVoicesForLanguage = widget.controller.availableVoices
-                .where((voice) => voice.languageCode.toLowerCase().startsWith(languagePrefix))
-                .toList();
-            widget.controller.changeVoice(_selectedVoice!.id);
-          }
-        });
-      }
+    if (widget.controller.isInitialized &&
+        widget.controller.availableVoices.isNotEmpty) {
+      // Always prioritize English as default
+      _setDefaultEnglishVoice();
     }
   }
 
+  void _setDefaultEnglishVoice() {
+    setState(() {
+      // 设置英文为默认语言选项
+      _selectedLanguageOption = LanguageConstants.supportedLanguages.firstWhere(
+        (lang) => lang.code.startsWith('en'),
+        orElse: () => LanguageConstants.supportedLanguages[1],
+      ); // Fallback to index 1 (English)
 
+      // 查找英文语音
+      final englishVoices = widget.controller.availableVoices
+          .where((voice) => voice.languageCode.toLowerCase().startsWith('en'))
+          .toList();
+
+      if (englishVoices.isNotEmpty) {
+        // 有英文语音，选择第一个英文语音
+        _selectedVoice = englishVoices.first;
+        _availableVoicesForLanguage = englishVoices;
+        widget.controller.changeVoice(_selectedVoice!.id);
+      } else {
+        // 没有英文语音，使用第一个可用语音
+        _selectedVoice = widget.controller.availableVoices.first;
+        final voiceLanguagePrefix = _selectedVoice!.languageCode
+            .split('-')
+            .first
+            .toLowerCase();
+        _selectedLanguageOption =
+            LanguageConstants.supportedLanguages.where((lang) {
+              final langPrefix = lang.code.split('-').first.toLowerCase();
+              return voiceLanguagePrefix == langPrefix;
+            }).firstOrNull ??
+            _selectedLanguageOption;
+
+        final languagePrefix = _selectedLanguageOption!.code
+            .split('-')
+            .first
+            .toLowerCase();
+        _availableVoicesForLanguage = widget.controller.availableVoices
+            .where(
+              (voice) =>
+                  voice.languageCode.toLowerCase().startsWith(languagePrefix),
+            )
+            .toList();
+        widget.controller.changeVoice(_selectedVoice!.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,14 +93,14 @@ class _TTSInputSectionState extends State<TTSInputSection> {
       listenable: widget.controller,
       builder: (context, child) {
         // Update selection when controller state changes
-        if (widget.controller.isInitialized && 
+        if (widget.controller.isInitialized &&
             widget.controller.availableVoices.isNotEmpty &&
             _selectedVoice == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _initializeSelection();
           });
         }
-        
+
         return ModernCard(
           child: Padding(
             padding: const EdgeInsets.all(6.0), // Reduced from 8 to 6
@@ -137,7 +126,6 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                   ],
                 ),
                 const SizedBox(height: 6), // Reduced from 8 to 6
-
                 // Text input field
                 Expanded(
                   child: ModernTextField(
@@ -150,9 +138,9 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                 ),
 
                 const SizedBox(height: 6), // Reduced from 8 to 6
-
                 // Voice selection with language and voice dropdowns
-                if (widget.controller.isInitialized && widget.controller.availableVoices.isNotEmpty)
+                if (widget.controller.isInitialized &&
+                    widget.controller.availableVoices.isNotEmpty)
                   _buildDualVoiceSelector(),
 
                 // Loading indicator when not initialized
@@ -170,7 +158,9 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                           SizedBox(height: 4), // Reduced from 6 to 4
                           Text(
                             'Initializing TTS...',
-                            style: TextStyle(fontSize: 10), // Reduced from 12 to 10
+                            style: TextStyle(
+                              fontSize: 10,
+                            ), // Reduced from 12 to 10
                           ),
                         ],
                       ),
@@ -199,15 +189,12 @@ class _TTSInputSectionState extends State<TTSInputSection> {
             const SizedBox(width: 3),
             const Text(
               'Voice Selection',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        
+
         // Language and Voice dropdowns
         Row(
           children: [
@@ -229,37 +216,51 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                       padding: EdgeInsets.only(left: 8),
                       child: Text('Language', style: TextStyle(fontSize: 11)),
                     ),
-                    items: LanguageConstants.supportedLanguages.map((lang) => 
-                      DropdownMenuItem<LanguageOption>(
-                        value: lang,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(lang.flag, style: const TextStyle(fontSize: 12)),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  lang.name,
-                                  style: const TextStyle(fontSize: 11),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                    items: LanguageConstants.supportedLanguages
+                        .map(
+                          (lang) => DropdownMenuItem<LanguageOption>(
+                            value: lang,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    lang.flag,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      lang.name,
+                                      style: const TextStyle(fontSize: 11),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ).toList(),
+                        )
+                        .toList(),
                     onChanged: (LanguageOption? language) {
                       setState(() {
                         _selectedLanguageOption = language;
                         if (language != null) {
-                          final languagePrefix = language.code.split('-').first.toLowerCase();
-                          _availableVoicesForLanguage = widget.controller.availableVoices
-                              .where((voice) => voice.languageCode.toLowerCase().startsWith(languagePrefix))
+                          final languagePrefix = language.code
+                              .split('-')
+                              .first
+                              .toLowerCase();
+                          _availableVoicesForLanguage = widget
+                              .controller
+                              .availableVoices
+                              .where(
+                                (voice) => voice.languageCode
+                                    .toLowerCase()
+                                    .startsWith(languagePrefix),
+                              )
                               .toList();
-                          
+
                           // Auto-select first available voice for this language
                           if (_availableVoicesForLanguage.isNotEmpty) {
                             _selectedVoice = _availableVoicesForLanguage.first;
@@ -281,9 +282,9 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                 ),
               ),
             ),
-            
+
             const SizedBox(width: 8),
-            
+
             // Voice dropdown (right) - compact implementation
             Expanded(
               flex: 2,
@@ -302,27 +303,31 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                       padding: EdgeInsets.only(left: 8),
                       child: Text('Voice', style: TextStyle(fontSize: 11)),
                     ),
-                    items: _availableVoicesForLanguage.map((voice) => 
-                      DropdownMenuItem<VoiceModel>(
-                        value: voice,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Text(
-                            '${voice.displayName} (${voice.gender.name})',
-                            style: const TextStyle(fontSize: 11),
-                            overflow: TextOverflow.ellipsis,
+                    items: _availableVoicesForLanguage
+                        .map(
+                          (voice) => DropdownMenuItem<VoiceModel>(
+                            value: voice,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Text(
+                                '${voice.displayName} (${voice.gender.name})',
+                                style: const TextStyle(fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ).toList(),
-                    onChanged: (_selectedLanguageOption != null) ? (VoiceModel? voice) {
-                      setState(() {
-                        _selectedVoice = voice;
-                      });
-                      if (voice != null) {
-                        widget.controller.changeVoice(voice.id);
-                      }
-                    } : null,
+                        )
+                        .toList(),
+                    onChanged: (_selectedLanguageOption != null)
+                        ? (VoiceModel? voice) {
+                            setState(() {
+                              _selectedVoice = voice;
+                            });
+                            if (voice != null) {
+                              widget.controller.changeVoice(voice.id);
+                            }
+                          }
+                        : null,
                     icon: const Padding(
                       padding: EdgeInsets.only(right: 8),
                       child: Icon(Icons.arrow_drop_down, size: 16),
