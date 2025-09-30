@@ -11,14 +11,32 @@ class TTSPage extends StatefulWidget {
 class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
   late final ITTSController _controller;
   final TextEditingController _textController = TextEditingController(
-    text: 'Hello, this is a test message.',
+    text: '你好，这是一个测试消息。',
   );
+  
+  // Language selection
+  String? _selectedLanguage = 'zh-CN';
+  static const List<Map<String, String>> _availableLanguages = [
+    {'code': 'zh-CN', 'name': '中文 (简体)'},
+    {'code': 'en-US', 'name': 'English (US)'},
+    {'code': 'ja-JP', 'name': '日本語'},
+    {'code': 'ko-KR', 'name': '한국어'},
+    {'code': 'fr-FR', 'name': 'Français'},
+    {'code': 'de-DE', 'name': 'Deutsch'},
+    {'code': 'es-ES', 'name': 'Español'},
+    {'code': 'ru-RU', 'name': 'Русский'},
+    {'code': 'ar-SA', 'name': 'العربية'},
+    {'code': 'hi-IN', 'name': 'हिन्दी'},
+  ];
 
   @override
   void initState() {
     super.initState();
     _controller = createTTSController();
     _controller.text = _textController.text;
+    if (_selectedLanguage != null) {
+      _controller.setLanguageCode(_selectedLanguage!);
+    }
     // Sync text controller with TTS controller
     _textController.addListener(_onTextChanged);
   }
@@ -34,6 +52,62 @@ class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
     _controller.text = _textController.text;
   }
 
+  void _onLanguageChanged(String? newLanguage) {
+    setState(() {
+      if (newLanguage == null) {
+        // Deselect language
+        _selectedLanguage = null;
+      } else if (newLanguage == _selectedLanguage) {
+        // Toggle off current selection
+        _selectedLanguage = null;
+      } else {
+        // Select new language
+        _selectedLanguage = newLanguage;
+        _controller.setLanguageCode(newLanguage);
+        _ensureVoiceMatchesLanguage();
+      }
+    });
+  }
+
+  void _clearText() {
+    // Temporarily remove listener to prevent interference
+    _textController.removeListener(_onTextChanged);
+    
+    // Clear both controllers
+    _textController.clear();
+    _controller.text = '';
+    
+    // Re-add listener
+    _textController.addListener(_onTextChanged);
+    
+    // Force UI update
+    setState(() {});
+  }
+
+  void _ensureVoiceMatchesLanguage() {
+    final voices = _controller.availableVoices;
+    if (voices.isEmpty || _selectedLanguage == null) return;
+
+    final prefix = '$_selectedLanguage-';
+    final current = _controller.selectedVoice;
+    if (current != null && current.startsWith(prefix)) return;
+
+    final match = voices.firstWhere(
+      (v) => v.startsWith(prefix),
+      orElse: () => '',
+    );
+    if (match.isNotEmpty && match != current) {
+      _controller.setVoice(match);
+    }
+  }
+
+  List<String> _getFilteredVoices() {
+    if (_selectedLanguage == null) return [];
+    final allVoices = _controller.availableVoices;
+    final prefix = '$_selectedLanguage-';
+    return allVoices.where((voice) => voice.startsWith(prefix)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -41,25 +115,100 @@ class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Voice selector
+          // Language selector
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Language Selection',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              DropdownButton<String>(
+                value: _selectedLanguage,
+                isExpanded: true,
+                items: [
+                  // Add "No Selection" option
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text(
+                      'No Language Selected',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                  // Add all available languages
+                  ..._availableLanguages.map((lang) {
+                    return DropdownMenuItem<String>(
+                      value: lang['code'],
+                      child: Text('${lang['code']} - ${lang['name']}'),
+                    );
+                  }),
+                ],
+                onChanged: _onLanguageChanged,
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+
+          // Voice selector (filtered by language)
           if (_controller.availableVoices.isNotEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Voice Selection',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    Text(
+                      'Voice Selection (${_selectedLanguage ?? 'No Language'})',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_getFilteredVoices().length}/${_controller.availableVoices.length}',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 DropdownButton<String>(
-                  value: _controller.selectedVoice,
+                  value: _controller.selectedVoice != null &&
+                          _getFilteredVoices().contains(_controller.selectedVoice)
+                      ? _controller.selectedVoice
+                      : null,
                   isExpanded: true,
-                  items: _controller.availableVoices.map((voice) {
-                    return DropdownMenuItem(value: voice, child: Text(voice));
-                  }).toList(),
-                  onChanged: (voiceName) {
+                  hint: Text(_getFilteredVoices().isEmpty 
+                      ? 'No voices for $_selectedLanguage'
+                      : 'Select Voice'),
+                  items: [
+                    // Add "No Selection" option
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text(
+                        'No Voice Selected',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                    // Add filtered voices
+                    ..._getFilteredVoices().map((voice) {
+                      // Remove language prefix for cleaner display
+                      final displayName = _selectedLanguage != null && voice.startsWith('$_selectedLanguage-')
+                          ? voice.substring(_selectedLanguage!.length + 1)
+                          : voice;
+                      return DropdownMenuItem(
+                        value: voice, 
+                        child: Text(displayName),
+                      );
+                    }),
+                  ],
+                  onChanged: _getFilteredVoices().isEmpty ? null : (voiceName) {
+                    // Allow null selection (deselection)
                     if (voiceName != null) {
                       _controller.setVoice(voiceName);
+                    } else {
+                      // Handle deselection - set to first available voice or empty
+                      final filteredVoices = _getFilteredVoices();
+                      if (filteredVoices.isNotEmpty) {
+                        _controller.setVoice(filteredVoices.first);
+                      }
                     }
                   },
                 ),
@@ -176,6 +325,16 @@ class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
                     },
                   );
                 },
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: _clearText,
+                icon: const Icon(Icons.clear),
+                label: const Text('Clear'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[600],
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),

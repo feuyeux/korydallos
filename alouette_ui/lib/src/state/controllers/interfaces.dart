@@ -159,8 +159,14 @@ abstract class ITTSController extends IStateController {
   /// Stream of paused state changes
   Stream<bool> get pausedStream;
 
+  /// Current language code (e.g., 'zh-CN', 'en-US')
+  String? get languageCode;
+
   /// Set the voice/language
   void setVoice(String voiceId);
+
+  /// Set language code for TTS
+  void setLanguageCode(String? languageCode);
 
   /// Set speech parameters
   void setSpeechRate(double rate);
@@ -169,6 +175,9 @@ abstract class ITTSController extends IStateController {
 
   /// TTS control methods
   Future<void> speak();
+
+  /// Speak with explicit language (preferred when language is known)
+  Future<void> speakWithLanguage(String languageCode);
   Future<void> pause();
   Future<void> resume();
   Future<void> stop();

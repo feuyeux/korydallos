@@ -2,6 +2,7 @@
 library alouette_ui.state.controllers.implementations;
 
 import 'dart:async';
+import 'package:alouette_lib_tts/alouette_tts.dart' as lib_tts;
 
 import '../../../alouette_ui.dart';
 
@@ -113,9 +114,8 @@ class TranslationController extends BaseStateController
   }
 }
 
-/// TTS controller implementation
+/// TTS controller implementation - simplified to use lib layer directly
 class TTSController extends BaseStateController implements ITTSController {
-  final ITTSService _ttsService;
   final StreamController<bool> _speakingController =
       StreamController<bool>.broadcast();
   final StreamController<bool> _pausedController =
@@ -123,6 +123,7 @@ class TTSController extends BaseStateController implements ITTSController {
 
   String _text = '';
   String? _selectedVoice;
+  String? _languageCode;
   List<String> _availableVoices = [];
   bool _isSpeaking = false;
   bool _isPaused = false;
@@ -130,8 +131,25 @@ class TTSController extends BaseStateController implements ITTSController {
   double _speechPitch = 0.5;
   double _speechVolume = 1.0;
 
-  TTSController(this._ttsService) {
-    _initializeVoices();
+  // Use lib layer directly
+  late final dynamic _libTTSService;
+
+  TTSController() {
+    _initializeLibService();
+  }
+
+  Future<void> _initializeLibService() async {
+    try {
+      print('[TTS] DEBUG: Initializing lib TTS service...');
+      _libTTSService = lib_tts.TTSService();
+      await _libTTSService.initialize();
+      print('[TTS] DEBUG: Lib TTS service initialized');
+      await _initializeVoices();
+      print('[TTS] DEBUG: TTS controller fully initialized');
+    } catch (e) {
+      print('[TTS] ERROR: Failed to initialize TTS service: $e');
+      setError('Failed to initialize TTS service: $e');
+    }
   }
 
   @override
@@ -145,6 +163,9 @@ class TTSController extends BaseStateController implements ITTSController {
 
   @override
   String? get selectedVoice => _selectedVoice;
+
+  @override
+  String? get languageCode => _languageCode;
 
   @override
   List<String> get availableVoices => List.unmodifiable(_availableVoices);
@@ -177,6 +198,12 @@ class TTSController extends BaseStateController implements ITTSController {
   }
 
   @override
+  void setLanguageCode(String? languageCode) {
+    ensureNotDisposed();
+    _languageCode = languageCode;
+  }
+
+  @override
   void setSpeechRate(double rate) {
     ensureNotDisposed();
     _speechRate = rate.clamp(0.0, 1.0);
@@ -197,6 +224,11 @@ class TTSController extends BaseStateController implements ITTSController {
   @override
   Future<void> speak() async {
     ensureNotDisposed();
+    
+    print('[TTS] DEBUG: speak() called');
+    print('[TTS] DEBUG: text = "$_text"');
+    print('[TTS] DEBUG: languageCode = "$_languageCode"');
+    print('[TTS] DEBUG: selectedVoice = "$_selectedVoice"');
 
     if (_text.isEmpty) {
       setError('Text cannot be empty');
@@ -207,9 +239,36 @@ class TTSController extends BaseStateController implements ITTSController {
       _setSpeaking(true);
       _setPaused(false);
 
-      await _ttsService.speak(
+      print('[TTS] DEBUG: Calling _libTTSService.speakText()');
+      // Use lib layer directly - match the actual API signature
+      await _libTTSService.speakText(
         _text,
         voiceName: _selectedVoice,
+        languageName: _languageCode,
+        format: 'audio-24khz-48kbitrate-mono-mp3',
+      );
+
+      _setSpeaking(false);
+    });
+  }
+
+  @override
+  Future<void> speakWithLanguage(String languageCode) async {
+    ensureNotDisposed();
+
+    if (_text.isEmpty) {
+      setError('Text cannot be empty');
+      return;
+    }
+
+    await executeAsync(() async {
+      _setSpeaking(true);
+      _setPaused(false);
+
+      // Use lib layer directly
+      await _libTTSService.speakText(
+        _text,
+        languageCode: languageCode,
         rate: _speechRate,
         pitch: _speechPitch,
         volume: _speechVolume,
@@ -223,7 +282,7 @@ class TTSController extends BaseStateController implements ITTSController {
   Future<void> pause() async {
     ensureNotDisposed();
     await executeAsync(() async {
-      await _ttsService.pause();
+      await _libTTSService.pause();
       _setPaused(true);
     });
   }
@@ -232,7 +291,7 @@ class TTSController extends BaseStateController implements ITTSController {
   Future<void> resume() async {
     ensureNotDisposed();
     await executeAsync(() async {
-      await _ttsService.resume();
+      await _libTTSService.resume();
       _setPaused(false);
     });
   }
@@ -241,7 +300,7 @@ class TTSController extends BaseStateController implements ITTSController {
   Future<void> stop() async {
     ensureNotDisposed();
     await executeAsync(() async {
-      await _ttsService.stop();
+      await _libTTSService.stop();
       _setSpeaking(false);
       _setPaused(false);
     });
@@ -249,12 +308,37 @@ class TTSController extends BaseStateController implements ITTSController {
 
   Future<void> _initializeVoices() async {
     try {
-      final voices = await _ttsService.getAvailableVoices();
-      _availableVoices = voices.map((voice) => voice.name).toList();
+      print('[TTS] DEBUG: Loading voices...');
+      final voices = await _libTTSService.getVoices();
+      print('[TTS] DEBUG: Raw voices type: ${voices.runtimeType}');
+      print('[TTS] DEBUG: Raw voices content: $voices');
+      
+      // Handle VoiceModel objects from lib layer
+      if (voices is List) {
+        _availableVoices = voices.map((voice) {
+          // Extract id from VoiceModel objects
+          if (voice != null && voice.toString().contains('id: ')) {
+            // Parse VoiceModel string to extract id
+            final voiceStr = voice.toString();
+            final idMatch = RegExp(r'id: ([^,)]+)').firstMatch(voiceStr);
+            if (idMatch != null) {
+              return idMatch.group(1)!;
+            }
+          }
+          return voice.toString();
+        }).toList();
+      } else {
+        throw Exception('Unexpected voices format: ${voices.runtimeType}');
+      }
+      
+      print('[TTS] DEBUG: Loaded ${_availableVoices.length} voices');
+      print('[TTS] DEBUG: First 5 voices: ${_availableVoices.take(5).toList()}');
       if (_availableVoices.isNotEmpty && _selectedVoice == null) {
         _selectedVoice = _availableVoices.first;
+        print('[TTS] DEBUG: Selected default voice: $_selectedVoice');
       }
     } catch (e) {
+      print('[TTS] ERROR: Failed to load voices: $e');
       setError('Failed to load voices: $e');
     }
   }

@@ -19,8 +19,7 @@ class ControllerFactory {
 
   /// Create a TTS controller
   ITTSController createTTSController() {
-    final ttsService = ServiceLocator.get<ITTSService>();
-    return TTSController(ttsService);
+    return TTSController();
   }
 
   /// Create a language selection controller

@@ -16,6 +16,7 @@ class TranslationInputWidget extends StatefulWidget {
   final ValueChanged<List<String>>? onLanguagesChanged;
   final VoidCallback? onReset;
   final VoidCallback? onSelectAll;
+  final VoidCallback? onClearResults;
   final bool isTranslating;
   final bool isConfigured;
 
@@ -29,6 +30,7 @@ class TranslationInputWidget extends StatefulWidget {
     this.onLanguagesChanged,
     this.onReset,
     this.onSelectAll,
+    this.onClearResults,
     this.isTranslating = false,
     this.isConfigured = true,
   });
@@ -91,7 +93,25 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   }
 
   void _onClear() {
+    print('[TranslationInputWidget] Clear button called');
+    print('[TranslationInputWidget] onClearResults callback available: ${widget.onClearResults != null}');
+    
     widget.textController.clear();
     widget.onReset?.call();
+    
+    // 同时清除语言选择
+    if (widget.onLanguagesChanged != null) {
+      print('[TranslationInputWidget] Clearing language selection');
+      widget.onLanguagesChanged!([]);
+    }
+    
+    // 清除翻译结果
+    if (widget.onClearResults != null) {
+      print('[TranslationInputWidget] Calling onClearResults callback');
+      widget.onClearResults!();
+      print('[TranslationInputWidget] onClearResults callback completed');
+    } else {
+      print('[TranslationInputWidget] WARNING: onClearResults callback is null!');
+    }
   }
 }

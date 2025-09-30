@@ -16,18 +16,48 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
   final TextEditingController _textController = TextEditingController(
     text: TTSAppConfig.defaultText,
   );
+  
+  // Explicit language selection - no guessing
+  String _selectedLanguage = 'zh-CN'; // Default language
+  
+  // Available languages for TTS
+  static const List<Map<String, String>> _availableLanguages = [
+    {'code': 'zh-CN', 'name': '中文 (简体)'},
+    {'code': 'en-US', 'name': 'English (US)'},
+    {'code': 'en-GB', 'name': 'English (UK)'},
+    {'code': 'ja-JP', 'name': '日本語'},
+    {'code': 'ko-KR', 'name': '한국어'},
+    {'code': 'fr-FR', 'name': 'Français'},
+    {'code': 'de-DE', 'name': 'Deutsch'},
+    {'code': 'es-ES', 'name': 'Español'},
+    {'code': 'ru-RU', 'name': 'Русский'},
+    {'code': 'ar-SA', 'name': 'العربية'},
+    {'code': 'hi-IN', 'name': 'हिन्दी'},
+  ];
 
   @override
   void initState() {
     super.initState();
     _ttsController = createTTSController();
     _ttsController.text = _textController.text;
+    // Set initial language
+    _ttsController.setLanguageCode(_selectedLanguage);
     // Sync text controller with TTS controller
     _textController.addListener(_onTextChanged);
   }
 
   void _onTextChanged() {
     _ttsController.text = _textController.text;
+  }
+
+  void _onLanguageChanged(String? newLanguage) {
+    if (newLanguage != null && newLanguage != _selectedLanguage) {
+      setState(() {
+        _selectedLanguage = newLanguage;
+        // Set language code directly to TTS controller
+        _ttsController.setLanguageCode(newLanguage);
+      });
+    }
   }
 
   @override
@@ -132,6 +162,35 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
           },
         ),
         actions: [
+          // Language selector
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedLanguage,
+                  isDense: true,
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                  dropdownColor: Colors.grey[800],
+                  items: _availableLanguages.map((lang) {
+                    return DropdownMenuItem<String>(
+                      value: lang['code'],
+                      child: Text(
+                        lang['code']!,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: _onLanguageChanged,
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
@@ -145,6 +204,7 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
       body: TTSPage(
         controller: _ttsController,
         textController: _textController,
+        language: _selectedLanguage, // Explicitly pass selected language
       ),
     );
   }

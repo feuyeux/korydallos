@@ -6,11 +6,13 @@ import '../widgets/tts_control_section.dart';
 class TTSPage extends StatefulWidget {
   final ITTSController controller;
   final TextEditingController textController;
+  final String? language;
 
   const TTSPage({
     super.key,
     required this.controller,
     required this.textController,
+    this.language,
   });
 
   @override
@@ -30,6 +32,7 @@ class _TTSPageState extends State<TTSPage> {
             child: TTSInputSection(
               controller: widget.controller,
               textController: widget.textController,
+              language: widget.language,
             ),
           ),
 
