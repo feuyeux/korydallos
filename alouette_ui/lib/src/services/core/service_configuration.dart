@@ -5,16 +5,16 @@
 class ServiceConfiguration {
   /// Whether to initialize TTS service
   final bool initializeTTS;
-  
+
   /// Whether to initialize Translation service
   final bool initializeTranslation;
-  
+
   /// Whether to enable automatic fallback for TTS engines
   final bool ttsAutoFallback;
-  
+
   /// Whether to enable verbose logging during initialization
   final bool verboseLogging;
-  
+
   /// Custom initialization timeout in milliseconds
   final int initializationTimeoutMs;
 
@@ -72,13 +72,13 @@ class ServiceConfiguration {
 class ServiceInitializationResult {
   /// Whether the overall initialization was successful
   final bool isSuccessful;
-  
+
   /// Individual service results
   final Map<String, bool> serviceResults;
-  
+
   /// Any errors that occurred during initialization
   final List<String> errors;
-  
+
   /// Initialization duration in milliseconds
   final int durationMs;
 
@@ -93,7 +93,7 @@ class ServiceInitializationResult {
   String getSummary() {
     final successful = serviceResults.values.where((v) => v).length;
     final total = serviceResults.length;
-    
+
     if (isSuccessful) {
       return 'Successfully initialized $successful/$total services in ${durationMs}ms';
     } else {

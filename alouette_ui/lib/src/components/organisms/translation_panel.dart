@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 
 /// Translation Panel Organism
@@ -59,19 +60,15 @@ class _TranslationPanelState extends State<TranslationPanel> {
             // Text input - smaller
             _buildTextInput(),
             const SizedBox(height: 1), // Minimal spacing
-            
 
             const SizedBox(height: 1), // Minimal spacing
-            
             // Language chips - 6 per row with equal width
             ConstrainedBox(
               constraints: const BoxConstraints(
                 maxHeight: 140, // Increased height for 2 rows
-                minHeight: 70,  // Increased minimum height for 1 row
+                minHeight: 70, // Increased minimum height for 1 row
               ),
-              child: SingleChildScrollView(
-                child: _buildLanguageGrid(),
-              ),
+              child: SingleChildScrollView(child: _buildLanguageGrid()),
             ),
             const SizedBox(height: 1), // Minimal spacing
             // Action buttons
@@ -82,9 +79,10 @@ class _TranslationPanelState extends State<TranslationPanel> {
               const SizedBox(height: 8),
               _buildErrorDisplay(),
             ],
-            
+
             // Results
-            if (widget.translationResults != null && widget.translationResults!.isNotEmpty) ...[
+            if (widget.translationResults != null &&
+                widget.translationResults!.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildResults(),
             ],
@@ -93,8 +91,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
       ),
     );
   }
-
-
 
   Widget _buildTextInput() {
     return SizedBox(
@@ -204,19 +200,23 @@ class _TranslationPanelState extends State<TranslationPanel> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-        ...widget.translationResults!.entries.map((entry) => _buildResultItem(entry)),
+        ...widget.translationResults!.entries.map(
+          (entry) => _buildResultItem(entry),
+        ),
       ],
     );
   }
 
   Widget _buildResultItem(MapEntry<String, String> entry) {
-    final language = LanguageConstants.supportedLanguages
-        .firstWhere((lang) => lang.code == entry.key, orElse: () => LanguageOption(
-          code: entry.key,
-          name: entry.key,
-          nativeName: entry.key,
-          flag: '🌐',
-        ));
+    final language = LanguageConstants.supportedLanguages.firstWhere(
+      (lang) => lang.code == entry.key,
+      orElse: () => LanguageOption(
+        code: entry.key,
+        name: entry.key,
+        nativeName: entry.key,
+        flag: '🌐',
+      ),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -230,10 +230,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
         children: [
           Row(
             children: [
-              Text(
-                language.flag,
-                style: const TextStyle(fontSize: 18),
-              ),
+              Text(language.flag, style: TextStyle(fontSize: PlatformDetector().flagFontSize * 1.125)), // 18.0 equivalent
               const SizedBox(width: 8),
               Text(
                 language.name,
@@ -250,29 +247,30 @@ class _TranslationPanelState extends State<TranslationPanel> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            entry.value,
-            style: const TextStyle(fontSize: 16),
-          ),
+          Text(entry.value, style: const TextStyle(fontSize: 16)),
         ],
       ),
     );
   }
 
   void _handleLanguageTap(LanguageOption language) {
-    final currentSelection = List<LanguageOption>.from(widget.selectedLanguages);
-    
+    final currentSelection = List<LanguageOption>.from(
+      widget.selectedLanguages,
+    );
+
     if (currentSelection.contains(language)) {
       currentSelection.remove(language);
     } else {
       currentSelection.add(language);
     }
-    
+
     widget.onLanguagesChanged?.call(currentSelection);
   }
 
   void _selectAllLanguages() {
-    widget.onLanguagesChanged?.call(List.from(LanguageConstants.supportedLanguages));
+    widget.onLanguagesChanged?.call(
+      List.from(LanguageConstants.supportedLanguages),
+    );
   }
 
   void _clearLanguages() {
@@ -282,7 +280,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
   Widget _buildLanguageGrid() {
     final languages = LanguageConstants.supportedLanguages;
     final rows = <Widget>[];
-    
+
     // Split languages into rows of 6
     for (int i = 0; i < languages.length; i += 6) {
       final rowLanguages = languages.skip(i).take(6).toList();
@@ -291,10 +289,8 @@ class _TranslationPanelState extends State<TranslationPanel> {
         rows.add(const SizedBox(height: 6)); // Spacing between rows
       }
     }
-    
-    return Column(
-      children: rows,
-    );
+
+    return Column(children: rows);
   }
 
   Widget _buildLanguageRow(List<LanguageOption> languages) {
@@ -303,7 +299,9 @@ class _TranslationPanelState extends State<TranslationPanel> {
         final isSelected = widget.selectedLanguages.contains(language);
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 1), // Minimal horizontal padding
+            padding: const EdgeInsets.symmetric(
+              horizontal: 1,
+            ), // Minimal horizontal padding
             child: SizedBox(
               height: 38, // 增加高度以容纳更大的字体
               width: double.infinity, // Ensure full width usage
@@ -315,7 +313,8 @@ class _TranslationPanelState extends State<TranslationPanel> {
                   style: const TextStyle(fontSize: 16), // 增大国旗字号
                 ),
                 label: SizedBox(
-                  width: double.infinity, // Force label to take full available width
+                  width: double
+                      .infinity, // Force label to take full available width
                   child: Text(
                     language.name,
                     style: const TextStyle(
@@ -332,10 +331,15 @@ class _TranslationPanelState extends State<TranslationPanel> {
                 side: BorderSide(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+                      : Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.4),
                   width: 1,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // 增加内边距
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 2,
+                ), // 增加内边距
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),

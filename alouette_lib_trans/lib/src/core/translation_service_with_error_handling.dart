@@ -12,15 +12,16 @@ class TranslationServiceWithErrorHandling {
   final CachedTranslationFallbackProvider _fallbackProvider;
 
   TranslationServiceWithErrorHandling(this._baseService)
-      : _circuitBreaker = TranslationErrorRecoveryService.createCircuitBreaker(),
-        _fallbackProvider = CachedTranslationFallbackProvider();
+    : _circuitBreaker = TranslationErrorRecoveryService.createCircuitBreaker(),
+      _fallbackProvider = CachedTranslationFallbackProvider();
 
   /// Translate text with comprehensive error handling and recovery
   Future<TranslationResult> translateText(TranslationRequest request) async {
     try {
       // Execute through circuit breaker with retry logic
       return await TranslationErrorRecoveryService.retryWithBackoff(
-        () => _circuitBreaker.execute(() => _baseService.translateText(request)),
+        () =>
+            _circuitBreaker.execute(() => _baseService.translateText(request)),
         shouldRetry: TranslationErrorRecoveryService.shouldRetryError,
       );
     } catch (error) {
@@ -69,15 +70,18 @@ class TranslationServiceWithErrorHandling {
             modelName: 'llama2',
             sourceLanguage: 'auto',
           );
-          
+
           final result = await translateText(request);
           results[language] = result;
         } catch (error) {
           errors[language] = error;
-          
+
           // Try to get cached translation as fallback
           try {
-            final cachedTranslation = await _fallbackProvider.translateText(text, language);
+            final cachedTranslation = await _fallbackProvider.translateText(
+              text,
+              language,
+            );
             results[language] = TranslationResult(
               original: text,
               translations: {language: cachedTranslation},
@@ -116,10 +120,7 @@ class TranslationServiceWithErrorHandling {
       throw TranslationException(
         'All translations failed',
         code: TranslationErrorCodes.invalidTranslation,
-        details: {
-          'targetLanguages': targetLanguages,
-          'errors': errors,
-        },
+        details: {'targetLanguages': targetLanguages, 'errors': errors},
       );
     }
 
@@ -139,7 +140,7 @@ class TranslationServiceWithErrorHandling {
       if (cachedModels.isNotEmpty) {
         return cachedModels;
       }
-      
+
       // Enhance error with context
       if (error is AlouetteTranslationError) {
         throw error;
@@ -177,7 +178,11 @@ class TranslationServiceWithErrorHandling {
   }
 
   /// Add translation to cache for fallback purposes
-  void cacheTranslation(String text, String targetLanguage, String translation) {
+  void cacheTranslation(
+    String text,
+    String targetLanguage,
+    String translation,
+  ) {
     _fallbackProvider.addToCache(text, targetLanguage, translation);
   }
 
@@ -198,9 +203,11 @@ class TranslationServiceWithErrorHandling {
     _circuitBreaker.reset();
   }
 
-  Future<TranslationResult> _fallbackTranslation(TranslationRequest request) async {
+  Future<TranslationResult> _fallbackTranslation(
+    TranslationRequest request,
+  ) async {
     final fallbackTranslations = <String, String>{};
-    
+
     for (final language in request.targetLanguages) {
       final fallbackText = await _fallbackProvider.translateText(
         request.text,
@@ -208,7 +215,7 @@ class TranslationServiceWithErrorHandling {
       );
       fallbackTranslations[language] = fallbackText;
     }
-    
+
     return TranslationResult(
       original: request.text,
       translations: fallbackTranslations,

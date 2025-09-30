@@ -34,10 +34,12 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
   void initState() {
     super.initState();
     _selectedProvider = widget.initialConfig.provider;
-    _serverUrlController =
-        TextEditingController(text: widget.initialConfig.serverUrl);
-    _apiKeyController =
-        TextEditingController(text: widget.initialConfig.apiKey ?? '');
+    _serverUrlController = TextEditingController(
+      text: widget.initialConfig.serverUrl,
+    );
+    _apiKeyController = TextEditingController(
+      text: widget.initialConfig.apiKey ?? '',
+    );
     _selectedModel = widget.initialConfig.selectedModel;
 
     // Try to load available models if already configured
@@ -67,7 +69,8 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           // Remove duplicates from the models list
           _availableModels = models.toSet().toList();
           _connectionSuccess = true;
-          _connectionMessage = 'Connected. ${_availableModels.length} models available.';
+          _connectionMessage =
+              'Connected. ${_availableModels.length} models available.';
           // Ensure selected model is valid
           if (!_availableModels.contains(_selectedModel)) {
             _selectedModel = _availableModels.first;
@@ -108,7 +111,9 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
             result.details != null &&
             result.details!['models'] != null) {
           // Remove duplicates from the models list
-          _availableModels = List<String>.from(result.details!['models']).toSet().toList();
+          _availableModels = List<String>.from(
+            result.details!['models'],
+          ).toSet().toList();
           if (_availableModels.isNotEmpty) {
             // Auto-select first available model if current selection is not available
             if (!_availableModels.contains(_selectedModel)) {
@@ -210,10 +215,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Provider Selection
-        Text(
-          'Provider',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Provider', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _selectedProvider,
@@ -243,10 +245,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
         const SizedBox(height: SpacingTokens.l),
 
         // Server URL
-        Text(
-          'Server URL',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Server URL', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         TextFormField(
           controller: _serverUrlController,
@@ -362,20 +361,16 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Model',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+              Text('Model', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                initialValue: _availableModels.contains(_selectedModel) ? _selectedModel : null,
+                initialValue: _availableModels.contains(_selectedModel)
+                    ? _selectedModel
+                    : null,
                 items: _availableModels.toSet().map((model) {
                   return DropdownMenuItem(
                     value: model,
-                    child: Text(
-                      model,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(model, overflow: TextOverflow.ellipsis),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -387,8 +382,10 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                 },
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 hint: const Text('Select a model'),
               ),

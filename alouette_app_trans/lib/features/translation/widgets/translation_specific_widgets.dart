@@ -119,10 +119,7 @@ class TranslationQuickActions extends StatelessWidget {
                 : null,
           ),
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -182,7 +179,7 @@ class TranslationStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final successRate = totalTranslations > 0 
+    final successRate = totalTranslations > 0
         ? (successfulTranslations / totalTranslations * 100).toStringAsFixed(1)
         : '0.0';
 
@@ -197,7 +194,7 @@ class TranslationStatsCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -205,8 +202,8 @@ class TranslationStatsCard extends StatelessWidget {
                 _buildStatItem(context, 'Success Rate', '$successRate%'),
                 if (averageTime != null)
                   _buildStatItem(
-                    context, 
-                    'Avg Time', 
+                    context,
+                    'Avg Time',
                     '${averageTime!.inMilliseconds}ms',
                   ),
               ],
@@ -227,10 +224,7 @@ class TranslationStatsCard extends StatelessWidget {
             color: Theme.of(context).primaryColor,
           ),
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

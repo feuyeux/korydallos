@@ -2,16 +2,16 @@
 class LLMConfig {
   /// The LLM provider type ('ollama', 'lmstudio', etc.)
   final String provider;
-  
+
   /// The server URL for the LLM provider
   final String serverUrl;
-  
+
   /// Optional API key for authentication
   final String? apiKey;
-  
+
   /// The selected model name
   final String selectedModel;
-  
+
   /// Provider-specific configuration options
   final Map<String, dynamic>? providerSpecific;
 
@@ -25,9 +25,9 @@ class LLMConfig {
 
   /// Basic validation of the configuration
   bool get isValid {
-    return provider.isNotEmpty && 
-           serverUrl.isNotEmpty && 
-           selectedModel.isNotEmpty;
+    return provider.isNotEmpty &&
+        serverUrl.isNotEmpty &&
+        selectedModel.isNotEmpty;
   }
 
   /// Comprehensive validation with detailed error reporting
@@ -61,15 +61,13 @@ class LLMConfig {
     }
 
     // Provider-specific warnings
-    if (provider == 'lmstudio' &&
-        (apiKey == null || apiKey!.isEmpty)) {
+    if (provider == 'lmstudio' && (apiKey == null || apiKey!.isEmpty)) {
       warnings.add('API key is recommended for LM Studio');
     }
 
     // URL-related warnings
     if (serverUrl.isNotEmpty) {
-      if (serverUrl.contains('localhost') ||
-          serverUrl.contains('127.0.0.1')) {
+      if (serverUrl.contains('localhost') || serverUrl.contains('127.0.0.1')) {
         warnings.add(
           'Using localhost - ensure the server is running on this machine',
         );
@@ -110,7 +108,7 @@ class LLMConfig {
       serverUrl: json['server_url'] ?? 'http://localhost:11434',
       apiKey: json['api_key'],
       selectedModel: json['selected_model'] ?? '',
-      providerSpecific: json['provider_specific'] != null 
+      providerSpecific: json['provider_specific'] != null
           ? Map<String, dynamic>.from(json['provider_specific'])
           : null,
     );

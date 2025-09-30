@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 import '../interfaces/translation_service_interface.dart';
 
@@ -26,20 +27,25 @@ class TranslationServiceImpl implements ITranslationService {
         if (_isInitialized) return true;
 
         _service = trans_lib.TranslationService();
-        
+
         // Initialize with auto-configuration
         final success = await _service!.initialize();
-        _isInitialized = true; // Service is initialized even if auto-config fails
+        _isInitialized =
+            true; // Service is initialized even if auto-config fails
 
         if (success) {
-          print('Translation Service initialized successfully with auto-configuration');
+          debugPrint(
+            'Translation Service initialized successfully with auto-configuration',
+          );
         } else {
-          print('Translation Service initialized but no auto-configuration found');
+          debugPrint(
+            'Translation Service initialized but no auto-configuration found',
+          );
         }
         return true; // Return true even if auto-config failed, service can still be used manually
       });
     } catch (e) {
-      print('Translation initialization error: $e');
+      debugPrint('Translation initialization error: $e');
       _cleanup();
       return false;
     }
@@ -58,20 +64,23 @@ class TranslationServiceImpl implements ITranslationService {
       if (!_service!.isReady) {
         final autoConfigured = await _service!.initialize();
         if (!autoConfigured) {
-          throw TranslationException('No valid LLM configuration available. Please configure LLM settings.');
+          throw TranslationException(
+            'No valid LLM configuration available. Please configure LLM settings.',
+          );
         }
       }
 
       // Perform translation using the unified API
-      final result = await _service!.translateWithAutoConfig(
-        text,
-        [targetLanguage],
-      );
+      final result = await _service!.translateWithAutoConfig(text, [
+        targetLanguage,
+      ]);
 
       if (result.translations.containsKey(targetLanguage)) {
         return result.translations[targetLanguage]!;
       } else {
-        throw TranslationException('Translation failed: No result for target language $targetLanguage');
+        throw TranslationException(
+          'Translation failed: No result for target language $targetLanguage',
+        );
       }
     } catch (e) {
       throw TranslationException('Error translating text: $e');
@@ -91,7 +100,9 @@ class TranslationServiceImpl implements ITranslationService {
       if (!_service!.isReady) {
         final autoConfigured = await _service!.initialize();
         if (!autoConfigured) {
-          throw TranslationException('No valid LLM configuration available. Please configure LLM settings.');
+          throw TranslationException(
+            'No valid LLM configuration available. Please configure LLM settings.',
+          );
         }
       }
 
@@ -103,7 +114,9 @@ class TranslationServiceImpl implements ITranslationService {
 
       return result.translations;
     } catch (e) {
-      throw TranslationException('Error translating text to multiple languages: $e');
+      throw TranslationException(
+        'Error translating text to multiple languages: $e',
+      );
     }
   }
 
@@ -114,12 +127,12 @@ class TranslationServiceImpl implements ITranslationService {
     try {
       // Note: Language detection may not be directly available in the current library
       // This would need to be implemented in the underlying library or use a heuristic approach
-      
+
       // For now, return null to indicate auto-detection should be used
       // This could be enhanced with actual language detection logic
       return null;
     } catch (e) {
-      print('Error detecting language: $e');
+      debugPrint('Error detecting language: $e');
       return null;
     }
   }
@@ -142,15 +155,48 @@ class TranslationServiceImpl implements ITranslationService {
     // For now, assume all common languages are supported
     // This could be enhanced with actual language support checking
     final commonLanguageCodes = [
-      'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh',
-      'ar', 'hi', 'tr', 'pl', 'nl', 'sv', 'da', 'no', 'fi', 'cs',
-      'hu', 'ro', 'bg', 'hr', 'sk', 'sl', 'et', 'lv', 'lt', 'mt'
+      'en',
+      'es',
+      'fr',
+      'de',
+      'it',
+      'pt',
+      'ru',
+      'ja',
+      'ko',
+      'zh',
+      'ar',
+      'hi',
+      'tr',
+      'pl',
+      'nl',
+      'sv',
+      'da',
+      'no',
+      'fi',
+      'cs',
+      'hu',
+      'ro',
+      'bg',
+      'hr',
+      'sk',
+      'sl',
+      'et',
+      'lv',
+      'lt',
+      'mt',
     ];
     return commonLanguageCodes.contains(languageCode.toLowerCase());
   }
 
   @override
   bool get isInitialized => _isInitialized && !_isDisposed;
+
+  /// Get the underlying TranslationService instance for widgets that need direct access
+  trans_lib.TranslationService get underlyingService {
+    _ensureInitialized();
+    return _service!;
+  }
 
   @override
   void dispose() {
@@ -168,7 +214,9 @@ class TranslationServiceImpl implements ITranslationService {
 
   void _ensureInitialized() {
     if (!_isInitialized) {
-      throw StateError('Translation Service not initialized. Call initialize() first.');
+      throw StateError(
+        'Translation Service not initialized. Call initialize() first.',
+      );
     }
     if (_isDisposed) {
       throw StateError('Translation Service has been disposed.');
@@ -188,7 +236,11 @@ class TranslationServiceImpl implements ITranslationService {
       const LanguageInfo(code: 'fr', name: 'French', nativeName: 'Français'),
       const LanguageInfo(code: 'de', name: 'German', nativeName: 'Deutsch'),
       const LanguageInfo(code: 'it', name: 'Italian', nativeName: 'Italiano'),
-      const LanguageInfo(code: 'pt', name: 'Portuguese', nativeName: 'Português'),
+      const LanguageInfo(
+        code: 'pt',
+        name: 'Portuguese',
+        nativeName: 'Português',
+      ),
       const LanguageInfo(code: 'ru', name: 'Russian', nativeName: 'Русский'),
       const LanguageInfo(code: 'ja', name: 'Japanese', nativeName: '日本語'),
       const LanguageInfo(code: 'ko', name: 'Korean', nativeName: '한국어'),

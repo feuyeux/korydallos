@@ -16,29 +16,29 @@ abstract class TTSProcessor {
   Future<List<VoiceModel>> getAvailableVoices();
 
   /// Synthesize text to audio bytes
-  /// 
+  ///
   /// [text] Text to synthesize
   /// [voiceName] Voice name to use
   /// [format] Audio format, defaults to 'mp3'
-  /// 
+  ///
   /// Returns audio data as bytes
   Future<Uint8List> synthesizeToAudio(
-    String text, 
+    String text,
     String voiceName, {
-    String format = 'mp3'
+    String format = 'mp3',
   });
 
   /// Stop current TTS playback
   Future<void> stop();
-  
+
   /// Set speech rate
   /// [rate] Speech rate value, typically between 0.1 and 3.0
   Future<void> setSpeechRate(double rate);
-  
+
   /// Set pitch
   /// [pitch] Pitch value, typically between 0.5 and 2.0
   Future<void> setPitch(double pitch);
-  
+
   /// Set volume
   /// [volume] Volume value, typically between 0.0 and 1.0
   Future<void> setVolume(double volume);
@@ -52,28 +52,30 @@ abstract class TTSProcessor {
 abstract class BaseTTSProcessor implements TTSProcessor {
   bool _disposed = false;
   late final CacheManager _cacheManager;
-  
+
   BaseTTSProcessor() {
     _cacheManager = CacheManager.instance;
   }
-  
+
   /// Cache manager instance
   CacheManager get cacheManager => _cacheManager;
-  
+
   /// Check if processor is disposed
   bool get isDisposed => _disposed;
-  
+
   /// Ensure processor is not disposed
   void ensureNotDisposed() {
     if (_disposed) {
       throw StateError('TTS processor has been disposed');
     }
   }
-  
+
   /// Get voices with caching support
-  Future<List<VoiceModel>> getVoicesWithCache(Future<List<VoiceModel>> Function() fetcher) async {
+  Future<List<VoiceModel>> getVoicesWithCache(
+    Future<List<VoiceModel>> Function() fetcher,
+  ) async {
     ensureNotDisposed();
-    
+
     // Check cache first
     final cachedVoices = _cacheManager.getCachedVoices(engineName);
     if (cachedVoices != null) {
@@ -84,10 +86,10 @@ abstract class BaseTTSProcessor implements TTSProcessor {
       () async {
         TTSLogger.voice('Loading voices', 0, engineName);
         final voices = await fetcher();
-        
+
         // Cache results
         _cacheManager.cacheVoices(engineName, voices);
-        
+
         TTSLogger.voice('Loaded voices', voices.length, engineName);
         return voices;
       },
@@ -95,7 +97,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
       TTSErrorCodes.voiceListError,
     );
   }
-  
+
   /// Synthesize text with caching support
   Future<Uint8List> synthesizeTextWithCache(
     String text,
@@ -104,7 +106,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
     Future<Uint8List> Function() synthesizer,
   ) async {
     ensureNotDisposed();
-    
+
     // Validate parameters
     _validateSynthesisParams(text, voiceName);
 
@@ -117,22 +119,26 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
     return await ErrorHandler.wrapAsync(
       () async {
-        TTSLogger.debug('Starting text synthesis with $engineName for text: ${text.length} chars, voice: $voiceName, format: $format');
-        
+        TTSLogger.debug(
+          'Starting text synthesis with $engineName for text: ${text.length} chars, voice: $voiceName, format: $format',
+        );
+
         final audioData = await synthesizer();
-        
+
         // Cache results
         _cacheManager.cacheAudio(text, voiceName, format, audioData);
-        
-        TTSLogger.debug('Text synthesis completed successfully - ${audioData.length} bytes generated');
-        
+
+        TTSLogger.debug(
+          'Text synthesis completed successfully - ${audioData.length} bytes generated',
+        );
+
         return audioData;
       },
       '$engineName text synthesis',
       TTSErrorCodes.synthesisError,
     );
   }
-  
+
   /// Validate synthesis parameters
   void _validateSynthesisParams(String text, String voiceName) {
     if (text.trim().isEmpty) {
@@ -150,11 +156,10 @@ abstract class BaseTTSProcessor implements TTSProcessor {
       );
     }
   }
-  
+
   @override
   void dispose() {
     TTSLogger.debug('Disposing $engineName processor');
     _disposed = true;
   }
 }
-

@@ -50,13 +50,15 @@ class VoiceSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filteredVoices = _getFilteredVoices();
-    
+
     final items = filteredVoices
-        .map((voice) => AtomicDropdownItem<VoiceModel>(
-              value: voice,
-              text: _formatVoiceName(voice),
-              icon: voice.gender.icon,
-            ))
+        .map(
+          (voice) => AtomicDropdownItem<VoiceModel>(
+            value: voice,
+            text: _formatVoiceName(voice),
+            icon: voice.gender.icon,
+          ),
+        )
         .toList();
 
     return AtomicDropdown<VoiceModel>(
@@ -85,13 +87,13 @@ class VoiceSelector extends StatelessWidget {
 
   String _formatVoiceName(VoiceModel voice) {
     final parts = <String>[voice.displayName];
-    
+
     if (voice.isNeural) {
       parts.add('(Neural)');
     }
-    
+
     parts.add('- ${voice.gender.name}');
-    
+
     return parts.join(' ');
   }
 }
@@ -127,10 +129,7 @@ class VoiceGridSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (labelText != null) ...[
-          AtomicText(
-            labelText!,
-            variant: AtomicTextVariant.labelMedium,
-          ),
+          AtomicText(labelText!, variant: AtomicTextVariant.labelMedium),
           const AtomicSpacer(AtomicSpacing.small),
         ],
         if (filteredVoices.isEmpty)
@@ -177,7 +176,9 @@ class VoiceGridSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(SpacingTokens.l),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),

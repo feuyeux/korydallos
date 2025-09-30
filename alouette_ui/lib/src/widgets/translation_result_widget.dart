@@ -8,7 +8,7 @@ import '../tokens/typography_tokens.dart';
 
 class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
-  final UnifiedTTSService? ttsService;
+  final TTSService? ttsService;
   final bool isCompactMode;
   final bool isTTSInitialized;
 
@@ -78,10 +78,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 const SizedBox(height: 8),
                 Text(
                   'Enter text and select languages to get started',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                 ),
               ],
             ],
@@ -113,9 +110,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
               const SizedBox(width: 8),
               Text(
                 'Translation Results',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               // _buildActionButtons(context, translation), // Removed
@@ -150,19 +147,14 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           children: [
             Icon(Icons.language, size: 16, color: Colors.grey.shade600),
             const SizedBox(width: 4),
-            Text(
-              'Translations',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            Text('Translations', style: Theme.of(context).textTheme.titleSmall),
             const Spacer(),
             // _buildActionButtons(context, translation), // Removed
           ],
         ),
 
         // Translations - 使用 Expanded 确保剩余空间被占用
-        Expanded(
-          child: _buildTranslations(context, translation),
-        ),
+        Expanded(child: _buildTranslations(context, translation)),
       ],
     );
   }
@@ -198,9 +190,11 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline,
-              size: TypographyTokens.titleLargeStyle.fontSize!,
-              color: Colors.grey.shade600),
+          Icon(
+            Icons.info_outline,
+            size: TypographyTokens.titleLargeStyle.fontSize!,
+            color: Colors.grey.shade600,
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -208,8 +202,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
               'Provider: ${translation.config.provider} | '
               'Generated: ${_formatTimestamp(translation.timestamp)}',
               style: TextStyle(
-                  fontSize: TypographyTokens.bodyMediumStyle.fontSize!,
-                  color: Colors.grey.shade700),
+                fontSize: TypographyTokens.bodyMediumStyle.fontSize!,
+                color: Colors.grey.shade700,
+              ),
             ),
           ),
         ],
@@ -218,14 +213,19 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   }
 
   Widget _buildOriginalText(
-      BuildContext context, TranslationResult translation) {
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.article_outlined,
-                size: DimensionTokens.iconM, color: Colors.grey.shade600),
+            Icon(
+              Icons.article_outlined,
+              size: DimensionTokens.iconM,
+              color: Colors.grey.shade600,
+            ),
             const SizedBox(width: 6),
             Text(
               'Original Text:',
@@ -244,8 +244,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           ),
           child: Text(
             translation.original,
-            style:
-                TextStyle(fontSize: TypographyTokens.titleLargeStyle.fontSize!),
+            style: TextStyle(
+              fontSize: TypographyTokens.titleLargeStyle.fontSize!,
+            ),
           ),
         ),
       ],
@@ -253,7 +254,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   }
 
   Widget _buildTranslations(
-      BuildContext context, TranslationResult translation) {
+    BuildContext context,
+    TranslationResult translation,
+  ) {
     if (widget.isCompactMode) {
       // 极简紧凑模式，直接显示列表
       return ListView.builder(
@@ -274,8 +277,11 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       children: [
         Row(
           children: [
-            Icon(Icons.language,
-                size: DimensionTokens.iconM, color: Colors.grey.shade600),
+            Icon(
+              Icons.language,
+              size: DimensionTokens.iconM,
+              color: Colors.grey.shade600,
+            ),
             const SizedBox(width: 6),
             Text(
               'Translations:',
@@ -295,8 +301,11 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 final translatedText = translation.translations[language] ?? '';
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child:
-                      _buildTranslationItem(context, language, translatedText),
+                  child: _buildTranslationItem(
+                    context,
+                    language,
+                    translatedText,
+                  ),
                 );
               },
             ),
@@ -307,10 +316,14 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   }
 
   Widget _buildTranslationItem(
-      BuildContext context, String language, String translatedText) {
+    BuildContext context,
+    String language,
+    String translatedText,
+  ) {
     final isPlaying = _playingStates[language] ?? false;
     final languageCode = _getLanguageCode(language);
-    final hasTTS = widget.ttsService != null &&
+    final hasTTS =
+        widget.ttsService != null &&
         widget.isTTSInitialized &&
         languageCode != null &&
         languageCode.isNotEmpty;
@@ -330,12 +343,13 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(
-              horizontal: isCompactStyle ? 8 : 12, 
+              horizontal: isCompactStyle ? 8 : 12,
               vertical: isCompactStyle ? 4 : 8,
             ),
             decoration: BoxDecoration(
-              color:
-                  isCompactStyle ? Colors.green.shade100 : Colors.grey.shade100,
+              color: isCompactStyle
+                  ? Colors.green.shade100
+                  : Colors.grey.shade100,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(7),
                 topRight: Radius.circular(7),
@@ -391,9 +405,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             padding: EdgeInsets.all(isCompactStyle ? 6 : 12),
             child: SelectableText(
               translatedText,
-              style: TextStyle(
-                fontSize: isCompactStyle ? 12 : 14,
-              ),
+              style: TextStyle(fontSize: isCompactStyle ? 12 : 14),
             ),
           ),
         ],
@@ -421,8 +433,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       final availableVoices = voices
           .where(
             (voice) => voice.locale.toLowerCase().startsWith(
-                  languageCode.toLowerCase().split('-')[0],
-                ),
+              languageCode.toLowerCase().split('-')[0],
+            ),
           )
           .toList();
 
@@ -436,8 +448,10 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         debugPrint('TTS: Using voice ${matchingVoice.name} for $language');
 
         // Synthesize text to audio data
-        final audioData =
-            await widget.ttsService!.synthesizeText(text, matchingVoice.name);
+        final audioData = await widget.ttsService!.synthesizeText(
+          text,
+          matchingVoice.name,
+        );
 
         // Play the audio (if audio data is not empty)
         if (audioData.isNotEmpty) {
@@ -548,7 +562,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       // If not a language code format, try to find from language name mapping
       final map = LanguageConstants.translationLanguageNames;
       debugPrint(
-          'Available language mappings: ${map.entries.take(5).map((e) => '${e.key}: ${e.value}').join(', ')}...');
+        'Available language mappings: ${map.entries.take(5).map((e) => '${e.key}: ${e.value}').join(', ')}...',
+      );
 
       final entry = map.entries.firstWhere(
         (e) => e.value.toLowerCase() == languageKey.toLowerCase(),
@@ -578,7 +593,10 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   }
 
   void _copyTranslation(
-      BuildContext context, String language, String translatedText) {
+    BuildContext context,
+    String language,
+    String translatedText,
+  ) {
     Clipboard.setData(ClipboardData(text: translatedText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

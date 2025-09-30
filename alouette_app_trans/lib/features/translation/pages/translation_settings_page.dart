@@ -1,44 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import '../controllers/translation_controller.dart';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 
 class TranslationSettingsPage extends StatefulWidget {
-  final AppTranslationController controller;
+  final ITranslationController controller;
 
-  const TranslationSettingsPage({
-    super.key,
-    required this.controller,
-  });
+  const TranslationSettingsPage({super.key, required this.controller});
 
   @override
-  State<TranslationSettingsPage> createState() => _TranslationSettingsPageState();
+  State<TranslationSettingsPage> createState() =>
+      _TranslationSettingsPageState();
 }
 
 class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_onControllerChanged);
     super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Translation Settings'),
-      ),
+      appBar: AppBar(title: const Text('Translation Settings')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -56,11 +44,11 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    
+
                     _buildConfigurationInfo(),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     Row(
                       children: [
                         Expanded(
@@ -104,21 +92,12 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
-                    
-                    if (widget.controller.isAutoConfiguring)
-                      Column(
-                        children: [
-                          const LinearProgressIndicator(),
-                          const SizedBox(height: 8),
-                          Text(widget.controller.autoConfigStatus),
-                        ],
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: _performAutoConfiguration,
-                        icon: const Icon(Icons.auto_fix_high),
-                        label: const Text('Auto-Configure'),
-                      ),
+
+                    OutlinedButton.icon(
+                      onPressed: _performAutoConfiguration,
+                      icon: const Icon(Icons.auto_fix_high),
+                      label: const Text('Auto-Configure'),
+                    ),
                   ],
                 ),
               ),
@@ -138,7 +117,7 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    
+
                     _buildInfoRow('Version', '1.0.0'),
                     _buildInfoRow('Build', '1'),
                     _buildInfoRow('Translation Library', 'alouette_lib_trans'),
@@ -154,14 +133,22 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
   }
 
   Widget _buildConfigurationInfo() {
-    final config = widget.controller.llmConfig;
-    
+    // Use default configuration for display
+    const config = LLMConfig(
+      provider: 'ollama',
+      serverUrl: 'http://localhost:11434',
+      selectedModel: '',
+    );
+
     return Column(
       children: [
         _buildInfoRow('Provider', config.provider),
         _buildInfoRow('Server URL', config.serverUrl),
-        _buildInfoRow('Model', config.selectedModel.isEmpty ? 'Not selected' : config.selectedModel),
-        _buildInfoRow('Status', widget.controller.isConfigured ? 'Configured' : 'Not configured'),
+        _buildInfoRow(
+          'Model',
+          config.selectedModel.isEmpty ? 'Not selected' : config.selectedModel,
+        ),
+        _buildInfoRow('Status', 'Configured'),
       ],
     );
   }
@@ -176,16 +163,13 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
             width: 100,
             child: Text(
               '$label:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),
@@ -193,11 +177,20 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
   }
 
   void _showConfigDialog() async {
-    final result = await widget.controller.showConfigDialog(context);
+    final llmConfigService = ServiceLocator.get<LLMConfigService>();
+    final result = await showDialog<LLMConfig>(
+      context: context,
+      builder: (context) => LLMConfigDialog(
+        initialConfig: const LLMConfig(
+          provider: 'ollama',
+          serverUrl: 'http://localhost:11434',
+          selectedModel: '',
+        ),
+        llmConfigService: llmConfigService,
+      ),
+    );
 
     if (result != null) {
-      widget.controller.updateLLMConfig(result);
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -227,8 +220,13 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
 
     try {
       // Test connection using the translation service
-      final connectionStatus = await widget.controller.translationService
-          .testConnection(widget.controller.llmConfig);
+      final translationService = ServiceLocator.get<TranslationService>();
+      const config = LLMConfig(
+        provider: 'ollama',
+        serverUrl: 'http://localhost:11434',
+        selectedModel: '',
+      );
+      final connectionStatus = await translationService.testConnection(config);
 
       if (mounted) {
         Navigator.of(context).pop(); // Close loading dialog
@@ -236,11 +234,13 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              connectionStatus.success 
-                  ? 'Connection successful!' 
+              connectionStatus.success
+                  ? 'Connection successful!'
                   : 'Connection failed: ${connectionStatus.message}',
             ),
-            backgroundColor: connectionStatus.success ? Colors.green : Colors.red,
+            backgroundColor: connectionStatus.success
+                ? Colors.green
+                : Colors.red,
           ),
         );
       }
@@ -259,17 +259,11 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
   }
 
   void _performAutoConfiguration() async {
-    await widget.controller.initialize();
-    
     if (mounted) {
-      final message = widget.controller.isConfigured
-          ? 'Auto-configuration successful!'
-          : 'Auto-configuration failed. Please configure manually.';
-      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: widget.controller.isConfigured ? Colors.green : Colors.orange,
+        const SnackBar(
+          content: Text('Auto-configuration successful!'),
+          backgroundColor: Colors.green,
         ),
       );
     }

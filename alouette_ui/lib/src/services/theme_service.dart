@@ -4,13 +4,8 @@ import '../tokens/color_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import '../tokens/dimension_tokens.dart';
 
-
 /// Theme modes supported by the application
-enum AlouetteThemeMode {
-  light,
-  dark,
-  system,
-}
+enum AlouetteThemeMode { light, dark, system }
 
 /// Theme service for managing application themes and design tokens
 class ThemeService extends ChangeNotifier {
@@ -79,8 +74,10 @@ class ThemeService extends ChangeNotifier {
 
   /// Get light theme with current customizations
   ThemeData getLightTheme() {
-    final primaryColor = _useCustomColors ? _customPrimaryColor : ColorTokens.primary;
-    
+    final primaryColor = _useCustomColors
+        ? _customPrimaryColor
+        : ColorTokens.primary;
+
     return ThemeData(
       colorScheme: _buildLightColorScheme(primaryColor),
       useMaterial3: true,
@@ -95,16 +92,16 @@ class ThemeService extends ChangeNotifier {
       dividerTheme: _buildDividerTheme(true),
       snackBarTheme: _buildSnackBarTheme(true),
       pageTransitionsTheme: _buildPageTransitionsTheme(),
-      extensions: [
-        _buildCustomThemeExtension(true, primaryColor),
-      ],
+      extensions: [_buildCustomThemeExtension(true, primaryColor)],
     );
   }
 
   /// Get dark theme with current customizations
   ThemeData getDarkTheme() {
-    final primaryColor = _useCustomColors ? _customPrimaryColor : ColorTokens.darkPrimary;
-    
+    final primaryColor = _useCustomColors
+        ? _customPrimaryColor
+        : ColorTokens.darkPrimary;
+
     return ThemeData(
       colorScheme: _buildDarkColorScheme(primaryColor),
       useMaterial3: true,
@@ -120,9 +117,7 @@ class ThemeService extends ChangeNotifier {
       dividerTheme: _buildDividerTheme(false),
       snackBarTheme: _buildSnackBarTheme(false),
       pageTransitionsTheme: _buildPageTransitionsTheme(),
-      extensions: [
-        _buildCustomThemeExtension(false, primaryColor),
-      ],
+      extensions: [_buildCustomThemeExtension(false, primaryColor)],
     );
   }
 
@@ -184,9 +179,7 @@ class ThemeService extends ChangeNotifier {
 
   /// Build typography theme
   Typography _buildTypography() {
-    return Typography.material2021(
-      platform: TargetPlatform.android,
-    );
+    return Typography.material2021(platform: TargetPlatform.android);
   }
 
   /// Build app bar theme
@@ -195,7 +188,9 @@ class ThemeService extends ChangeNotifier {
       centerTitle: true,
       elevation: 0,
       backgroundColor: isLight ? ColorTokens.surface : ColorTokens.darkSurface,
-      foregroundColor: isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface,
+      foregroundColor: isLight
+          ? ColorTokens.onSurface
+          : ColorTokens.darkOnSurface,
       shadowColor: ColorTokens.shadow,
       titleTextStyle: TypographyTokens.titleLargeStyle.copyWith(
         color: isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface,
@@ -223,8 +218,10 @@ class ThemeService extends ChangeNotifier {
   /// Build input decoration theme
   InputDecorationTheme _buildInputDecorationTheme(bool isLight) {
     final borderColor = isLight ? ColorTokens.outline : ColorTokens.darkOutline;
-    final fillColor = isLight ? ColorTokens.surfaceVariant : ColorTokens.darkSurfaceVariant;
-    
+    final fillColor = isLight
+        ? ColorTokens.surfaceVariant
+        : ColorTokens.darkSurfaceVariant;
+
     return InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
@@ -249,27 +246,38 @@ class ThemeService extends ChangeNotifier {
       fillColor: fillColor,
       isDense: false,
       hintStyle: TypographyTokens.bodyMediumStyle.copyWith(
-        color: isLight ? ColorTokens.onSurfaceVariant : ColorTokens.darkOnSurfaceVariant,
+        color: isLight
+            ? ColorTokens.onSurfaceVariant
+            : ColorTokens.darkOnSurfaceVariant,
       ),
     );
   }
 
   /// Build elevated button theme
-  ElevatedButtonThemeData _buildElevatedButtonTheme(bool isLight, Color primaryColor) {
+  ElevatedButtonThemeData _buildElevatedButtonTheme(
+    bool isLight,
+    Color primaryColor,
+  ) {
     return ElevatedButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(primaryColor),
         foregroundColor: WidgetStateProperty.all(ColorTokens.onPrimary),
-        shape: WidgetStateProperty.all(RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
-        )),
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
-          horizontal: SpacingTokens.xl,
-          vertical: SpacingTokens.m,
-        )),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
+          ),
+        ),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.xl,
+            vertical: SpacingTokens.m,
+          ),
+        ),
         elevation: WidgetStateProperty.all(2),
         shadowColor: WidgetStateProperty.all(ColorTokens.shadow),
-        minimumSize: WidgetStateProperty.all(const Size(DimensionTokens.buttonMinWidth, DimensionTokens.buttonL)),
+        minimumSize: WidgetStateProperty.all(
+          const Size(DimensionTokens.buttonMinWidth, DimensionTokens.buttonL),
+        ),
         textStyle: WidgetStateProperty.all(TypographyTokens.labelLargeStyle),
       ),
     );
@@ -280,13 +288,17 @@ class ThemeService extends ChangeNotifier {
     return TextButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.all(primaryColor),
-        shape: WidgetStateProperty.all(RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DimensionTokens.radiusM),
-        )),
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(
-          horizontal: SpacingTokens.l,
-          vertical: SpacingTokens.s,
-        )),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DimensionTokens.radiusM),
+          ),
+        ),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(
+            horizontal: SpacingTokens.l,
+            vertical: SpacingTokens.s,
+          ),
+        ),
         textStyle: WidgetStateProperty.all(TypographyTokens.labelLargeStyle),
       ),
     );
@@ -296,7 +308,9 @@ class ThemeService extends ChangeNotifier {
   IconButtonThemeData _buildIconButtonTheme(bool isLight) {
     return IconButtonThemeData(
       style: ButtonStyle(
-        foregroundColor: WidgetStateProperty.all(isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface),
+        foregroundColor: WidgetStateProperty.all(
+          isLight ? ColorTokens.onSurface : ColorTokens.darkOnSurface,
+        ),
         backgroundColor: WidgetStateProperty.all(Colors.transparent),
         overlayColor: WidgetStateProperty.all(ColorTokens.surfaceHover),
         iconSize: WidgetStateProperty.all(DimensionTokens.iconL),
@@ -305,7 +319,9 @@ class ThemeService extends ChangeNotifier {
   }
 
   /// Build floating action button theme
-  FloatingActionButtonThemeData _buildFloatingActionButtonTheme(Color primaryColor) {
+  FloatingActionButtonThemeData _buildFloatingActionButtonTheme(
+    Color primaryColor,
+  ) {
     return FloatingActionButtonThemeData(
       backgroundColor: primaryColor,
       foregroundColor: ColorTokens.onPrimary,
@@ -353,7 +369,10 @@ class ThemeService extends ChangeNotifier {
   }
 
   /// Build custom theme extension
-  AlouetteThemeExtension _buildCustomThemeExtension(bool isLight, Color primaryColor) {
+  AlouetteThemeExtension _buildCustomThemeExtension(
+    bool isLight,
+    Color primaryColor,
+  ) {
     return AlouetteThemeExtension(
       success: ColorTokens.success,
       onSuccess: ColorTokens.onSuccess,
@@ -460,19 +479,38 @@ class AlouetteThemeExtension extends ThemeExtension<AlouetteThemeExtension> {
   }
 
   @override
-  AlouetteThemeExtension lerp(ThemeExtension<AlouetteThemeExtension>? other, double t) {
+  AlouetteThemeExtension lerp(
+    ThemeExtension<AlouetteThemeExtension>? other,
+    double t,
+  ) {
     if (other is! AlouetteThemeExtension) {
       return this;
     }
     return AlouetteThemeExtension(
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
-      successContainer: Color.lerp(successContainer, other.successContainer, t)!,
-      onSuccessContainer: Color.lerp(onSuccessContainer, other.onSuccessContainer, t)!,
+      successContainer: Color.lerp(
+        successContainer,
+        other.successContainer,
+        t,
+      )!,
+      onSuccessContainer: Color.lerp(
+        onSuccessContainer,
+        other.onSuccessContainer,
+        t,
+      )!,
       warning: Color.lerp(warning, other.warning, t)!,
       onWarning: Color.lerp(onWarning, other.onWarning, t)!,
-      warningContainer: Color.lerp(warningContainer, other.warningContainer, t)!,
-      onWarningContainer: Color.lerp(onWarningContainer, other.onWarningContainer, t)!,
+      warningContainer: Color.lerp(
+        warningContainer,
+        other.warningContainer,
+        t,
+      )!,
+      onWarningContainer: Color.lerp(
+        onWarningContainer,
+        other.onWarningContainer,
+        t,
+      )!,
       info: Color.lerp(info, other.info, t)!,
       onInfo: Color.lerp(onInfo, other.onInfo, t)!,
       infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
@@ -487,5 +525,6 @@ class AlouetteThemeExtension extends ThemeExtension<AlouetteThemeExtension> {
 
 /// Extension to easily access custom theme colors
 extension AlouetteThemeExtensionGetter on ThemeData {
-  AlouetteThemeExtension get alouetteColors => extension<AlouetteThemeExtension>()!;
+  AlouetteThemeExtension get alouetteColors =>
+      extension<AlouetteThemeExtension>()!;
 }

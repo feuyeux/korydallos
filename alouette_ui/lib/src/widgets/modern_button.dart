@@ -7,19 +7,10 @@ import '../tokens/elevation_tokens.dart';
 import '../tokens/effect_tokens.dart';
 
 /// 按钮类型枚举
-enum ModernButtonType {
-  primary,
-  secondary,
-  outline,
-  text,
-}
+enum ModernButtonType { primary, secondary, outline, text }
 
 /// 按钮尺寸枚举
-enum ModernButtonSize {
-  small,
-  medium,
-  large,
-}
+enum ModernButtonSize { small, medium, large }
 
 /// 现代化的按钮组件，为所有Alouette应用提供一致的交互元素
 /// 重构后减少了重复代码，使用设计令牌系统提供一致性
@@ -51,8 +42,10 @@ class ModernButton extends StatefulWidget {
     this.color,
     this.padding,
     this.borderRadius,
-  }) : assert(text != null || child != null,
-            'Either text or child must be provided');
+  }) : assert(
+         text != null || child != null,
+         'Either text or child must be provided',
+       );
 
   @override
   State<ModernButton> createState() => _ModernButtonState();
@@ -167,8 +160,8 @@ class _ModernButtonState extends State<ModernButton> {
     if (widget.type == ModernButtonType.primary &&
         widget.onPressed != null &&
         !widget.loading) {
-      return _isHovering 
-          ? ElevationTokens.shadowMedium 
+      return _isHovering
+          ? ElevationTokens.shadowMedium
           : ElevationTokens.shadowSubtle;
     }
     return null;
@@ -257,7 +250,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           padding: widget.iconOnly
               ? const EdgeInsets.all(SpacingTokens.xs)
               : const EdgeInsets.symmetric(
-                  horizontal: SpacingTokens.s, 
+                  horizontal: SpacingTokens.s,
                   vertical: SpacingTokens.xxs,
                 ),
         );
@@ -269,7 +262,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           padding: widget.iconOnly
               ? const EdgeInsets.all(SpacingTokens.s)
               : const EdgeInsets.symmetric(
-                  horizontal: SpacingTokens.m, 
+                  horizontal: SpacingTokens.m,
                   vertical: SpacingTokens.xs,
                 ),
         );
@@ -281,7 +274,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           padding: widget.iconOnly
               ? const EdgeInsets.all(SpacingTokens.m)
               : const EdgeInsets.symmetric(
-                  horizontal: SpacingTokens.l, 
+                  horizontal: SpacingTokens.l,
                   vertical: SpacingTokens.s,
                 ),
         );

@@ -3,24 +3,24 @@ import 'dart:developer' as developer;
 /// Centralized logging service for all Alouette applications
 class LoggingService {
   static LoggingService? _instance;
-  
+
   /// Get the singleton instance
   static LoggingService get instance {
     _instance ??= LoggingService._internal();
     return _instance!;
   }
-  
+
   LoggingService._internal();
-  
+
   /// Current log level
   LogLevel _logLevel = LogLevel.info;
-  
+
   /// List of log listeners for custom handling
   final List<LogListener> _listeners = [];
-  
+
   /// Maximum number of logs to keep in memory
   static const int _maxLogEntries = 1000;
-  
+
   /// In-memory log storage for debugging
   final List<LogEntry> _logEntries = [];
 
@@ -40,8 +40,21 @@ class LoggingService {
   }
 
   /// Log a debug message
-  void debug(String message, {String? tag, Map<String, dynamic>? details, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.debug, message, tag: tag, details: details, error: error, stackTrace: stackTrace);
+  void debug(
+    String message, {
+    String? tag,
+    Map<String, dynamic>? details,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.debug,
+      message,
+      tag: tag,
+      details: details,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Log an info message
@@ -50,43 +63,86 @@ class LoggingService {
   }
 
   /// Log a warning message
-  void warning(String message, {String? tag, Map<String, dynamic>? details, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.warning, message, tag: tag, details: details, error: error, stackTrace: stackTrace);
+  void warning(
+    String message, {
+    String? tag,
+    Map<String, dynamic>? details,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.warning,
+      message,
+      tag: tag,
+      details: details,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Log an error message
-  void error(String message, {String? tag, Map<String, dynamic>? details, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message, tag: tag, details: details, error: error, stackTrace: stackTrace);
+  void error(
+    String message, {
+    String? tag,
+    Map<String, dynamic>? details,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      details: details,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Log a fatal error message
-  void fatal(String message, {String? tag, Map<String, dynamic>? details, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.fatal, message, tag: tag, details: details, error: error, stackTrace: stackTrace);
+  void fatal(
+    String message, {
+    String? tag,
+    Map<String, dynamic>? details,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.fatal,
+      message,
+      tag: tag,
+      details: details,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Log an Alouette error with automatic error code extraction
-  void logAlouetteError(dynamic alouetteError, {String? tag, Map<String, dynamic>? additionalDetails}) {
+  void logAlouetteError(
+    dynamic alouetteError, {
+    String? tag,
+    Map<String, dynamic>? additionalDetails,
+  }) {
     if (alouetteError == null) return;
-    
+
     String message;
     String? errorCode;
     Map<String, dynamic>? details;
     bool isRecoverable = false;
     List<String> recoveryActions = [];
-    
+
     // Check if it's an Alouette error with our standard interface
     if (alouetteError is Error) {
       try {
         // Use reflection-like approach to get properties
         final errorString = alouetteError.toString();
         message = errorString;
-        
+
         // Try to extract error code from string format [CODE]
         final codeMatch = RegExp(r'\[([A-Z_]+)\]').firstMatch(errorString);
         if (codeMatch != null) {
           errorCode = codeMatch.group(1);
         }
-        
+
         // Try to get additional properties if they exist
         if (alouetteError.runtimeType.toString().contains('Alouette')) {
           try {
@@ -117,7 +173,7 @@ class LoggingService {
     } else {
       message = alouetteError.toString();
     }
-    
+
     final combinedDetails = <String, dynamic>{
       if (errorCode != null) 'errorCode': errorCode,
       if (details != null) ...details,
@@ -125,7 +181,7 @@ class LoggingService {
       'isRecoverable': isRecoverable,
       if (recoveryActions.isNotEmpty) 'recoveryActions': recoveryActions,
     };
-    
+
     error(
       message,
       tag: tag ?? 'AlouetteError',
@@ -141,14 +197,14 @@ class LoggingService {
       if (tag != null && entry.tag != tag) return false;
       return true;
     }).toList();
-    
+
     // Sort by timestamp (most recent first)
     filtered.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    
+
     if (limit != null && limit > 0) {
       filtered = filtered.take(limit).toList();
     }
-    
+
     return filtered;
   }
 
@@ -161,14 +217,16 @@ class LoggingService {
   String exportLogs({LogLevel? minLevel, String? tag}) {
     final logs = getRecentLogs(minLevel: minLevel, tag: tag);
     final buffer = StringBuffer();
-    
+
     buffer.writeln('=== Alouette Application Logs ===');
     buffer.writeln('Generated: ${DateTime.now().toIso8601String()}');
     buffer.writeln('Total entries: ${logs.length}');
     buffer.writeln();
-    
+
     for (final log in logs) {
-      buffer.writeln('${log.timestamp.toIso8601String()} [${log.level.name.toUpperCase()}] ${log.tag ?? 'APP'}: ${log.message}');
+      buffer.writeln(
+        '${log.timestamp.toIso8601String()} [${log.level.name.toUpperCase()}] ${log.tag ?? 'APP'}: ${log.message}',
+      );
       if (log.details != null && log.details!.isNotEmpty) {
         buffer.writeln('  Details: ${log.details}');
       }
@@ -180,7 +238,7 @@ class LoggingService {
       }
       buffer.writeln();
     }
-    
+
     return buffer.toString();
   }
 
@@ -194,7 +252,7 @@ class LoggingService {
   }) {
     // Check if we should log this level
     if (level.index < _logLevel.index) return;
-    
+
     final entry = LogEntry(
       level: level,
       message: message,
@@ -204,18 +262,18 @@ class LoggingService {
       stackTrace: stackTrace,
       timestamp: DateTime.now(),
     );
-    
+
     // Add to in-memory storage
     _logEntries.add(entry);
-    
+
     // Maintain max entries limit
     if (_logEntries.length > _maxLogEntries) {
       _logEntries.removeAt(0);
     }
-    
+
     // Log to system console
     _logToConsole(entry);
-    
+
     // Notify listeners
     for (final listener in _listeners) {
       try {
@@ -231,7 +289,7 @@ class LoggingService {
     final prefix = '[${entry.level.name.toUpperCase()}]';
     final tag = entry.tag != null ? ' ${entry.tag}:' : '';
     final message = '$prefix$tag ${entry.message}';
-    
+
     switch (entry.level) {
       case LogLevel.debug:
         developer.log(message, name: 'Alouette', level: 500);
@@ -240,16 +298,34 @@ class LoggingService {
         developer.log(message, name: 'Alouette', level: 800);
         break;
       case LogLevel.warning:
-        developer.log(message, name: 'Alouette', level: 900, error: entry.error, stackTrace: entry.stackTrace);
+        developer.log(
+          message,
+          name: 'Alouette',
+          level: 900,
+          error: entry.error,
+          stackTrace: entry.stackTrace,
+        );
         break;
       case LogLevel.error:
-        developer.log(message, name: 'Alouette', level: 1000, error: entry.error, stackTrace: entry.stackTrace);
+        developer.log(
+          message,
+          name: 'Alouette',
+          level: 1000,
+          error: entry.error,
+          stackTrace: entry.stackTrace,
+        );
         break;
       case LogLevel.fatal:
-        developer.log(message, name: 'Alouette', level: 1200, error: entry.error, stackTrace: entry.stackTrace);
+        developer.log(
+          message,
+          name: 'Alouette',
+          level: 1200,
+          error: entry.error,
+          stackTrace: entry.stackTrace,
+        );
         break;
     }
-    
+
     // Also print details if available
     if (entry.details != null && entry.details!.isNotEmpty) {
       developer.log('Details: ${entry.details}', name: 'Alouette');
@@ -258,13 +334,7 @@ class LoggingService {
 }
 
 /// Log levels in order of severity
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-  fatal,
-}
+enum LogLevel { debug, info, warning, error, fatal }
 
 /// A single log entry
 class LogEntry {
@@ -307,7 +377,7 @@ class FileLogListener implements LogListener {
   @override
   void onLog(LogEntry entry) {
     if (entry.level.index < minLevel.index) return;
-    
+
     // File writing implementation would go here
     // This would require platform-specific file I/O implementation
   }
@@ -323,7 +393,7 @@ class NetworkLogListener implements LogListener {
   @override
   void onLog(LogEntry entry) {
     if (entry.level.index < minLevel.index) return;
-    
+
     // Network logging implementation would go here
     // This would send logs to a remote endpoint
   }

@@ -12,21 +12,22 @@ export 'atomic_elements.dart';
 export 'atomic_input.dart';
 
 // Re-export commonly used classes for convenience
-export 'atomic_elements.dart' show
-    AtomicWidget,
-    AtomicIcon,
-    AtomicIconSize,
-    AtomicText,
-    AtomicTextVariant,
-    AtomicSpacer,
-    AtomicSpacing,
-    AtomicSpacerDirection,
-    AtomicDivider,
-    AtomicDividerType,
-    AtomicCard,
-    AtomicBadge,
-    AtomicBadgeSize,
-    AtomicChip,
-    AtomicProgressIndicator,
-    AtomicProgressType,
-    AtomicProgressSize;
+export 'atomic_elements.dart'
+    show
+        AtomicWidget,
+        AtomicIcon,
+        AtomicIconSize,
+        AtomicText,
+        AtomicTextVariant,
+        AtomicSpacer,
+        AtomicSpacing,
+        AtomicSpacerDirection,
+        AtomicDivider,
+        AtomicDividerType,
+        AtomicCard,
+        AtomicBadge,
+        AtomicBadgeSize,
+        AtomicChip,
+        AtomicProgressIndicator,
+        AtomicProgressType,
+        AtomicProgressSize;

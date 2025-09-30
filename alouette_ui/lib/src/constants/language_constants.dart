@@ -3,14 +3,17 @@ class LanguageOption {
   final String code;
   final String name;
   final String nativeName;
-  final String flag;
+  final String _emojiFlag;
 
   const LanguageOption({
     required this.code,
     required this.name,
     required this.nativeName,
-    required this.flag,
-  });
+    required String flag,
+  }) : _emojiFlag = flag;
+
+  /// Get platform-appropriate flag representation
+  String get flag => _emojiFlag;
 
   @override
   bool operator ==(Object other) =>

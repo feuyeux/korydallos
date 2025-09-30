@@ -4,7 +4,7 @@ import '../constants/language_constants.dart';
 import '../components/organisms/translation_panel.dart';
 
 /// Translation Input Widget - Migrated to use Atomic Design
-/// 
+///
 /// This widget now uses the new TranslationPanel organism component
 /// for consistent UI across all applications.
 class TranslationInputWidget extends StatefulWidget {
@@ -44,9 +44,17 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   Widget build(BuildContext context) {
     // Convert string language codes to LanguageOption objects
     final selectedLanguageOptions = widget.selectedLanguages
-        .map((code) => LanguageConstants.supportedLanguages
-            .firstWhere((lang) => lang.code == code || lang.name == code,
-                orElse: () => LanguageOption(code: code, name: code, nativeName: code, flag: '🌐')))
+        .map(
+          (code) => LanguageConstants.supportedLanguages.firstWhere(
+            (lang) => lang.code == code || lang.name == code,
+            orElse: () => LanguageOption(
+              code: code,
+              name: code,
+              nativeName: code,
+              flag: '🌐',
+            ),
+          ),
+        )
         .toList();
 
     return TranslationPanel(
@@ -69,12 +77,12 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
       // Handle individual language toggles for backward compatibility
       final currentCodes = widget.selectedLanguages.toSet();
       final newCodes = languages.map((lang) => lang.code).toSet();
-      
+
       // Find added languages
       for (final code in newCodes.difference(currentCodes)) {
         widget.onLanguageToggle!(code, true);
       }
-      
+
       // Find removed languages
       for (final code in currentCodes.difference(newCodes)) {
         widget.onLanguageToggle!(code, false);

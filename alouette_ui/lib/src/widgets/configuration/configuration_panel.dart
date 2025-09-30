@@ -4,16 +4,16 @@ import '../../services/core/configuration_manager.dart';
 import '../../models/app_configuration.dart';
 
 /// Configuration panel widget for managing application settings
-/// 
+///
 /// Provides a unified interface for managing all application configuration
 /// including UI preferences, theme settings, and feature toggles.
 class ConfigurationPanel extends StatefulWidget {
   /// Whether to show advanced configuration options
   final bool showAdvanced;
-  
+
   /// Callback when configuration changes
   final void Function(AppConfiguration config)? onConfigurationChanged;
-  
+
   /// Custom sections to include in the configuration panel
   final List<Widget>? customSections;
 
@@ -48,7 +48,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
       });
 
       final config = await _configManager.getConfiguration();
-      
+
       setState(() {
         _currentConfig = config;
         _isLoading = false;
@@ -91,9 +91,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -123,9 +121,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
     }
 
     if (_currentConfig == null) {
-      return const Center(
-        child: Text('No configuration available'),
-      );
+      return const Center(child: Text('No configuration available'));
     }
 
     return SingleChildScrollView(
@@ -160,10 +156,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Appearance',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
             _buildThemeModeSelector(),
             const SizedBox(height: 16),
@@ -178,10 +171,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Theme Mode',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text('Theme Mode', style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 8),
         SegmentedButton<String>(
           segments: const [
@@ -266,9 +256,8 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
               ],
               onChanged: (String? value) {
                 if (value != null) {
-                  final updatedPreferences = _currentConfig!.uiPreferences.copyWith(
-                    primaryLanguage: value,
-                  );
+                  final updatedPreferences = _currentConfig!.uiPreferences
+                      .copyWith(primaryLanguage: value);
                   final updatedConfig = _currentConfig!.copyWith(
                     uiPreferences: updatedPreferences,
                   );
@@ -343,12 +332,13 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
             const SizedBox(height: 16),
             SwitchListTile(
               title: const Text('Show Advanced Options'),
-              subtitle: const Text('Display expert-level configuration options'),
+              subtitle: const Text(
+                'Display expert-level configuration options',
+              ),
               value: _currentConfig!.uiPreferences.showAdvancedOptions,
               onChanged: (bool value) {
-                final updatedPreferences = _currentConfig!.uiPreferences.copyWith(
-                  showAdvancedOptions: value,
-                );
+                final updatedPreferences = _currentConfig!.uiPreferences
+                    .copyWith(showAdvancedOptions: value);
                 final updatedConfig = _currentConfig!.copyWith(
                   uiPreferences: updatedPreferences,
                 );
@@ -360,7 +350,9 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
               subtitle: const Text('Automatically save changes'),
               value: _currentConfig!.appSettings['auto_save'] ?? true,
               onChanged: (bool value) {
-                final updatedSettings = Map<String, dynamic>.from(_currentConfig!.appSettings);
+                final updatedSettings = Map<String, dynamic>.from(
+                  _currentConfig!.appSettings,
+                );
                 updatedSettings['auto_save'] = value;
                 final updatedConfig = _currentConfig!.copyWith(
                   appSettings: updatedSettings,
@@ -373,7 +365,9 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
               subtitle: const Text('Create automatic backups of configuration'),
               value: _currentConfig!.appSettings['backup_enabled'] ?? true,
               onChanged: (bool value) {
-                final updatedSettings = Map<String, dynamic>.from(_currentConfig!.appSettings);
+                final updatedSettings = Map<String, dynamic>.from(
+                  _currentConfig!.appSettings,
+                );
                 updatedSettings['backup_enabled'] = value;
                 final updatedConfig = _currentConfig!.copyWith(
                   appSettings: updatedSettings,
@@ -444,9 +438,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
       // For now, we'll just show a success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Configuration exported successfully'),
-          ),
+          const SnackBar(content: Text('Configuration exported successfully')),
         );
       }
     } catch (e) {
@@ -498,9 +490,7 @@ class _ConfigurationPanelState extends State<ConfigurationPanel> {
         await _loadConfiguration();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Configuration reset to defaults'),
-            ),
+            const SnackBar(content: Text('Configuration reset to defaults')),
           );
         }
       } catch (e) {

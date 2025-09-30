@@ -53,9 +53,12 @@ class ModernTextField extends StatelessWidget {
 
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(DimensionTokens.radiusM);
-    final effectiveContentPadding = contentPadding ??
+    final effectiveContentPadding =
+        contentPadding ??
         const EdgeInsets.symmetric(
-            horizontal: SpacingTokens.l, vertical: SpacingTokens.s);
+          horizontal: SpacingTokens.l,
+          vertical: SpacingTokens.s,
+        );
 
     return TextField(
       controller: controller,
@@ -71,15 +74,17 @@ class ModernTextField extends StatelessWidget {
       textAlign: textAlign,
       autofocus: autofocus,
       obscureText: obscureText,
-      decoration: decoration ??
+      decoration:
+          decoration ??
           InputDecoration(
             hintText: hintText,
             labelText: labelText,
             contentPadding: effectiveContentPadding,
             filled: true,
             fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-            hintStyle:
-                TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[500]),
+            hintStyle: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[500],
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,
               borderSide: BorderSide(
@@ -89,10 +94,7 @@ class ModernTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,
-              borderSide: BorderSide(
-                color: primaryColor,
-                width: 2.0,
-              ),
+              borderSide: BorderSide(color: primaryColor, width: 2.0),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,

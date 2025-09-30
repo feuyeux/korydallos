@@ -3,14 +3,14 @@ import 'dart:convert';
 import '../models/tts_config.dart';
 
 /// Configuration manager for TTS settings
-/// 
+///
 /// Provides functionality to load and save TTS configuration from/to files,
 /// with support for default configurations and custom file paths.
 class ConfigManager {
   static const String _defaultConfigFile = 'tts_config.json';
 
   /// Load configuration from file
-  /// 
+  ///
   /// If the file doesn't exist, returns a default configuration.
   /// Throws [ConfigException] if the file exists but cannot be parsed.
   Future<TTSConfig> loadFromFile(String filePath) async {
@@ -31,12 +31,12 @@ class ConfigManager {
       }
 
       final config = TTSConfig.fromJson(json);
-      
+
       // Validate the loaded configuration
       final validationErrors = config.validate();
       if (validationErrors.isNotEmpty) {
         throw ConfigException(
-          'Invalid configuration: ${validationErrors.join(', ')}'
+          'Invalid configuration: ${validationErrors.join(', ')}',
         );
       }
 
@@ -49,7 +49,7 @@ class ConfigManager {
   }
 
   /// Save configuration to file
-  /// 
+  ///
   /// Creates the directory if it doesn't exist.
   /// Throws [ConfigException] if the configuration is invalid or cannot be saved.
   Future<void> saveToFile(TTSConfig config, String filePath) async {
@@ -58,12 +58,12 @@ class ConfigManager {
       final validationErrors = config.validate();
       if (validationErrors.isNotEmpty) {
         throw ConfigException(
-          'Cannot save invalid configuration: ${validationErrors.join(', ')}'
+          'Cannot save invalid configuration: ${validationErrors.join(', ')}',
         );
       }
 
       final file = File(filePath);
-      
+
       // Create directory if it doesn't exist
       final directory = file.parent;
       if (!await directory.exists()) {
@@ -81,7 +81,7 @@ class ConfigManager {
   }
 
   /// Load default configuration
-  /// 
+  ///
   /// Loads configuration from the default file location.
   /// If the file doesn't exist, returns a default configuration.
   Future<TTSConfig> loadDefault() async {
@@ -89,7 +89,7 @@ class ConfigManager {
   }
 
   /// Save as default configuration
-  /// 
+  ///
   /// Saves configuration to the default file location.
   Future<void> saveDefault(TTSConfig config) async {
     return saveToFile(config, _defaultConfigFile);
@@ -105,7 +105,7 @@ class ConfigManager {
   String get defaultConfigPath => _defaultConfigFile;
 
   /// Load configuration with fallback
-  /// 
+  ///
   /// Attempts to load from the specified path, falls back to default if not found,
   /// and finally falls back to built-in defaults if neither exists.
   Future<TTSConfig> loadWithFallback(String? customPath) async {
@@ -126,7 +126,7 @@ class ConfigManager {
   }
 
   /// Create a backup of the current configuration
-  /// 
+  ///
   /// Creates a timestamped backup file in the same directory as the original.
   Future<String> createBackup(String configPath) async {
     try {
@@ -137,7 +137,7 @@ class ConfigManager {
 
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
       final backupPath = '${configPath}.backup.$timestamp';
-      
+
       await originalFile.copy(backupPath);
       return backupPath;
     } catch (e) {
@@ -146,7 +146,7 @@ class ConfigManager {
   }
 
   /// Restore configuration from backup
-  /// 
+  ///
   /// Restores a configuration file from a backup.
   Future<void> restoreFromBackup(String backupPath, String targetPath) async {
     try {
@@ -164,19 +164,35 @@ class ConfigManager {
   }
 
   /// Merge two configurations
-  /// 
+  ///
   /// Creates a new configuration by merging the base config with overrides.
   /// Non-null values in the override config take precedence.
   TTSConfig mergeConfigs(TTSConfig base, TTSConfig override) {
     return base.copyWith(
-      defaultVoice: override.defaultVoice != base.defaultVoice ? override.defaultVoice : null,
-      defaultFormat: override.defaultFormat != base.defaultFormat ? override.defaultFormat : null,
-      defaultRate: override.defaultRate != base.defaultRate ? override.defaultRate : null,
-      defaultPitch: override.defaultPitch != base.defaultPitch ? override.defaultPitch : null,
-      defaultVolume: override.defaultVolume != base.defaultVolume ? override.defaultVolume : null,
-      outputDirectory: override.outputDirectory != base.outputDirectory ? override.outputDirectory : null,
-      enableCaching: override.enableCaching != base.enableCaching ? override.enableCaching : null,
-      enablePlayback: override.enablePlayback != base.enablePlayback ? override.enablePlayback : null,
+      defaultVoice: override.defaultVoice != base.defaultVoice
+          ? override.defaultVoice
+          : null,
+      defaultFormat: override.defaultFormat != base.defaultFormat
+          ? override.defaultFormat
+          : null,
+      defaultRate: override.defaultRate != base.defaultRate
+          ? override.defaultRate
+          : null,
+      defaultPitch: override.defaultPitch != base.defaultPitch
+          ? override.defaultPitch
+          : null,
+      defaultVolume: override.defaultVolume != base.defaultVolume
+          ? override.defaultVolume
+          : null,
+      outputDirectory: override.outputDirectory != base.outputDirectory
+          ? override.outputDirectory
+          : null,
+      enableCaching: override.enableCaching != base.enableCaching
+          ? override.enableCaching
+          : null,
+      enablePlayback: override.enablePlayback != base.enablePlayback
+          ? override.enablePlayback
+          : null,
     );
   }
 }
@@ -184,9 +200,9 @@ class ConfigManager {
 /// Exception thrown when configuration operations fail
 class ConfigException implements Exception {
   final String message;
-  
+
   const ConfigException(this.message);
-  
+
   @override
   String toString() => 'ConfigException: $message';
 }

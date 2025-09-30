@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../tokens/app_tokens.dart';
 import '../atoms/atomic_elements.dart';
-
 
 /// Status Indicator Molecule
 ///
@@ -34,9 +34,7 @@ class StatusIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: status.getBackgroundColor(colorScheme),
         borderRadius: BorderRadius.circular(DimensionTokens.radiusL),
-        border: Border.all(
-          color: status.getBorderColor(colorScheme),
-        ),
+        border: Border.all(color: status.getBorderColor(colorScheme)),
       ),
       child: Row(
         children: [
@@ -64,10 +62,7 @@ class StatusIndicator extends StatelessWidget {
               AtomicSpacing.small,
               direction: AtomicSpacerDirection.horizontal,
             ),
-            TextButton(
-              onPressed: onActionPressed,
-              child: Text(actionText!),
-            ),
+            TextButton(onPressed: onActionPressed, child: Text(actionText!)),
           ],
         ],
       ),
@@ -153,10 +148,7 @@ class StatusBadge extends StatelessWidget {
 
     if (text != null) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: 2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: status.getBorderColor(colorScheme),
           borderRadius: BorderRadius.circular(size),
@@ -280,6 +272,135 @@ enum StatusType {
         return Colors.white;
       case StatusType.processing:
         return Colors.white;
+    }
+  }
+}
+
+/// TTS Status Indicator
+///
+/// Specialized status indicator for TTS functionality that shows
+/// initialization, playing, error, and ready states with appropriate
+/// icons and messages.
+class TTSStatusIndicator extends StatelessWidget {
+  final bool isInitialized;
+  final bool isPlaying;
+  final TTSEngineType? currentEngine;
+  final String? lastError;
+
+  const TTSStatusIndicator({
+    super.key,
+    required this.isInitialized,
+    required this.isPlaying,
+    this.currentEngine,
+    this.lastError,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Error state
+    if (lastError != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AtomicIcon(
+            Icons.error,
+            size: AtomicIconSize.small,
+            color: colorScheme.error,
+          ),
+          const AtomicSpacer(
+            AtomicSpacing.xs,
+            direction: AtomicSpacerDirection.horizontal,
+          ),
+          AtomicText(
+            'Error',
+            variant: AtomicTextVariant.labelSmall,
+            color: colorScheme.error,
+          ),
+        ],
+      );
+    }
+
+    // Initializing state
+    if (!isInitialized) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: DimensionTokens.iconS,
+            height: DimensionTokens.iconS,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+            ),
+          ),
+          const AtomicSpacer(
+            AtomicSpacing.xs,
+            direction: AtomicSpacerDirection.horizontal,
+          ),
+          AtomicText(
+            'Initializing...',
+            variant: AtomicTextVariant.labelSmall,
+            color: colorScheme.primary,
+          ),
+        ],
+      );
+    }
+
+    // Playing state
+    if (isPlaying) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AtomicIcon(
+            Icons.volume_up,
+            size: AtomicIconSize.small,
+            color: colorScheme.primary,
+          ),
+          const AtomicSpacer(
+            AtomicSpacing.xs,
+            direction: AtomicSpacerDirection.horizontal,
+          ),
+          AtomicText(
+            'Speaking...',
+            variant: AtomicTextVariant.labelSmall,
+            color: colorScheme.primary,
+          ),
+        ],
+      );
+    }
+
+    // Ready state
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AtomicIcon(
+          Icons.check_circle,
+          size: AtomicIconSize.small,
+          color: colorScheme.primary,
+        ),
+        const AtomicSpacer(
+          AtomicSpacing.xs,
+          direction: AtomicSpacerDirection.horizontal,
+        ),
+        AtomicText(
+          currentEngine != null
+              ? '${_getEngineName(currentEngine!)} Ready'
+              : 'Ready',
+          variant: AtomicTextVariant.labelSmall,
+          color: colorScheme.primary,
+        ),
+      ],
+    );
+  }
+
+  String _getEngineName(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return 'Edge TTS';
+      case TTSEngineType.flutter:
+        return 'Flutter TTS';
     }
   }
 }

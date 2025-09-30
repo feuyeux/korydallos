@@ -504,8 +504,11 @@ class SearchController extends BaseStateController
 
     await executeAsync(() async {
       _currentPage = 0;
-      final searchResults =
-          await performSearch(_query, _currentPage, _pageSize);
+      final searchResults = await performSearch(
+        _query,
+        _currentPage,
+        _pageSize,
+      );
       _results.clear();
       _results.addAll(searchResults);
       _hasMoreResults = searchResults.length == _pageSize;
@@ -521,8 +524,11 @@ class SearchController extends BaseStateController
 
     await executeAsync(() async {
       _currentPage++;
-      final searchResults =
-          await performSearch(_query, _currentPage, _pageSize);
+      final searchResults = await performSearch(
+        _query,
+        _currentPage,
+        _pageSize,
+      );
       _results.addAll(searchResults);
       _hasMoreResults = searchResults.length == _pageSize;
       _resultsController.add(results);
@@ -541,7 +547,10 @@ class SearchController extends BaseStateController
 
   /// Override this method to implement custom search logic
   Future<List<dynamic>> performSearch(
-      String query, int page, int pageSize) async {
+    String query,
+    int page,
+    int pageSize,
+  ) async {
     // Default implementation returns empty list
     return [];
   }

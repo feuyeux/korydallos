@@ -1,29 +1,29 @@
 /// Translation request model containing all necessary information for a translation operation
-/// 
+///
 /// This is the standardized data model used across all Alouette applications
 /// for translation requests. It includes comprehensive validation and serialization.
 class TranslationRequest {
   /// The text to be translated
   final String text;
-  
+
   /// List of target language codes (e.g., ['es', 'fr', 'de'])
   final List<String> targetLanguages;
-  
+
   /// The LLM provider to use for translation
   final String provider;
-  
+
   /// The server URL for the LLM provider
   final String serverUrl;
-  
+
   /// The model name to use for translation
   final String modelName;
-  
+
   /// Optional API key for authentication
   final String? apiKey;
-  
+
   /// Additional request parameters specific to the provider
   final Map<String, dynamic>? additionalParams;
-  
+
   /// Source language code (optional, auto-detected if not provided)
   final String? sourceLanguage;
 
@@ -92,7 +92,7 @@ class TranslationRequest {
   }
 
   /// Validate the translation request
-  /// 
+  ///
   /// Returns a map with validation results including errors and warnings
   Map<String, dynamic> validate() {
     final errors = <String>[];
@@ -138,13 +138,17 @@ class TranslationRequest {
         break;
       }
       if (!RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(lang)) {
-        warnings.add('Language code "$lang" may not be in standard format (e.g., "en", "en-US")');
+        warnings.add(
+          'Language code "$lang" may not be in standard format (e.g., "en", "en-US")',
+        );
       }
     }
 
     // Text length validation
     if (text.length > 10000) {
-      warnings.add('Text is very long (${text.length} characters). Consider splitting into smaller chunks.');
+      warnings.add(
+        'Text is very long (${text.length} characters). Consider splitting into smaller chunks.',
+      );
     }
 
     // Duplicate language check
@@ -153,11 +157,7 @@ class TranslationRequest {
       warnings.add('Duplicate target languages detected');
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   /// Check if the request is valid (no validation errors)
@@ -193,6 +193,6 @@ class TranslationRequest {
   @override
   String toString() {
     return 'TranslationRequest(text: ${text.length > 50 ? '${text.substring(0, 50)}...' : text}, '
-           'targetLanguages: $targetLanguages, provider: $provider, modelName: $modelName)';
+        'targetLanguages: $targetLanguages, provider: $provider, modelName: $modelName)';
   }
 }

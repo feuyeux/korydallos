@@ -2,19 +2,19 @@
 class ConnectionStatus {
   /// Whether the connection was successful
   final bool success;
-  
+
   /// Human-readable message describing the connection status
   final String message;
-  
+
   /// Number of available models (if connection was successful)
   final int? modelCount;
-  
+
   /// Timestamp when the connection test was performed
   final DateTime timestamp;
-  
+
   /// Response time in milliseconds (if available)
   final int? responseTimeMs;
-  
+
   /// Additional details about the connection test
   final Map<String, dynamic>? details;
 
@@ -78,7 +78,9 @@ class ConnectionStatus {
       success: json['success'] ?? false,
       message: json['message'] ?? '',
       modelCount: json['model_count'],
-      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? DateTime.now().toIso8601String(),
+      ),
       responseTimeMs: json['response_time_ms'],
       details: json['details'] != null
           ? Map<String, dynamic>.from(json['details'])
@@ -118,18 +120,12 @@ class ConnectionStatus {
 
   @override
   int get hashCode {
-    return Object.hash(
-      success,
-      message,
-      modelCount,
-      timestamp,
-      responseTimeMs,
-    );
+    return Object.hash(success, message, modelCount, timestamp, responseTimeMs);
   }
 
   @override
   String toString() {
     return 'ConnectionStatus(success: $success, message: $message, '
-           'modelCount: $modelCount, responseTime: ${responseTimeMs}ms)';
+        'modelCount: $modelCount, responseTime: ${responseTimeMs}ms)';
   }
 }

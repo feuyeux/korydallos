@@ -10,7 +10,8 @@ import 'dart:async';
 class LMStudioProvider extends TranslationProvider {
   final HttpClient _httpClient;
 
-  LMStudioProvider({HttpClient? httpClient}) : _httpClient = httpClient ?? DefaultHttpClient();
+  LMStudioProvider({HttpClient? httpClient})
+    : _httpClient = httpClient ?? DefaultHttpClient();
 
   @override
   String get providerName => 'lmstudio';
@@ -67,8 +68,11 @@ class LMStudioProvider extends TranslationProvider {
 
           if (rawTranslation != null && rawTranslation.trim().isNotEmpty) {
             // Enhanced cleaning similar to Ollama provider
-            String cleanedTranslation = _cleanTranslationResult(rawTranslation, targetLanguage);
-            
+            String cleanedTranslation = _cleanTranslationResult(
+              rawTranslation,
+              targetLanguage,
+            );
+
             if (cleanedTranslation.trim().isEmpty) {
               throw InvalidTranslationException(
                 'Translation result is empty after cleaning',
@@ -76,12 +80,14 @@ class LMStudioProvider extends TranslationProvider {
                 targetLanguage,
               );
             }
-            
+
             return cleanedTranslation;
           }
         }
 
-        throw TranslationException('No valid translation in LM Studio response');
+        throw TranslationException(
+          'No valid translation in LM Studio response',
+        );
       } else {
         throw TranslationException(
           'LM Studio API request failed: HTTP ${response.statusCode}: ${response.body}',
@@ -100,15 +106,15 @@ class LMStudioProvider extends TranslationProvider {
   @override
   Future<ConnectionStatus> testConnection(LLMConfig config) async {
     final startTime = DateTime.now();
-    
+
     try {
       final apiUrl = '${config.normalizedServerUrl}/v1/models';
-      
+
       final headers = {'Content-Type': 'application/json'};
       if (config.apiKey != null && config.apiKey!.isNotEmpty) {
         headers['Authorization'] = 'Bearer ${config.apiKey}';
       }
-      
+
       final response = await _httpClient.get(
         apiUrl,
         headers: headers,
@@ -137,7 +143,7 @@ class LMStudioProvider extends TranslationProvider {
       }
     } catch (e) {
       final responseTime = DateTime.now().difference(startTime).inMilliseconds;
-      
+
       if (e is TranslationException) {
         return ConnectionStatus.failure(
           message: 'LM Studio connection test failed: ${e.toString()}',
@@ -158,12 +164,12 @@ class LMStudioProvider extends TranslationProvider {
   Future<List<String>> getAvailableModels(LLMConfig config) async {
     try {
       final apiUrl = '${config.normalizedServerUrl}/v1/models';
-      
+
       final headers = {'Content-Type': 'application/json'};
       if (config.apiKey != null && config.apiKey!.isNotEmpty) {
         headers['Authorization'] = 'Bearer ${config.apiKey}';
       }
-      
+
       final response = await _httpClient.get(
         apiUrl,
         headers: headers,
@@ -173,7 +179,7 @@ class LMStudioProvider extends TranslationProvider {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final models = data['data'] as List?;
-        
+
         if (models != null) {
           return models
               .map((model) => model['id'] as String? ?? '')
@@ -193,7 +199,7 @@ class LMStudioProvider extends TranslationProvider {
         'LM Studio translation failed: ${e.toString()}',
       );
     }
-    
+
     return [];
   }
 
@@ -361,14 +367,14 @@ class LMStudioProvider extends TranslationProvider {
   /// Fallback extraction when main cleaning fails
   String _fallbackExtraction(String rawText) {
     final lines = rawText.split('\n').map((line) => line.trim()).toList();
-    
+
     // Return first non-empty line
     for (final line in lines) {
       if (line.isNotEmpty) {
         return line;
       }
     }
-    
+
     return rawText.trim();
   }
 }

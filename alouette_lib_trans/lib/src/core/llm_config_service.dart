@@ -110,8 +110,10 @@ class LLMConfigService {
   Future<ConnectionStatus> testConnection(LLMConfig config) async {
     // For now, return mock success since we need TranslationService integration
     // In a real implementation, this would use TranslationService
-    await Future.delayed(const Duration(milliseconds: 500)); // Simulate network call
-    
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    ); // Simulate network call
+
     if (config.isValid) {
       final models = await getAvailableModels(config);
       return ConnectionStatus.success(
@@ -126,7 +128,8 @@ class LLMConfigService {
       );
     } else {
       return ConnectionStatus.failure(
-        message: 'Invalid configuration: ${config.validate()['errors'].join(', ')}',
+        message:
+            'Invalid configuration: ${config.validate()['errors'].join(', ')}',
         responseTimeMs: 500,
       );
     }

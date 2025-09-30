@@ -12,18 +12,15 @@ export 'status_indicator.dart';
 
 // Re-export commonly used classes for convenience
 
-export 'language_selector.dart' show
-    LanguageSelector,
-    LanguageGridSelector,
-    LanguageChip;
+export 'language_selector.dart'
+    show LanguageSelector, LanguageGridSelector, LanguageChip;
 
-export 'voice_selector.dart' show
-    VoiceSelector,
-    VoiceGridSelector,
-    VoiceChip;
+export 'voice_selector.dart' show VoiceSelector, VoiceGridSelector, VoiceChip;
 
-export 'status_indicator.dart' show
-    StatusIndicator,
-    CompactStatusIndicator,
-    StatusBadge,
-    StatusType;
+export 'status_indicator.dart'
+    show
+        StatusIndicator,
+        CompactStatusIndicator,
+        StatusBadge,
+        StatusType,
+        TTSStatusIndicator;

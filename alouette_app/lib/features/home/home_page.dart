@@ -4,7 +4,6 @@ import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'home_controller.dart';
 import '../translation/translation_page.dart';
 import '../../widgets/translation_status_widget.dart';
-import '../translation/translation_controller.dart' as app_controllers;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,22 +12,18 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with AutoControllerDisposal {
   late final HomeController _controller;
-  late final app_controllers.AppTranslationController _translationController;
 
   @override
   void initState() {
     super.initState();
     _controller = HomeController();
-    _translationController = app_controllers.AppTranslationController();
-    _translationController.initialize();
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _translationController.dispose();
     super.dispose();
   }
 
@@ -55,16 +50,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showConfigDialog() async {
+    final llmConfigService = ServiceLocator.get<LLMConfigService>();
     final result = await showDialog<LLMConfig>(
       context: context,
       builder: (context) => LLMConfigDialog(
-        initialConfig: _translationController.llmConfigNotifier.value,
-        llmConfigService: _translationController.llmConfigService,
+        initialConfig: const LLMConfig(
+          provider: 'ollama',
+          serverUrl: 'http://localhost:11434',
+          selectedModel: '',
+        ),
+        llmConfigService: llmConfigService,
       ),
     );
 
     if (result != null) {
-      _translationController.updateLLMConfig(result);
+      // Configuration is handled by the UI library controller internally
     }
   }
 }

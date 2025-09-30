@@ -5,8 +5,8 @@ import 'package:alouette_ui/alouette_ui.dart';
 /// Controller for voice management functionality
 class VoiceController extends ChangeNotifier {
   // TTS Service from ServiceLocator
-  UnifiedTTSService? _ttsService;
-  
+  TTSService? _ttsService;
+
   // State variables
   List<VoiceModel> _voices = [];
   String? _selectedVoiceId;
@@ -27,21 +27,21 @@ class VoiceController extends ChangeNotifier {
 
     try {
       // Get TTS service from ServiceLocator
-      _ttsService = ServiceLocator.get<UnifiedTTSService>();
-      
+      _ttsService = ServiceLocator.get<TTSService>();
+
       // Initialize if not already initialized
       if (!_ttsService!.isInitialized) {
         await _ttsService!.initialize();
       }
-      
+
       // Load voices
       _voices = await _ttsService!.getVoices();
-      
+
       // Set default selected voice if none selected
       if (_selectedVoiceId == null && _voices.isNotEmpty) {
         _selectedVoiceId = _voices.first.id;
       }
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -85,8 +85,9 @@ class VoiceController extends ChangeNotifier {
 
   /// Get voices by language
   List<VoiceModel> getVoicesByLanguage(String languageCode) {
-    return _voices.where((voice) => 
-        voice.languageCode.startsWith(languageCode)).toList();
+    return _voices
+        .where((voice) => voice.languageCode.startsWith(languageCode))
+        .toList();
   }
 
   /// Get voices by gender

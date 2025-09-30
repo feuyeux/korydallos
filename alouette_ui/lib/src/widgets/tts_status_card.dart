@@ -35,11 +35,7 @@ class TTSStatusCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            _getStatusIcon(),
-            color: _getStatusColor(),
-            size: 20,
-          ),
+          Icon(_getStatusIcon(), color: _getStatusColor(), size: 20),
           const SizedBox(width: 4), // Fixed small spacing to avoid overflow
           Expanded(
             child: Column(

@@ -87,7 +87,10 @@ class AtomicInput extends AtomicWidget {
   }
 
   Widget _buildTextField(
-      BuildContext context, ColorScheme colorScheme, bool hasError) {
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool hasError,
+  ) {
     return SizedBox(
       height: maxLines == null ? size.height : null,
       child: TextField(
@@ -126,8 +129,9 @@ class AtomicInput extends AtomicWidget {
           focusedBorder: _buildInputBorder(colorScheme.primary),
           errorBorder: _buildInputBorder(colorScheme.error),
           focusedErrorBorder: _buildInputBorder(colorScheme.error),
-          disabledBorder:
-              _buildInputBorder(colorScheme.outline.withValues(alpha: 0.38)),
+          disabledBorder: _buildInputBorder(
+            colorScheme.outline.withValues(alpha: 0.38),
+          ),
           filled: true,
           fillColor: isEnabled
               ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.05)
@@ -146,11 +150,7 @@ class AtomicInput extends AtomicWidget {
         ? getColorScheme(context).error
         : getColorScheme(context).onSurfaceVariant;
 
-    return AtomicText(
-      text,
-      variant: AtomicTextVariant.caption,
-      color: color,
-    );
+    return AtomicText(text, variant: AtomicTextVariant.caption, color: color);
   }
 
   InputBorder _buildInputBorder(Color color) {
@@ -183,7 +183,11 @@ enum AtomicInputSize {
   );
 
   const AtomicInputSize(
-      this.height, this.padding, this.iconSize, this.textStyle);
+    this.height,
+    this.padding,
+    this.iconSize,
+    this.textStyle,
+  );
 
   final double height;
   final EdgeInsets padding;
@@ -287,7 +291,10 @@ class AtomicDropdown<T> extends AtomicWidget {
   }
 
   Widget _buildDropdown(
-      BuildContext context, ColorScheme colorScheme, bool hasError) {
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool hasError,
+  ) {
     return Container(
       height: size.height,
       decoration: BoxDecoration(
@@ -296,8 +303,8 @@ class AtomicDropdown<T> extends AtomicWidget {
           color: hasError
               ? colorScheme.error
               : isEnabled
-                  ? colorScheme.outline
-                  : colorScheme.outline.withValues(alpha: 0.38),
+              ? colorScheme.outline
+              : colorScheme.outline.withValues(alpha: 0.38),
         ),
         color: isEnabled
             ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.05)
@@ -347,21 +354,13 @@ class AtomicDropdownItem<T> {
       child: Row(
         children: [
           if (icon != null) ...[
-            AtomicIcon(
-              icon!,
-              size: AtomicIconSize.small,
-            ),
+            AtomicIcon(icon!, size: AtomicIconSize.small),
             const AtomicSpacer(
               AtomicSpacing.xs,
               direction: AtomicSpacerDirection.horizontal,
             ),
           ],
-          Expanded(
-            child: AtomicText(
-              text,
-              variant: AtomicTextVariant.body,
-            ),
-          ),
+          Expanded(child: AtomicText(text, variant: AtomicTextVariant.body)),
         ],
       ),
     );

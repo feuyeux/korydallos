@@ -1,41 +1,41 @@
 /// TTS Status model representing the current state of TTS operations
-/// 
+///
 /// This is the standardized data model used across all Alouette applications
 /// for TTS status reporting. It includes comprehensive validation and serialization.
 class TTSStatus {
   /// Whether TTS is currently speaking
   final bool isSpeaking;
-  
+
   /// Whether TTS is currently paused
   final bool isPaused;
-  
+
   /// Whether TTS is currently initializing
   final bool isInitializing;
-  
+
   /// Whether TTS is ready for use
   final bool isReady;
-  
+
   /// Current engine being used
   final String? currentEngine;
-  
+
   /// Current voice being used
   final String? currentVoice;
-  
+
   /// Current speech rate (0.1 to 3.0)
   final double speechRate;
-  
+
   /// Current pitch (0.5 to 2.0)
   final double pitch;
-  
+
   /// Current volume (0.0 to 1.0)
   final double volume;
-  
+
   /// Error message if any
   final String? errorMessage;
-  
+
   /// Timestamp of status update
   final DateTime timestamp;
-  
+
   /// Additional metadata
   final Map<String, dynamic>? metadata;
 
@@ -114,9 +114,7 @@ class TTSStatus {
   }
 
   /// Create an initializing status
-  factory TTSStatus.initializing({
-    String? currentEngine,
-  }) {
+  factory TTSStatus.initializing({String? currentEngine}) {
     return TTSStatus(
       isInitializing: true,
       currentEngine: currentEngine,
@@ -169,7 +167,9 @@ class TTSStatus {
       pitch: (json['pitch'] ?? 1.0).toDouble(),
       volume: (json['volume'] ?? 1.0).toDouble(),
       errorMessage: json['error_message'],
-      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? DateTime.now().toIso8601String(),
+      ),
       metadata: json['metadata'] != null
           ? Map<String, dynamic>.from(json['metadata'])
           : null,
@@ -237,18 +237,20 @@ class TTSStatus {
     }
 
     if ((isSpeaking || isPaused) && !isReady) {
-      warnings.add('Speaking or paused state without being ready may indicate an issue');
+      warnings.add(
+        'Speaking or paused state without being ready may indicate an issue',
+      );
     }
 
-    if (errorMessage != null && errorMessage!.isNotEmpty && (isSpeaking || isReady)) {
-      warnings.add('Error message present but status indicates normal operation');
+    if (errorMessage != null &&
+        errorMessage!.isNotEmpty &&
+        (isSpeaking || isReady)) {
+      warnings.add(
+        'Error message present but status indicates normal operation',
+      );
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   /// Check if the status is valid (no validation errors)

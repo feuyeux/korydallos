@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import '../interfaces/tts_service_interface.dart';
 
@@ -6,9 +7,7 @@ import '../interfaces/tts_service_interface.dart';
 /// Concrete implementation of ITTSService that wraps the alouette_lib_tts library.
 /// Provides thread-safe initialization and proper resource management.
 class TTSServiceImpl implements ITTSService {
-  tts_lib.TTSService? _service;
-  tts_lib.VoiceService? _voiceService;
-  tts_lib.AudioPlayer? _audioPlayer;
+  tts_lib.TTSService? _ttsService;
   bool _isInitialized = false;
   bool _isDisposed = false;
 
@@ -27,18 +26,16 @@ class TTSServiceImpl implements ITTSService {
       return await _synchronized(_initLock, () async {
         if (_isInitialized) return true;
 
-        _service = tts_lib.TTSService();
-        await _service!.initialize(autoFallback: autoFallback);
-
-        _voiceService = tts_lib.VoiceService(_service!);
-        _audioPlayer = tts_lib.AudioPlayer();
+        _ttsService = tts_lib.TTSService();
+        await _ttsService!.initialize(autoFallback: autoFallback);
+        
         _isInitialized = true;
 
-        print('TTS Service initialized with ${_service!.currentEngine} engine');
+        debugPrint('TTS Service initialized with ${_ttsService!.currentEngine} engine');
         return true;
       });
     } catch (e) {
-      print('TTS initialization error: $e');
+      debugPrint('TTS initialization error: $e');
       _cleanup();
       return false;
     }
@@ -55,35 +52,38 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
 
     try {
-      // Use provided voice or first available voice
-      String selectedVoice = voiceName ?? '';
-      if (selectedVoice.isEmpty) {
-        final voices = await getAvailableVoices();
-        if (voices.isNotEmpty) {
-          selectedVoice = voices.first.name;
-        } else {
-          throw TTSException('No voices available for TTS');
-        }
-      }
-
-      // Note: The current library doesn't expose rate/volume/pitch settings
-      // This would need to be implemented in the underlying library
-      final audioData = await _service!.synthesizeText(text, selectedVoice);
-      await _audioPlayer!.playBytes(audioData);
+      // Use the library's speakText method directly
+      await _ttsService!.speakText(text, voiceName: voiceName);
     } catch (e) {
       throw TTSException('Error speaking text: $e');
     }
   }
 
   @override
+  Future<void> speakInLanguage(
+    String text,
+    String languageName, {
+    double rate = 1.0,
+    double volume = 1.0,
+    double pitch = 1.0,
+  }) async {
+    _ensureInitialized();
+
+    try {
+      // Use the library's speakText method with language name
+      await _ttsService!.speakText(text, languageName: languageName);
+    } catch (e) {
+      throw TTSException('Error speaking text in $languageName: $e');
+    }
+  }
+
+  @override
   Future<void> stop() async {
     _ensureInitialized();
-    // Note: AudioPlayer stop method needs to be checked in the actual library
-    // For now, using a basic implementation
     try {
-      await _audioPlayer!.stop();
+      await _ttsService!.stop();
     } catch (e) {
-      print('Error stopping audio: $e');
+      debugPrint('Error stopping TTS: $e');
     }
   }
 
@@ -93,9 +93,9 @@ class TTSServiceImpl implements ITTSService {
     // Note: Pause functionality may not be available in current library
     try {
       // Implementation depends on actual AudioPlayer API
-      print('Pause requested - implementation depends on library capabilities');
+      debugPrint('Pause requested - implementation depends on library capabilities');
     } catch (e) {
-      print('Error pausing audio: $e');
+      debugPrint('Error pausing audio: $e');
     }
   }
 
@@ -105,10 +105,11 @@ class TTSServiceImpl implements ITTSService {
     // Note: Resume functionality may not be available in current library
     try {
       // Implementation depends on actual AudioPlayer API
-      print(
-          'Resume requested - implementation depends on library capabilities');
+      debugPrint(
+        'Resume requested - implementation depends on library capabilities',
+      );
     } catch (e) {
-      print('Error resuming audio: $e');
+      debugPrint('Error resuming audio: $e');
     }
   }
 
@@ -117,14 +118,16 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
 
     try {
-      final voices = await _voiceService!.getAllVoices();
+      final voices = await _ttsService!.getVoices();
       return voices
-          .map((voice) => TTSVoice(
-                name: voice.id,
-                language: voice.languageCode,
-                gender: voice.gender.name,
-                isDefault: false, // Library may not have this property
-              ))
+          .map(
+            (voice) => TTSVoice(
+              name: voice.id,
+              language: voice.languageCode,
+              gender: voice.gender.name,
+              isDefault: false,
+            ),
+          )
           .toList();
     } catch (e) {
       throw TTSException('Error getting available voices: $e');
@@ -133,20 +136,20 @@ class TTSServiceImpl implements ITTSService {
 
   @override
   tts_lib.TTSEngineType? get currentEngine {
-    if (!_isInitialized || _service == null) return null;
-    return _service!.currentEngine;
+    if (!_isInitialized || _ttsService == null) return null;
+    return _ttsService!.currentEngine;
   }
 
   @override
   bool get isSpeaking {
-    if (!_isInitialized || _audioPlayer == null) return false;
+    if (!_isInitialized || _ttsService == null) return false;
     // Library may not have this property - return false for now
     return false;
   }
 
   @override
   bool get isPaused {
-    if (!_isInitialized || _audioPlayer == null) return false;
+    if (!_isInitialized || _ttsService == null) return false;
     // Library may not have this property - return false for now
     return false;
   }
@@ -159,7 +162,7 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
 
     try {
-      await _service!.switchEngine(engineType);
+      await _ttsService!.switchEngine(engineType);
     } catch (e) {
       throw TTSException('Error switching engine: $e');
     }
@@ -174,12 +177,8 @@ class TTSServiceImpl implements ITTSService {
   }
 
   void _cleanup() {
-    _service?.dispose();
-    _voiceService?.dispose();
-    _audioPlayer?.dispose();
-    _service = null;
-    _voiceService = null;
-    _audioPlayer = null;
+    _ttsService?.dispose();
+    _ttsService = null;
     _isInitialized = false;
   }
 
@@ -196,6 +195,8 @@ class TTSServiceImpl implements ITTSService {
   Future<T> _synchronized<T>(Object lock, Future<T> Function() action) async {
     return await action();
   }
+
+
 }
 
 /// TTS specific exception

@@ -1,40 +1,40 @@
 import 'dart:convert';
 
 /// TTS Configuration class
-/// 
+///
 /// Defines configuration parameters for TTS operations including
 /// voice settings, output preferences, and feature toggles.
 class TTSConfig {
   /// Default voice to use for synthesis
   final String defaultVoice;
-  
+
   /// Default audio format (mp3, wav, etc.)
   final String defaultFormat;
-  
+
   /// Default speech rate (0.1 to 3.0)
   final double defaultRate;
-  
+
   /// Default pitch (0.5 to 2.0)
   final double defaultPitch;
-  
+
   /// Default volume (0.0 to 1.0)
   final double defaultVolume;
 
   /// Current speech rate (0.1 to 3.0)
   final double speechRate;
-  
+
   /// Current pitch (0.5 to 2.0)
   final double pitch;
-  
+
   /// Current volume (0.0 to 1.0)
   final double volume;
-  
+
   /// Directory for output files
   final String outputDirectory;
-  
+
   /// Whether to enable audio caching
   final bool enableCaching;
-  
+
   /// Whether to enable automatic playback after synthesis
   final bool enablePlayback;
 
@@ -53,7 +53,7 @@ class TTSConfig {
   });
 
   /// Create TTSConfig from JSON map
-  /// 
+  ///
   /// Provides default values for missing keys and validates input types.
   factory TTSConfig.fromJson(Map<String, dynamic> json) {
     return TTSConfig(
@@ -136,31 +136,31 @@ class TTSConfig {
   }
 
   /// Validate configuration parameters
-  /// 
+  ///
   /// Returns a list of validation errors, empty if valid.
   List<String> validate() {
     final errors = <String>[];
-    
+
     if (defaultVoice.isEmpty) {
       errors.add('defaultVoice cannot be empty');
     }
-    
+
     if (defaultFormat.isEmpty) {
       errors.add('defaultFormat cannot be empty');
     }
-    
+
     if (!_isValidFormat(defaultFormat)) {
       errors.add('defaultFormat must be one of: mp3, wav, ogg, flac');
     }
-    
+
     if (!_isValidRate(defaultRate)) {
       errors.add('defaultRate must be a number between 0.1 and 3.0');
     }
-    
+
     if (!_isValidPitch(defaultPitch)) {
       errors.add('defaultPitch must be a number between 0.5 and 2.0');
     }
-    
+
     if (!_isValidVolume(defaultVolume)) {
       errors.add('defaultVolume must be a number between 0.0 and 1.0');
     }
@@ -168,19 +168,19 @@ class TTSConfig {
     if (!_isValidRate(speechRate)) {
       errors.add('speechRate must be a number between 0.1 and 3.0');
     }
-    
+
     if (!_isValidPitch(pitch)) {
       errors.add('pitch must be a number between 0.5 and 2.0');
     }
-    
+
     if (!_isValidVolume(volume)) {
       errors.add('volume must be a number between 0.0 and 1.0');
     }
-    
+
     if (outputDirectory.isEmpty) {
       errors.add('outputDirectory cannot be empty');
     }
-    
+
     return errors;
   }
 
@@ -190,7 +190,7 @@ class TTSConfig {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is TTSConfig &&
         other.defaultVoice == defaultVoice &&
         other.defaultFormat == defaultFormat &&

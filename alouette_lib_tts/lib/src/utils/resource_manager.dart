@@ -9,14 +9,14 @@ import 'file_utils.dart';
 class ResourceManager {
   static ResourceManager? _instance;
   static ResourceManager get instance => _instance ??= ResourceManager._();
-  
+
   ResourceManager._();
-  
+
   final List<File> _tempFiles = [];
   final List<Directory> _tempDirectories = [];
   final List<Process> _processes = [];
   final Map<String, Timer> _cleanupTimers = {};
-  
+
   /// 创建并追踪临时文件
   Future<File> createTempFile({
     String prefix = 'tts_temp',
@@ -27,42 +27,42 @@ class ResourceManager {
       prefix: prefix,
       suffix: suffix,
     );
-    
+
     _tempFiles.add(tempFile);
     TTSLogger.debug('Created temporary file: ${tempFile.path}');
-    
+
     // 如果设置了自动清理延迟，则安排清理任务
     if (autoCleanupDelay != null) {
       _scheduleAutoCleanup(tempFile, autoCleanupDelay);
     }
-    
+
     return tempFile;
   }
-  
+
   /// 创建并追踪临时目录
   Future<Directory> createTempDirectory({
     String prefix = 'tts_temp_dir',
     Duration? autoCleanupDelay,
   }) async {
     final tempDir = await FileUtils.createTempDirectory(prefix: prefix);
-    
+
     _tempDirectories.add(tempDir);
     TTSLogger.debug('Created temporary directory: ${tempDir.path}');
-    
+
     // 如果设置了自动清理延迟，则安排清理任务
     if (autoCleanupDelay != null) {
       _scheduleAutoCleanup(tempDir, autoCleanupDelay);
     }
-    
+
     return tempDir;
   }
-  
+
   /// 追踪进程
   void trackProcess(Process process) {
     _processes.add(process);
     TTSLogger.debug('Tracking process: ${process.pid}');
   }
-  
+
   /// 清理特定的临时文件
   Future<void> cleanupFile(File file, {bool removeFromTracking = true}) async {
     try {
@@ -70,33 +70,40 @@ class ResourceManager {
       if (removeFromTracking) {
         _tempFiles.remove(file);
       }
-      
+
       // 取消相关的自动清理任务
       _cancelAutoCleanup(file.path);
-      
+
       TTSLogger.debug('Cleaned up temporary file: ${file.path}');
     } catch (e) {
-      TTSLogger.warning('Failed to cleanup temporary file: ${file.path}, error: $e');
+      TTSLogger.warning(
+        'Failed to cleanup temporary file: ${file.path}, error: $e',
+      );
     }
   }
-  
+
   /// 清理特定的临时目录
-  Future<void> cleanupDirectory(Directory directory, {bool removeFromTracking = true}) async {
+  Future<void> cleanupDirectory(
+    Directory directory, {
+    bool removeFromTracking = true,
+  }) async {
     try {
       await FileUtils.cleanupTempDirectory(directory);
       if (removeFromTracking) {
         _tempDirectories.remove(directory);
       }
-      
+
       // 取消相关的自动清理任务
       _cancelAutoCleanup(directory.path);
-      
+
       TTSLogger.debug('Cleaned up temporary directory: ${directory.path}');
     } catch (e) {
-      TTSLogger.warning('Failed to cleanup temporary directory: ${directory.path}, error: $e');
+      TTSLogger.warning(
+        'Failed to cleanup temporary directory: ${directory.path}, error: $e',
+      );
     }
   }
-  
+
   /// 清理特定进程
   void cleanupProcess(Process process) {
     try {
@@ -109,11 +116,11 @@ class ResourceManager {
       TTSLogger.warning('Failed to cleanup process: ${process.pid}, error: $e');
     }
   }
-  
+
   /// 清理所有临时文件
   Future<void> cleanupAllFiles() async {
     final errors = <String>[];
-    
+
     // 清理文件
     for (final file in List.from(_tempFiles)) {
       try {
@@ -123,16 +130,18 @@ class ResourceManager {
       }
     }
     _tempFiles.clear();
-    
+
     if (errors.isNotEmpty) {
-      TTSLogger.warning('Some temporary files failed to cleanup: ${errors.join(', ')}');
+      TTSLogger.warning(
+        'Some temporary files failed to cleanup: ${errors.join(', ')}',
+      );
     }
   }
-  
+
   /// 清理所有临时目录
   Future<void> cleanupAllDirectories() async {
     final errors = <String>[];
-    
+
     // 清理目录
     for (final dir in List.from(_tempDirectories)) {
       try {
@@ -142,16 +151,18 @@ class ResourceManager {
       }
     }
     _tempDirectories.clear();
-    
+
     if (errors.isNotEmpty) {
-      TTSLogger.warning('Some temporary directories failed to cleanup: ${errors.join(', ')}');
+      TTSLogger.warning(
+        'Some temporary directories failed to cleanup: ${errors.join(', ')}',
+      );
     }
   }
-  
+
   /// 清理所有进程
   void cleanupAllProcesses() {
     final errors = <String>[];
-    
+
     // 清理进程
     for (final process in List.from(_processes)) {
       try {
@@ -161,33 +172,32 @@ class ResourceManager {
       }
     }
     _processes.clear();
-    
+
     if (errors.isNotEmpty) {
-      TTSLogger.warning('Some processes failed to cleanup: ${errors.join(', ')}');
+      TTSLogger.warning(
+        'Some processes failed to cleanup: ${errors.join(', ')}',
+      );
     }
   }
-  
+
   /// 清理所有资源
   Future<void> cleanupAll() async {
     TTSLogger.debug('Starting cleanup of all resources');
-    
+
     // 取消所有自动清理任务
     for (final timer in _cleanupTimers.values) {
       timer.cancel();
     }
     _cleanupTimers.clear();
-    
+
     // 并行清理文件和目录，序列清理进程
-    await Future.wait([
-      cleanupAllFiles(),
-      cleanupAllDirectories(),
-    ]);
-    
+    await Future.wait([cleanupAllFiles(), cleanupAllDirectories()]);
+
     cleanupAllProcesses();
-    
+
     TTSLogger.debug('Completed cleanup of all resources');
   }
-  
+
   /// 获取资源统计信息
   Map<String, int> getResourceStats() {
     return {
@@ -197,14 +207,14 @@ class ResourceManager {
       'autoCleanupTasks': _cleanupTimers.length,
     };
   }
-  
+
   /// 安排自动清理任务
   void _scheduleAutoCleanup(FileSystemEntity entity, Duration delay) {
     final path = entity.path;
-    
+
     // 取消之前的任务（如果存在）
     _cancelAutoCleanup(path);
-    
+
     _cleanupTimers[path] = Timer(delay, () async {
       try {
         if (entity is File) {
@@ -217,10 +227,12 @@ class ResourceManager {
       }
       _cleanupTimers.remove(path);
     });
-    
-    TTSLogger.debug('Scheduled auto cleanup for $path after ${delay.inMilliseconds}ms');
+
+    TTSLogger.debug(
+      'Scheduled auto cleanup for $path after ${delay.inMilliseconds}ms',
+    );
   }
-  
+
   /// 取消自动清理任务
   void _cancelAutoCleanup(String path) {
     final timer = _cleanupTimers.remove(path);
@@ -246,7 +258,7 @@ extension ResourceManagerExtension on ResourceManager {
       await cleanupFile(file);
     }
   }
-  
+
   /// 使用临时目录执行操作，操作完成后自动清理
   Future<T> withTempDirectory<T>(
     Future<T> Function(Directory directory) operation, {

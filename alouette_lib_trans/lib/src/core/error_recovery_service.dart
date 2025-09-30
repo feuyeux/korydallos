@@ -52,16 +52,20 @@ class TranslationErrorRecoveryService {
   }
 
   /// Calculate delay with exponential backoff and jitter
-  static Duration _calculateDelay(int attempt, Duration baseDelay, Duration maxDelay) {
+  static Duration _calculateDelay(
+    int attempt,
+    Duration baseDelay,
+    Duration maxDelay,
+  ) {
     // Exponential backoff: baseDelay * 2^(attempt-1)
     final exponentialDelay = baseDelay * pow(2, attempt - 1);
-    
+
     // Add jitter (random factor between 0.5 and 1.5)
     final jitter = 0.5 + Random().nextDouble();
     final delayWithJitter = Duration(
       milliseconds: (exponentialDelay.inMilliseconds * jitter).round(),
     );
-    
+
     // Cap at maximum delay
     return delayWithJitter > maxDelay ? maxDelay : delayWithJitter;
   }
@@ -74,9 +78,9 @@ class TranslationErrorRecoveryService {
 
     // For non-Alouette errors, check common patterns
     if (error is TimeoutException) return true;
-    
+
     final errorString = error.toString().toLowerCase();
-    
+
     // Network-related errors that might be temporary
     if (errorString.contains('connection') ||
         errorString.contains('timeout') ||
@@ -85,7 +89,7 @@ class TranslationErrorRecoveryService {
         errorString.contains('dns')) {
       return true;
     }
-    
+
     // Server errors that might be temporary (5xx status codes)
     if (errorString.contains('500') ||
         errorString.contains('502') ||
@@ -93,7 +97,7 @@ class TranslationErrorRecoveryService {
         errorString.contains('504')) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -123,21 +127,21 @@ class TranslationErrorRecoveryService {
           // For network errors, try the fallback after a short delay
           await Future.delayed(const Duration(seconds: 2));
           return await fallbackOperation();
-          
+
         case TranslationErrorCodes.modelNotFound:
           // For model errors, the fallback should use a different model
           return await fallbackOperation();
-          
+
         case TranslationErrorCodes.rateLimitExceeded:
           // For rate limits, wait longer before fallback
           await Future.delayed(const Duration(seconds: 10));
           return await fallbackOperation();
-          
+
         default:
           throw error;
       }
     }
-    
+
     throw error;
   }
 }
@@ -147,7 +151,7 @@ class CircuitBreaker {
   final int failureThreshold;
   final Duration timeout;
   final Duration resetTimeout;
-  
+
   int _failureCount = 0;
   DateTime? _lastFailureTime;
   CircuitBreakerState _state = CircuitBreakerState.closed;
@@ -193,7 +197,7 @@ class CircuitBreaker {
   void _onFailure() {
     _failureCount++;
     _lastFailureTime = DateTime.now();
-    
+
     if (_failureCount >= failureThreshold) {
       _state = CircuitBreakerState.open;
     }
@@ -201,10 +205,10 @@ class CircuitBreaker {
 
   /// Get current circuit breaker state
   CircuitBreakerState get state => _state;
-  
+
   /// Get current failure count
   int get failureCount => _failureCount;
-  
+
   /// Reset the circuit breaker
   void reset() {
     _failureCount = 0;
@@ -215,17 +219,15 @@ class CircuitBreaker {
 
 /// Circuit breaker states
 enum CircuitBreakerState {
-  closed,   // Normal operation
-  open,     // Failing fast
+  closed, // Normal operation
+  open, // Failing fast
   halfOpen, // Testing if service is back
 }
 
 /// Exception thrown when circuit breaker is open
 class CircuitBreakerOpenException extends AlouetteTranslationError {
-  CircuitBreakerOpenException(String message) : super(
-    message,
-    'CIRCUIT_BREAKER_OPEN',
-  );
+  CircuitBreakerOpenException(String message)
+    : super(message, 'CIRCUIT_BREAKER_OPEN');
 }
 
 /// Fallback provider interface for translation operations

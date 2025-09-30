@@ -6,13 +6,7 @@ import '../utils/tts_logger.dart';
 import '../utils/resource_manager.dart';
 
 /// 播放状态枚举
-enum PlaybackState {
-  idle,
-  playing,
-  paused,
-  stopped,
-  error,
-}
+enum PlaybackState { idle, playing, paused, stopped, error }
 
 /// 跨平台音频播放器
 /// 使用 audioplayers 进行应用内播放
@@ -61,13 +55,13 @@ class AudioPlayer {
 
     try {
       _state = PlaybackState.playing;
-      
+
       // 使用 audioplayers 进行应用内播放
       await _audioPlayer.play(ap.DeviceFileSource(filePath));
-      
+
       // 等待播放完成
       await _audioPlayer.onPlayerComplete.first;
-      
+
       _state = PlaybackState.idle;
       TTSLogger.debug('Audio playback completed successfully');
     } catch (e) {
@@ -78,8 +72,11 @@ class AudioPlayer {
       if (e is TTSError) {
         rethrow;
       }
-      throw TTSError('Failed to play audio: $e',
-          code: 'PLAYBACK_FAILED', originalError: e);
+      throw TTSError(
+        'Failed to play audio: $e',
+        code: 'PLAYBACK_FAILED',
+        originalError: e,
+      );
     }
   }
 
@@ -92,7 +89,8 @@ class AudioPlayer {
     await _resourceManager.withTempFile(
       (tempFile) async {
         TTSLogger.debug(
-            'Playing audio bytes: ${audioData.length} bytes for format $format');
+          'Playing audio bytes: ${audioData.length} bytes for format $format',
+        );
 
         await tempFile.writeAsBytes(audioData);
         await play(tempFile.path);
@@ -136,7 +134,8 @@ class AudioPlayer {
       _tempFiles.remove(file);
     } catch (e) {
       TTSLogger.warning(
-          'Failed to cleanup temporary file: ${file.path}, error: $e');
+        'Failed to cleanup temporary file: ${file.path}, error: $e',
+      );
     }
   }
 }

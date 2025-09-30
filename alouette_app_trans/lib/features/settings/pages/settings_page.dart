@@ -17,128 +17,114 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Application Settings'),
-      ),
+      appBar: AppBar(title: const Text('Application Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           // Appearance Section
-          _buildSectionCard(
-            'Appearance',
-            [
-              SwitchListTile(
-                title: const Text('Dark Mode'),
-                subtitle: const Text('Use dark theme'),
-                value: _darkMode,
-                onChanged: (value) {
-                  setState(() {
-                    _darkMode = value;
-                  });
-                },
-              ),
-              ListTile(
-                title: const Text('Font Size'),
-                subtitle: Text('${_fontSize.toInt()}px'),
-                trailing: SizedBox(
-                  width: 150,
-                  child: Slider(
-                    value: _fontSize,
-                    min: 12.0,
-                    max: 20.0,
-                    divisions: 8,
-                    onChanged: (value) {
-                      setState(() {
-                        _fontSize = value;
-                      });
-                    },
-                  ),
+          _buildSectionCard('Appearance', [
+            SwitchListTile(
+              title: const Text('Dark Mode'),
+              subtitle: const Text('Use dark theme'),
+              value: _darkMode,
+              onChanged: (value) {
+                setState(() {
+                  _darkMode = value;
+                });
+              },
+            ),
+            ListTile(
+              title: const Text('Font Size'),
+              subtitle: Text('${_fontSize.toInt()}px'),
+              trailing: SizedBox(
+                width: 150,
+                child: Slider(
+                  value: _fontSize,
+                  min: 12.0,
+                  max: 20.0,
+                  divisions: 8,
+                  onChanged: (value) {
+                    setState(() {
+                      _fontSize = value;
+                    });
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ]),
 
           const SizedBox(height: 16),
 
           // Behavior Section
-          _buildSectionCard(
-            'Behavior',
-            [
-              SwitchListTile(
-                title: const Text('Auto-save translations'),
-                subtitle: const Text('Automatically save translation results'),
-                value: _autoSave,
-                onChanged: (value) {
-                  setState(() {
-                    _autoSave = value;
-                  });
-                },
-              ),
-              SwitchListTile(
-                title: const Text('Show notifications'),
-                subtitle: const Text('Display system notifications'),
-                value: _showNotifications,
-                onChanged: (value) {
-                  setState(() {
-                    _showNotifications = value;
-                  });
-                },
-              ),
-            ],
-          ),
+          _buildSectionCard('Behavior', [
+            SwitchListTile(
+              title: const Text('Auto-save translations'),
+              subtitle: const Text('Automatically save translation results'),
+              value: _autoSave,
+              onChanged: (value) {
+                setState(() {
+                  _autoSave = value;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Show notifications'),
+              subtitle: const Text('Display system notifications'),
+              value: _showNotifications,
+              onChanged: (value) {
+                setState(() {
+                  _showNotifications = value;
+                });
+              },
+            ),
+          ]),
 
           const SizedBox(height: 16),
 
           // Data Section
-          _buildSectionCard(
-            'Data Management',
-            [
-              ListTile(
-                title: const Text('Clear translation history'),
-                subtitle: const Text('Remove all saved translations'),
-                trailing: const Icon(Icons.delete_outline),
-                onTap: _showClearHistoryDialog,
-              ),
-              ListTile(
-                title: const Text('Export settings'),
-                subtitle: const Text('Save current settings to file'),
-                trailing: const Icon(Icons.file_download),
-                onTap: _exportSettings,
-              ),
-              ListTile(
-                title: const Text('Import settings'),
-                subtitle: const Text('Load settings from file'),
-                trailing: const Icon(Icons.file_upload),
-                onTap: _importSettings,
-              ),
-            ],
-          ),
+          _buildSectionCard('Data Management', [
+            ListTile(
+              title: const Text('Clear translation history'),
+              subtitle: const Text('Remove all saved translations'),
+              trailing: const Icon(Icons.delete_outline),
+              onTap: _showClearHistoryDialog,
+            ),
+            ListTile(
+              title: const Text('Export settings'),
+              subtitle: const Text('Save current settings to file'),
+              trailing: const Icon(Icons.file_download),
+              onTap: _exportSettings,
+            ),
+            ListTile(
+              title: const Text('Import settings'),
+              subtitle: const Text('Load settings from file'),
+              trailing: const Icon(Icons.file_upload),
+              onTap: _importSettings,
+            ),
+          ]),
 
           const SizedBox(height: 16),
 
           // About Section
-          _buildSectionCard(
-            'About',
-            [
-              ListTile(
-                title: const Text('Version'),
-                subtitle: const Text('1.0.0+1'),
-                trailing: const Icon(Icons.info_outline),
-              ),
-              ListTile(
-                title: const Text('License'),
-                subtitle: const Text('View license information'),
-                trailing: const Icon(Icons.description),
-                onTap: _showLicenseDialog,
-              ),
-              ListTile(
-                title: const Text('Privacy Policy'),
-                subtitle: const Text('View privacy policy'),
-                trailing: const Icon(Icons.privacy_tip),
-                onTap: _showPrivacyPolicy,
-              ),
-            ],
-          ),
+          _buildSectionCard('About', [
+            ListTile(
+              title: const Text('Version'),
+              subtitle: const Text('1.0.0+1'),
+              trailing: const Icon(Icons.info_outline),
+            ),
+            ListTile(
+              title: const Text('License'),
+              subtitle: const Text('View license information'),
+              trailing: const Icon(Icons.description),
+              onTap: _showLicenseDialog,
+            ),
+            ListTile(
+              title: const Text('Privacy Policy'),
+              subtitle: const Text('View privacy policy'),
+              trailing: const Icon(Icons.privacy_tip),
+              onTap: _showPrivacyPolicy,
+            ),
+          ]),
         ],
       ),
     );
@@ -151,10 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
           ),
           ...children,
         ],
@@ -190,27 +173,21 @@ class _SettingsPageState extends State<SettingsPage> {
   void _clearHistory() {
     // Clear translation history from local storage
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Translation history cleared'),
-      ),
+      const SnackBar(content: Text('Translation history cleared')),
     );
   }
 
   void _exportSettings() {
     // Export settings functionality - placeholder for future implementation
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings export feature coming soon'),
-      ),
+      const SnackBar(content: Text('Settings export feature coming soon')),
     );
   }
 
   void _importSettings() {
     // Import settings functionality - placeholder for future implementation
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings import feature coming soon'),
-      ),
+      const SnackBar(content: Text('Settings import feature coming soon')),
     );
   }
 

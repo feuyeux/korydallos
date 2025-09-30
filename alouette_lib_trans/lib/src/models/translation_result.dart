@@ -1,31 +1,31 @@
 import 'llm_config.dart';
 
 /// Translation result model containing the original text and all translations
-/// 
+///
 /// This is the standardized data model used across all Alouette applications
 /// for translation results. It includes comprehensive validation and serialization.
 class TranslationResult {
   /// The original text that was translated
   final String original;
-  
+
   /// Map of language codes to translated text
   final Map<String, String> translations;
-  
+
   /// List of target languages that were requested
   final List<String> languages;
-  
+
   /// Timestamp when the translation was completed
   final DateTime timestamp;
-  
+
   /// The LLM configuration used for this translation
   final LLMConfig config;
-  
+
   /// Optional metadata about the translation process
   final Map<String, dynamic>? metadata;
-  
+
   /// Whether the translation was successful
   final bool isSuccessful;
-  
+
   /// Error message if translation failed
   final String? errorMessage;
 
@@ -80,12 +80,17 @@ class TranslationResult {
   }
 
   /// Create from JSON representation
-  factory TranslationResult.fromJson(Map<String, dynamic> json, LLMConfig config) {
+  factory TranslationResult.fromJson(
+    Map<String, dynamic> json,
+    LLMConfig config,
+  ) {
     return TranslationResult(
       original: json['original'] ?? '',
       translations: Map<String, String>.from(json['translations'] ?? {}),
       languages: List<String>.from(json['languages'] ?? []),
-      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? DateTime.now().toIso8601String(),
+      ),
       config: config,
       metadata: json['metadata'] != null
           ? Map<String, dynamic>.from(json['metadata'])
@@ -139,13 +144,15 @@ class TranslationResult {
 
   /// Check if translation exists for a language
   bool hasTranslation(String languageCode) {
-    return translations.containsKey(languageCode) && 
-           translations[languageCode]?.isNotEmpty == true;
+    return translations.containsKey(languageCode) &&
+        translations[languageCode]?.isNotEmpty == true;
   }
 
   /// Get all available language codes with translations
   List<String> get availableLanguages {
-    return translations.keys.where((lang) => translations[lang]?.isNotEmpty == true).toList();
+    return translations.keys
+        .where((lang) => translations[lang]?.isNotEmpty == true)
+        .toList();
   }
 
   /// Check if all requested languages have translations
@@ -172,9 +179,13 @@ class TranslationResult {
       }
 
       // Check for missing translations
-      final missingLanguages = languages.where((lang) => !hasTranslation(lang)).toList();
+      final missingLanguages = languages
+          .where((lang) => !hasTranslation(lang))
+          .toList();
       if (missingLanguages.isNotEmpty) {
-        warnings.add('Missing translations for languages: ${missingLanguages.join(", ")}');
+        warnings.add(
+          'Missing translations for languages: ${missingLanguages.join(", ")}',
+        );
       }
     } else {
       if (errorMessage == null || errorMessage!.trim().isEmpty) {
@@ -182,11 +193,7 @@ class TranslationResult {
       }
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   /// Check if the result is valid (no validation errors)
@@ -198,7 +205,9 @@ class TranslationResult {
     return other is TranslationResult &&
         other.original == original &&
         other.translations.length == translations.length &&
-        other.translations.keys.every((key) => translations[key] == other.translations[key]) &&
+        other.translations.keys.every(
+          (key) => translations[key] == other.translations[key],
+        ) &&
         other.languages.length == languages.length &&
         other.languages.every((lang) => languages.contains(lang)) &&
         other.timestamp == timestamp &&
@@ -210,7 +219,9 @@ class TranslationResult {
   int get hashCode {
     return Object.hash(
       original,
-      Object.hashAll(translations.entries.map((e) => Object.hash(e.key, e.value))),
+      Object.hashAll(
+        translations.entries.map((e) => Object.hash(e.key, e.value)),
+      ),
       Object.hashAll(languages),
       timestamp,
       isSuccessful,
@@ -221,6 +232,6 @@ class TranslationResult {
   @override
   String toString() {
     return 'TranslationResult(original: ${original.length > 30 ? '${original.substring(0, 30)}...' : original}, '
-           'languages: $languages, translations: ${translations.length}, successful: $isSuccessful)';
+        'languages: $languages, translations: ${translations.length}, successful: $isSuccessful)';
   }
 }

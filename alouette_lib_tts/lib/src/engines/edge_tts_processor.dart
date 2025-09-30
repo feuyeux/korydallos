@@ -20,7 +20,7 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
     return getVoicesWithCache(() async {
       // Simplified command line call
       final result = await Process.run('edge-tts', ['--list-voices']);
-      
+
       if (result.exitCode != 0) {
         final errorMessage = result.stderr.toString().trim();
         throw TTSError(
@@ -128,19 +128,19 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
   List<VoiceModel> _parseVoicesFromOutput(String output) {
     final voices = <VoiceModel>[];
     final lines = output.split('\n');
-    
+
     bool headerPassed = false;
-    
+
     for (final line in lines) {
       final trimmedLine = line.trim();
       if (trimmedLine.isEmpty) continue;
-      
+
       // Skip header and separator lines
       if (trimmedLine.startsWith('Name') || trimmedLine.startsWith('-')) {
         headerPassed = true;
         continue;
       }
-      
+
       if (!headerPassed) continue;
 
       try {
@@ -163,25 +163,27 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
     try {
       // Use regex to parse table row
       // Match: voice name + spaces + gender + spaces + other info
-      final parts = line.split(RegExp(r'\s{2,}')); // Use multiple spaces as separator
-      
+      final parts = line.split(
+        RegExp(r'\s{2,}'),
+      ); // Use multiple spaces as separator
+
       if (parts.length < 2) return null;
-      
+
       final name = parts[0].trim();
       final genderStr = parts[1].trim();
-      
+
       if (name.isEmpty) return null;
-      
+
       // Extract locale from voice name
       // Example: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
       final languageCode = _extractLocaleFromName(name);
-      
+
       // Generate display name
       final displayName = _generateDisplayName(name, languageCode, genderStr);
 
       // Parse gender
       final gender = _parseGender(genderStr);
-      
+
       // Determine quality
       final isNeural = name.toLowerCase().contains('neural');
       final quality = isNeural ? VoiceQuality.neural : VoiceQuality.standard;
@@ -198,7 +200,7 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
       return null;
     }
   }
-  
+
   /// Extract locale from voice name
   /// Example: "zh-CN-XiaoxiaoNeural" -> "zh-CN"
   String _extractLocaleFromName(String name) {
@@ -213,16 +215,18 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
   String _generateDisplayName(String name, String languageCode, String gender) {
     // Extract meaningful parts from voice name
     // Example: "zh-CN-XiaoxiaoNeural" -> "Xiaoxiao (Chinese, Female, Neural)"
-    
+
     final parts = name.split('-');
     if (parts.length >= 3) {
-      final voiceName = parts[2].replaceAll('Neural', '').replaceAll('Standard', '');
+      final voiceName = parts[2]
+          .replaceAll('Neural', '')
+          .replaceAll('Standard', '');
       final isNeural = name.toLowerCase().contains('neural');
       final qualityType = isNeural ? 'Neural' : 'Standard';
-      
+
       return '$voiceName ($languageCode, $gender, $qualityType)';
     }
-    
+
     return name;
   }
 

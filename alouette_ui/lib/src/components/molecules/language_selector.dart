@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 
 import '../atoms/atomic_elements.dart';
@@ -29,11 +30,13 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = LanguageConstants.supportedLanguages
-        .map((language) => AtomicDropdownItem<LanguageOption>(
-              value: language,
-              text: language.name,
-              icon: null, // We'll handle the flag separately
-            ))
+        .map(
+          (language) => AtomicDropdownItem<LanguageOption>(
+            value: language,
+            text: language.name,
+            icon: null, // We'll handle the flag separately
+          ),
+        )
         .toList();
 
     return AtomicDropdown<LanguageOption>(
@@ -74,10 +77,7 @@ class LanguageGridSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (labelText != null) ...[
-          AtomicText(
-            labelText!,
-            variant: AtomicTextVariant.labelMedium,
-          ),
+          AtomicText(labelText!, variant: AtomicTextVariant.labelMedium),
           const AtomicSpacer(AtomicSpacing.small),
         ],
         ConstrainedBox(
@@ -141,10 +141,7 @@ class LanguageChip extends StatelessWidget {
     return FilterChip(
       selected: isSelected,
       onSelected: (_) => onTap(),
-      avatar: Text(
-        language.flag,
-        style: const TextStyle(fontSize: 14),
-      ),
+      avatar: Text(language.flag, style: TextStyle(fontSize: PlatformDetector().flagFontSize * 0.875)), // 14.0 equivalent
       label: Text(
         language.name,
         style: TextStyle(

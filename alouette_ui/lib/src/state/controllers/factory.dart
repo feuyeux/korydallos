@@ -27,7 +27,8 @@ class ControllerFactory {
   ISelectionController<String> createLanguageSelectionController([
     List<String>? availableLanguages,
   ]) {
-    final languages = availableLanguages ??
+    final languages =
+        availableLanguages ??
         [
           'en-US',
           'es-ES',
@@ -36,7 +37,7 @@ class ControllerFactory {
           'it-IT',
           'pt-BR',
           'zh-CN',
-          'ja-JP'
+          'ja-JP',
         ];
     return LanguageSelectionController(languages);
   }
@@ -52,9 +53,7 @@ class ControllerFactory {
   }
 
   /// Create a text controller with optional validation
-  ITextController createTextController({
-    bool Function(String)? validator,
-  }) {
+  ITextController createTextController({bool Function(String)? validator}) {
     return ValidatedTextController(validator: validator) as ITextController;
   }
 }
@@ -64,7 +63,7 @@ class ValidatedTextController extends BaseTextController {
   final bool Function(String)? _validator;
 
   ValidatedTextController({bool Function(String)? validator})
-      : _validator = validator;
+    : _validator = validator;
 
   @override
   bool validateText(String text) {
@@ -111,7 +110,8 @@ mixin ControllerWidget {
   /// Create a translation controller
   ITranslationController createTranslationController() {
     return createController(
-        () => _controllerFactory.createTranslationController());
+      () => _controllerFactory.createTranslationController(),
+    );
   }
 
   /// Create a TTS controller
@@ -123,8 +123,11 @@ mixin ControllerWidget {
   ISelectionController<String> createLanguageSelectionController([
     List<String>? availableLanguages,
   ]) {
-    return createController(() => _controllerFactory
-        .createLanguageSelectionController(availableLanguages));
+    return createController(
+      () => _controllerFactory.createLanguageSelectionController(
+        availableLanguages,
+      ),
+    );
   }
 
   /// Create a form controller
@@ -138,11 +141,10 @@ mixin ControllerWidget {
   }
 
   /// Create a text controller
-  ITextController createTextController({
-    bool Function(String)? validator,
-  }) {
+  ITextController createTextController({bool Function(String)? validator}) {
     return createController(
-        () => _controllerFactory.createTextController(validator: validator));
+      () => _controllerFactory.createTextController(validator: validator),
+    );
   }
 
   /// Dispose all managed controllers
@@ -177,7 +179,8 @@ mixin AutoControllerDisposal<T extends StatefulWidget> on State<T>
   @override
   ITranslationController createTranslationController() {
     return createController(
-        () => _controllerFactory.createTranslationController());
+      () => _controllerFactory.createTranslationController(),
+    );
   }
 
   @override
@@ -189,8 +192,11 @@ mixin AutoControllerDisposal<T extends StatefulWidget> on State<T>
   ISelectionController<String> createLanguageSelectionController([
     List<String>? availableLanguages,
   ]) {
-    return createController(() => _controllerFactory
-        .createLanguageSelectionController(availableLanguages));
+    return createController(
+      () => _controllerFactory.createLanguageSelectionController(
+        availableLanguages,
+      ),
+    );
   }
 
   @override
@@ -204,11 +210,10 @@ mixin AutoControllerDisposal<T extends StatefulWidget> on State<T>
   }
 
   @override
-  ITextController createTextController({
-    bool Function(String)? validator,
-  }) {
+  ITextController createTextController({bool Function(String)? validator}) {
     return createController(
-        () => _controllerFactory.createTextController(validator: validator));
+      () => _controllerFactory.createTextController(validator: validator),
+    );
   }
 
   @override

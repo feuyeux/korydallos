@@ -7,8 +7,10 @@ A multi-platform text-to-speech (TTS) library for Flutter applications, providin
 - **Unified API**: Consistent interface across all TTS engines
 - **Multi-platform Support**: Works on Desktop (Windows, macOS, Linux), Mobile (Android, iOS), and Web
 - **Automatic Engine Selection**: Intelligently chooses the best TTS engine for each platform
+- **Platform-specific UI Support**: Optimized display for different platforms (emoji flags on macOS, text codes on Windows)
 - **High-Quality Voices**: Access to Microsoft Edge's neural voices and system TTS voices
 - **Audio File Generation**: Synthesize speech to audio files (MP3, WAV, etc.)
+- **Direct Speech Playback**: Integrated `speakText` method for immediate audio playback
 - **Cross-platform Audio Playback**: Built-in audio player for all platforms
 - **Error Handling**: Comprehensive error handling with recovery suggestions
 - **Backward Compatibility**: Maintains compatibility with existing applications
@@ -50,8 +52,8 @@ pip install edge-tts
 import 'package:alouette_tts/alouette_tts.dart';
 
 void main() async {
-  // Create and initialize the unified TTS service
-  final ttsService = UnifiedTTSService();
+  // Create and initialize the TTS service
+  final ttsService = TTSService();
   await ttsService.initialize();
   
   // Get available voices
@@ -102,7 +104,7 @@ import 'package:alouette_tts/alouette_tts.dart';
 
 void main() async {
   // Create TTS service with preferred engine
-  final ttsService = UnifiedTTSService();
+  final ttsService = TTSService();
   await ttsService.initialize(preferredEngine: TTSEngineType.edge);
   
   // Check current engine
@@ -128,17 +130,32 @@ void main() async {
 
 ### Core Classes
 
-#### UnifiedTTSService
+#### TTSService
 The main service class providing a unified interface to all TTS engines.
 
 ```dart
-class UnifiedTTSService {
+class TTSService {
   Future<void> initialize({TTSEngineType? preferredEngine});
   Future<List<Voice>> getVoices();
   Future<Uint8List> synthesizeText(String text, String voiceName, {String format = 'mp3'});
+  Future<void> speakText(String text, {String? voiceName, String format = 'mp3'});
   Future<void> switchEngine(TTSEngineType engineType);
   TTSEngineType? get currentEngine;
   void dispose();
+}
+```
+
+#### PlatformDetector
+Utility class for platform detection and platform-specific UI optimizations.
+
+```dart
+class PlatformDetector {
+  String get platformName;
+  bool get isDesktop;
+  bool get isMobile;
+  bool get supportsEmojiFlags;
+  String getFlag(String emojiFlag, String languageCode);
+  double get flagFontSize;
 }
 ```
 
@@ -244,7 +261,7 @@ final voices = await edgeService.getVoices();
 **After (New Unified API):**
 ```dart
 // New way
-final ttsService = UnifiedTTSService();
+final ttsService = TTSService();
 await ttsService.initialize();
 final voices = await ttsService.getVoices();
 ```
@@ -261,8 +278,8 @@ final voices = await ttsService.getVoices();
 
 The following APIs are still supported but marked as deprecated:
 
-- `EdgeTTSService` → Use `UnifiedTTSService` or `EdgeTTSProcessor`
-- `FlutterTTSService` → Use `UnifiedTTSService` or `FlutterTTSProcessor`
+- `EdgeTTSService` → Use `TTSService` or `EdgeTTSProcessor`
+- `FlutterTTSService` → Use `TTSService` or `FlutterTTSProcessor`
 - Legacy `TTSPlayer` classes → Use `AudioPlayer`
 
 ## Platform-Specific Notes

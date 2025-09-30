@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens/dimension_tokens.dart';
 
-
 /// 现代化的应用栏组件，为所有Alouette应用提供一致的顶部导航栏
 class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -62,7 +61,8 @@ class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
                     title,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: foregroundColor ??
+                      color:
+                          foregroundColor ??
                           (isDark ? Colors.white : const Color(0xFF1F2937)),
                     ),
                   ),

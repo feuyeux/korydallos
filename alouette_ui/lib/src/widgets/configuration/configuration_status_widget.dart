@@ -4,13 +4,13 @@ import '../../services/core/configuration_manager.dart';
 import '../../models/app_configuration.dart';
 
 /// Widget that displays the current configuration status
-/// 
+///
 /// Shows validation status, version information, and quick access
 /// to configuration management functions.
 class ConfigurationStatusWidget extends StatefulWidget {
   /// Whether to show detailed status information
   final bool showDetails;
-  
+
   /// Callback when configuration needs attention
   final VoidCallback? onConfigurationIssue;
 
@@ -21,7 +21,8 @@ class ConfigurationStatusWidget extends StatefulWidget {
   });
 
   @override
-  State<ConfigurationStatusWidget> createState() => _ConfigurationStatusWidgetState();
+  State<ConfigurationStatusWidget> createState() =>
+      _ConfigurationStatusWidgetState();
 }
 
 class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
@@ -35,7 +36,7 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
   void initState() {
     super.initState();
     _loadConfigurationStatus();
-    
+
     // Listen to configuration changes
     _configManager.configurationStream.listen((config) {
       if (mounted) {
@@ -53,7 +54,7 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
 
       final config = await _configManager.getConfiguration();
       final validation = await _configManager.validateConfiguration();
-      
+
       setState(() {
         _currentConfig = config;
         _validationResult = validation;
@@ -61,7 +62,8 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
       });
 
       // Notify if there are configuration issues
-      if (!(validation['isValid'] as bool) && widget.onConfigurationIssue != null) {
+      if (!(validation['isValid'] as bool) &&
+          widget.onConfigurationIssue != null) {
         widget.onConfigurationIssue!();
       }
     } catch (e) {
@@ -107,9 +109,7 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
               Expanded(
                 child: Text(
                   _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
               IconButton(
@@ -165,19 +165,18 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
     } else if (isValid && warnings.isNotEmpty) {
       statusIcon = Icons.warning;
       statusColor = Colors.orange;
-      statusText = 'Configuration OK (${warnings.length} warning${warnings.length > 1 ? 's' : ''})';
+      statusText =
+          'Configuration OK (${warnings.length} warning${warnings.length > 1 ? 's' : ''})';
     } else {
       statusIcon = Icons.error;
       statusColor = Theme.of(context).colorScheme.error;
-      statusText = 'Configuration Issues (${errors.length} error${errors.length > 1 ? 's' : ''})';
+      statusText =
+          'Configuration Issues (${errors.length} error${errors.length > 1 ? 's' : ''})';
     }
 
     return Row(
       children: [
-        Icon(
-          statusIcon,
-          color: statusColor,
-        ),
+        Icon(statusIcon, color: statusColor),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -185,9 +184,9 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
             children: [
               Text(
                 statusText,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
               ),
               Text(
                 'Version ${_currentConfig!.version}',
@@ -219,7 +218,11 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
         _buildConfigurationSummary(),
         if (errors.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _buildIssuesList('Errors', errors, Theme.of(context).colorScheme.error),
+          _buildIssuesList(
+            'Errors',
+            errors,
+            Theme.of(context).colorScheme.error,
+          ),
         ],
         if (warnings.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -240,7 +243,9 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
         const SizedBox(height: 8),
         _buildSummaryItem(
           'Translation Config',
-          _currentConfig!.translationConfig != null ? 'Configured' : 'Not configured',
+          _currentConfig!.translationConfig != null
+              ? 'Configured'
+              : 'Not configured',
           _currentConfig!.translationConfig != null,
         ),
         _buildSummaryItem(
@@ -273,24 +278,23 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
       child: Row(
         children: [
           Icon(
-            isConfigured ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+            isConfigured
+                ? Icons.check_circle_outline
+                : Icons.radio_button_unchecked,
             size: 16,
-            color: isConfigured 
-                ? Theme.of(context).colorScheme.primary 
+            color: isConfigured
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(value, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
       ),
@@ -303,33 +307,29 @@ class _ConfigurationStatusWidgetState extends State<ConfigurationStatusWidget> {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: color,
-          ),
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: color),
         ),
         const SizedBox(height: 8),
-        ...issues.map((issue) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.circle,
-                size: 8,
-                color: color,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  issue,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color,
+        ...issues.map(
+          (issue) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.circle, size: 8, color: color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    issue,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: color),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }

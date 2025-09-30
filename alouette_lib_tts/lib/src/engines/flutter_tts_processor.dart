@@ -139,21 +139,22 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
   /// 适用于 Web 平台和不支持文件合成的平台
   Future<Uint8List> _synthesizeDirectPlay(String text, String voiceName) async {
     TTSLogger.debug(
-        'TTS: Using direct playback mode for text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."');
+      'TTS: Using direct playback mode for text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."',
+    );
 
     // On Web platform, check voice availability first
     if (kIsWeb) {
       final voices = await getAvailableVoices();
 
       // 检查是否是阿拉伯语
-      final isArabic = voiceName.toLowerCase().contains('ar-') ||
+      final isArabic =
+          voiceName.toLowerCase().contains('ar-') ||
           voiceName.toLowerCase().contains('arabic');
 
       if (isArabic) {
         // 检查浏览器是否支持阿拉伯语
         final arabicVoices = voices
-            .where((v) =>
-                v.languageCode.toLowerCase().startsWith('ar-'))
+            .where((v) => v.languageCode.toLowerCase().startsWith('ar-'))
             .toList();
 
         if (arabicVoices.isEmpty) {
@@ -200,17 +201,41 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
     try {
       // 直接播放
       TTSLogger.debug('TTS: Starting direct speech playback');
-      await _tts.speak(text);
-
-      // 等待播放开始和完成
-      // Since we can't reliably track completion, estimate based on text length
+      
+      // Set up completion tracking
+      bool speechCompleted = false;
+      _tts.setCompletionHandler(() {
+        speechCompleted = true;
+        TTSLogger.debug('TTS: Speech completion detected');
+      });
+      
+      // Set up error handling
+      _tts.setErrorHandler((msg) {
+        TTSLogger.error('TTS: Speech error: $msg');
+      });
+      
+      // Speak the text
+      final result = await _tts.speak(text);
+      TTSLogger.debug('TTS: Speak method returned: $result');
+      
+      // Wait for completion or timeout
       final estimatedDuration = _estimateSpeechDuration(text);
-      TTSLogger.debug('TTS: Estimated speech duration: ${estimatedDuration}ms');
-
-      // Wait a minimum time to ensure speech starts
-      await Future.delayed(Duration(milliseconds: 500));
-
-      TTSLogger.debug('TTS: Direct speech playback initiated successfully');
+      final maxWaitTime = estimatedDuration + 2000; // Add 2 seconds buffer
+      
+      int waitedTime = 0;
+      const checkInterval = 100;
+      
+      while (!speechCompleted && waitedTime < maxWaitTime) {
+        await Future.delayed(Duration(milliseconds: checkInterval));
+        waitedTime += checkInterval;
+      }
+      
+      if (speechCompleted) {
+        TTSLogger.debug('TTS: Direct speech playback completed successfully');
+      } else {
+        TTSLogger.debug('TTS: Direct speech playback timed out, assuming completed');
+      }
+      
     } catch (e) {
       TTSLogger.error('TTS: Direct speech playback failed: $e');
       throw TTSError(
@@ -251,9 +276,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       // First try exact match
       VoiceModel? targetVoice;
       try {
-        targetVoice = voices.firstWhere(
-          (voice) => voice.id == voiceName,
-        );
+        targetVoice = voices.firstWhere((voice) => voice.id == voiceName);
       } catch (e) {
         targetVoice = null;
       }
@@ -265,7 +288,8 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         if (locale != null) {
           try {
             targetVoice = voices.firstWhere(
-              (voice) => voice.languageCode.toLowerCase() == locale.toLowerCase(),
+              (voice) =>
+                  voice.languageCode.toLowerCase() == locale.toLowerCase(),
             );
           } catch (e) {
             targetVoice = null;
@@ -277,7 +301,9 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           final language = locale.split('-')[0];
           try {
             targetVoice = voices.firstWhere(
-              (voice) => voice.languageCode.toLowerCase().startsWith(language.toLowerCase()),
+              (voice) => voice.languageCode.toLowerCase().startsWith(
+                language.toLowerCase(),
+              ),
             );
           } catch (e) {
             targetVoice = null;
@@ -296,8 +322,10 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           );
         }
 
-        final availableVoices =
-            voices.map((v) => '${v.id} (${v.languageCode})').take(5).join(', ');
+        final availableVoices = voices
+            .map((v) => '${v.id} (${v.languageCode})')
+            .take(5)
+            .join(', ');
         throw TTSError(
           'Voice "$voiceName" not available. '
           'Available voices: $availableVoices${voices.length > 5 ? '...' : ''}',
@@ -462,7 +490,8 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         displayName: displayName,
         languageCode: locale,
         gender: parsedGender,
-        quality: VoiceQuality.standard, // Flutter TTS usually uses system voices
+        quality:
+            VoiceQuality.standard, // Flutter TTS usually uses system voices
         isNeural: false,
       );
     } catch (e) {

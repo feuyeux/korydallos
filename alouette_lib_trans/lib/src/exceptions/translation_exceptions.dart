@@ -2,16 +2,16 @@
 abstract class AlouetteTranslationError extends Error {
   /// The error message
   final String message;
-  
+
   /// Consistent error code for programmatic handling
   final String code;
-  
+
   /// Optional additional details about the error
   final Map<String, dynamic>? details;
-  
+
   /// The original error that caused this error (if any)
   final dynamic originalError;
-  
+
   /// Timestamp when the error occurred
   final DateTime timestamp;
 
@@ -24,13 +24,13 @@ abstract class AlouetteTranslationError extends Error {
 
   /// Get user-friendly error message
   String get userMessage => _getUserMessage();
-  
+
   /// Get technical error message for logging
   String get technicalMessage => _getTechnicalMessage();
-  
+
   /// Check if this error is recoverable
   bool get isRecoverable => _isRecoverable();
-  
+
   /// Get suggested recovery actions
   List<String> get recoveryActions => _getRecoveryActions();
 
@@ -56,7 +56,7 @@ abstract class AlouetteTranslationError extends Error {
         return message;
     }
   }
-  
+
   String _getTechnicalMessage() {
     final buffer = StringBuffer();
     buffer.write('[$code] $message');
@@ -68,7 +68,7 @@ abstract class AlouetteTranslationError extends Error {
     }
     return buffer.toString();
   }
-  
+
   bool _isRecoverable() {
     switch (code) {
       case TranslationErrorCodes.connectionFailed:
@@ -84,7 +84,7 @@ abstract class AlouetteTranslationError extends Error {
         return false;
     }
   }
-  
+
   List<String> _getRecoveryActions() {
     switch (code) {
       case TranslationErrorCodes.connectionFailed:
@@ -130,11 +130,11 @@ class TranslationException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    code ?? TranslationErrorCodes.networkError,
-    details: details,
-    originalError: originalError,
-  );
+         message,
+         code ?? TranslationErrorCodes.networkError,
+         details: details,
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when there are network/connection issues with the LLM provider
@@ -144,11 +144,11 @@ class LLMConnectionException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.connectionFailed,
-    details: details,
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.connectionFailed,
+         details: details,
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when authentication with the LLM provider fails
@@ -158,11 +158,11 @@ class LLMAuthenticationException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.authenticationFailed,
-    details: details,
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.authenticationFailed,
+         details: details,
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when the requested model is not found or available
@@ -176,14 +176,11 @@ class LLMModelNotFoundException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.modelNotFound,
-    details: {
-      'modelName': modelName,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.modelNotFound,
+         details: {'modelName': modelName, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when a translation request times out
@@ -197,21 +194,21 @@ class TranslationTimeoutException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.requestTimeout,
-    details: {
-      if (timeout != null) 'timeoutSeconds': timeout.inSeconds,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.requestTimeout,
+         details: {
+           if (timeout != null) 'timeoutSeconds': timeout.inSeconds,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when the translation result is invalid or empty
 class InvalidTranslationException extends AlouetteTranslationError {
   /// The original text that failed to translate
   final String originalText;
-  
+
   /// The target language that failed
   final String targetLanguage;
 
@@ -222,15 +219,15 @@ class InvalidTranslationException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.invalidTranslation,
-    details: {
-      'originalText': originalText,
-      'targetLanguage': targetLanguage,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.invalidTranslation,
+         details: {
+           'originalText': originalText,
+           'targetLanguage': targetLanguage,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when there are configuration-related errors
@@ -244,21 +241,18 @@ class ConfigurationException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.configurationError,
-    details: {
-      if (field != null) 'field': field,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.configurationError,
+         details: {if (field != null) 'field': field, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when a provider is not supported
 class UnsupportedProviderException extends AlouetteTranslationError {
   /// The provider name that is not supported
   final String providerName;
-  
+
   /// List of supported providers
   final List<String> supportedProviders;
 
@@ -269,22 +263,22 @@ class UnsupportedProviderException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.unsupportedProvider,
-    details: {
-      'providerName': providerName,
-      'supportedProviders': supportedProviders,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.unsupportedProvider,
+         details: {
+           'providerName': providerName,
+           'supportedProviders': supportedProviders,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when rate limits are exceeded
 class RateLimitException extends AlouetteTranslationError {
   /// When the rate limit will reset (if available)
   final DateTime? resetTime;
-  
+
   /// Number of requests remaining (if available)
   final int? remainingRequests;
 
@@ -295,13 +289,14 @@ class RateLimitException extends AlouetteTranslationError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TranslationErrorCodes.rateLimitExceeded,
-    details: {
-      if (resetTime != null) 'resetTime': resetTime.toIso8601String(),
-      if (remainingRequests != null) 'remainingRequests': remainingRequests,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TranslationErrorCodes.rateLimitExceeded,
+         details: {
+           if (resetTime != null) 'resetTime': resetTime.toIso8601String(),
+           if (remainingRequests != null)
+             'remainingRequests': remainingRequests,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }

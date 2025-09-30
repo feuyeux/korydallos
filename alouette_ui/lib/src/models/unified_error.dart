@@ -1,32 +1,32 @@
 /// Unified error model for consistent error handling across all Alouette applications
-/// 
+///
 /// This is the standardized error model used across all Alouette applications
 /// for error reporting and handling. It includes comprehensive validation and serialization.
 class UnifiedError extends Error {
   /// Error message
   final String message;
-  
+
   /// Error code for programmatic handling
   final String? code;
-  
+
   /// Error category (translation, tts, ui, network, etc.)
   final ErrorCategory category;
-  
+
   /// Error severity level
   final ErrorSeverity severity;
-  
+
   /// Original error object (if any)
   final dynamic originalError;
-  
+
   /// Stack trace (if available)
   final StackTrace? stackTrace;
-  
+
   /// Timestamp when error occurred
   final DateTime timestamp;
-  
+
   /// Additional context information
   final Map<String, dynamic>? context;
-  
+
   /// Suggested recovery actions
   final List<String> recoveryActions;
 
@@ -181,10 +181,12 @@ class UnifiedError extends Error {
         orElse: () => ErrorSeverity.error,
       ),
       originalError: json['original_error'],
-      stackTrace: json['stack_trace'] != null 
+      stackTrace: json['stack_trace'] != null
           ? StackTrace.fromString(json['stack_trace'])
           : null,
-      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? DateTime.now().toIso8601String(),
+      ),
       context: json['context'] != null
           ? Map<String, dynamic>.from(json['context'])
           : null,
@@ -284,12 +286,7 @@ enum ErrorCategory {
 }
 
 /// Error severity enumeration
-enum ErrorSeverity {
-  info,
-  warning,
-  error,
-  critical,
-}
+enum ErrorSeverity { info, warning, error, critical }
 
 /// Extension methods for ErrorCategory
 extension ErrorCategoryExtension on ErrorCategory {

@@ -6,7 +6,7 @@ import '../exceptions/tts_exceptions.dart';
 import 'config_manager.dart';
 
 /// Service for managing TTS configuration
-/// 
+///
 /// Provides configuration management with reactive updates,
 /// validation, and persistence capabilities.
 class TTSConfigService extends ChangeNotifier {
@@ -24,7 +24,7 @@ class TTSConfigService extends ChangeNotifier {
   final ValueNotifier<bool> isDirtyNotifier = ValueNotifier<bool>(false);
 
   TTSConfigService({ConfigManager? configManager})
-      : _configManager = configManager ?? ConfigManager();
+    : _configManager = configManager ?? ConfigManager();
 
   /// Get current configuration
   TTSConfig get currentConfig => _currentConfig;
@@ -45,7 +45,7 @@ class TTSConfigService extends ChangeNotifier {
       } else {
         _currentConfig = await _configManager.loadDefault();
       }
-      
+
       _setDirty(false);
       notifyListeners();
     } catch (e) {
@@ -69,7 +69,7 @@ class TTSConfigService extends ChangeNotifier {
       } else {
         await _configManager.saveDefault(_currentConfig);
       }
-      
+
       _setDirty(false);
       notifyListeners();
     } catch (e) {
@@ -121,7 +121,9 @@ class TTSConfigService extends ChangeNotifier {
         updatedConfig = _currentConfig.copyWith(defaultVoice: value as String?);
         break;
       case 'defaultFormat':
-        updatedConfig = _currentConfig.copyWith(defaultFormat: value as String?);
+        updatedConfig = _currentConfig.copyWith(
+          defaultFormat: value as String?,
+        );
         break;
       case 'defaultRate':
         updatedConfig = _currentConfig.copyWith(defaultRate: value as double?);
@@ -130,10 +132,14 @@ class TTSConfigService extends ChangeNotifier {
         updatedConfig = _currentConfig.copyWith(defaultPitch: value as double?);
         break;
       case 'defaultVolume':
-        updatedConfig = _currentConfig.copyWith(defaultVolume: value as double?);
+        updatedConfig = _currentConfig.copyWith(
+          defaultVolume: value as double?,
+        );
         break;
       case 'outputDirectory':
-        updatedConfig = _currentConfig.copyWith(outputDirectory: value as String?);
+        updatedConfig = _currentConfig.copyWith(
+          outputDirectory: value as String?,
+        );
         break;
       case 'enableCaching':
         updatedConfig = _currentConfig.copyWith(enableCaching: value as bool?);
@@ -160,7 +166,7 @@ class TTSConfigService extends ChangeNotifier {
   ValidationResult validateCurrentConfig() {
     return _validateCurrentConfig();
   }
-  
+
   /// Internal validation method
   ValidationResult _validateCurrentConfig() {
     if (_validator != null) {
@@ -168,7 +174,7 @@ class TTSConfigService extends ChangeNotifier {
     } else {
       // Fallback to basic validation if no validator is set
       final errors = _currentConfig.validate();
-      _lastValidationResult = errors.isEmpty 
+      _lastValidationResult = errors.isEmpty
           ? ValidationResult.valid()
           : ValidationResult.invalid(errors);
     }
@@ -180,19 +186,19 @@ class TTSConfigService extends ChangeNotifier {
     final result = _lastValidationResult ?? _validateCurrentConfig();
     return result.isValid;
   }
-  
+
   /// Get validation errors
   List<String> get validationErrors {
     final result = _lastValidationResult ?? _validateCurrentConfig();
     return result.errors;
   }
-  
+
   /// Get validation warnings
   List<String> get validationWarnings {
     final result = _lastValidationResult ?? _validateCurrentConfig();
     return result.warnings;
   }
-  
+
   /// Get validation suggestions
   List<String> get validationSuggestions {
     final result = _lastValidationResult ?? _validateCurrentConfig();
@@ -202,7 +208,7 @@ class TTSConfigService extends ChangeNotifier {
   /// Get configuration summary with enhanced validation info
   Map<String, dynamic> getConfigSummary() {
     final validationResult = _validateCurrentConfig();
-    
+
     return {
       'hasDefaultVoice': _currentConfig.defaultVoice.isNotEmpty,
       'defaultVoice': _currentConfig.defaultVoice,
@@ -237,7 +243,10 @@ class TTSConfigService extends ChangeNotifier {
   }
 
   /// Restore configuration from backup
-  Future<void> restoreFromBackup(String backupPath, [String? targetPath]) async {
+  Future<void> restoreFromBackup(
+    String backupPath, [
+    String? targetPath,
+  ]) async {
     _setLoading(true);
 
     try {
@@ -287,7 +296,7 @@ class TTSConfigService extends ChangeNotifier {
 
   /// Get default configuration file path
   String get defaultConfigPath => _configManager.defaultConfigPath;
-  
+
   /// Generate configuration recommendations
   List<String> getRecommendations() {
     if (_validator != null) {
@@ -295,7 +304,7 @@ class TTSConfigService extends ChangeNotifier {
     }
     return [];
   }
-  
+
   /// Perform quick validation (basic checks only)
   bool quickValidate() {
     if (_validator != null) {

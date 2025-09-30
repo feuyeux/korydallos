@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 import '../core/service_locator.dart';
 import '../core/service_configuration.dart';
 import '../interfaces/tts_service_interface.dart';
@@ -25,7 +26,9 @@ class ServiceManager {
     if (_isInitialized) {
       return ServiceInitializationResult(
         isSuccessful: true,
-        serviceResults: Map.from(_serviceStatus.map((k, v) => MapEntry(k.toString(), v))),
+        serviceResults: Map.from(
+          _serviceStatus.map((k, v) => MapEntry(k.toString(), v)),
+        ),
         errors: [],
         durationMs: 0,
       );
@@ -50,7 +53,14 @@ class ServiceManager {
       }
 
       if (config.initializeTranslation) {
-        ServiceLocator.registerSingleton<ITranslationService>(() => TranslationServiceImpl());
+        final translationImpl = TranslationServiceImpl();
+        ServiceLocator.registerSingleton<ITranslationService>(
+          () => translationImpl,
+        );
+        // Also register the underlying TranslationService for widgets that need it
+        ServiceLocator.registerSingleton<trans_lib.TranslationService>(
+          () => translationImpl.underlyingService,
+        );
         _log('Translation service registered');
       }
 
@@ -59,16 +69,20 @@ class ServiceManager {
       await initFuture.timeout(
         Duration(milliseconds: config.initializationTimeoutMs),
         onTimeout: () {
-          throw TimeoutException('Service initialization timed out after ${config.initializationTimeoutMs}ms');
+          throw TimeoutException(
+            'Service initialization timed out after ${config.initializationTimeoutMs}ms',
+          );
         },
       );
 
       _isInitialized = true;
       stopwatch.stop();
-      
+
       final result = ServiceInitializationResult(
         isSuccessful: true,
-        serviceResults: Map.from(_serviceStatus.map((k, v) => MapEntry(k.toString(), v))),
+        serviceResults: Map.from(
+          _serviceStatus.map((k, v) => MapEntry(k.toString(), v)),
+        ),
         errors: errors,
         durationMs: stopwatch.elapsedMilliseconds,
       );
@@ -77,16 +91,18 @@ class ServiceManager {
       if (config.verboseLogging) {
         print('Service Manager: ${result.getSummary()}');
       }
-      
+
       return result;
     } catch (e) {
       stopwatch.stop();
       errors.add(e.toString());
       _log('Service initialization failed: $e');
-      
+
       final result = ServiceInitializationResult(
         isSuccessful: false,
-        serviceResults: Map.from(_serviceStatus.map((k, v) => MapEntry(k.toString(), v))),
+        serviceResults: Map.from(
+          _serviceStatus.map((k, v) => MapEntry(k.toString(), v)),
+        ),
         errors: errors,
         durationMs: stopwatch.elapsedMilliseconds,
       );
@@ -94,14 +110,16 @@ class ServiceManager {
       if (config.verboseLogging) {
         print('Service Manager initialization error: ${result.getSummary()}');
       }
-      
+
       await dispose(); // Cleanup on failure
       return result;
     }
   }
 
   /// Initialize services based on configuration
-  static Future<void> _initializeServicesWithConfig(ServiceConfiguration config) async {
+  static Future<void> _initializeServicesWithConfig(
+    ServiceConfiguration config,
+  ) async {
     // Initialize services in parallel for better performance
     final futures = <Future<void>>[];
 
@@ -110,7 +128,9 @@ class ServiceManager {
     }
 
     if (config.initializeTranslation) {
-      futures.add(_initializeService<ITranslationService>('Translation', config));
+      futures.add(
+        _initializeService<ITranslationService>('Translation', config),
+      );
     }
 
     // Wait for all services to initialize
@@ -118,13 +138,18 @@ class ServiceManager {
   }
 
   /// Initialize a specific service
-  static Future<void> _initializeService<T>(String serviceName, ServiceConfiguration config) async {
+  static Future<void> _initializeService<T>(
+    String serviceName,
+    ServiceConfiguration config,
+  ) async {
     try {
       final service = ServiceLocator.get<T>();
-      
+
       bool success = false;
       if (service is ITTSService) {
-        success = await service.initialize(autoFallback: config.ttsAutoFallback);
+        success = await service.initialize(
+          autoFallback: config.ttsAutoFallback,
+        );
       } else if (service is ITranslationService) {
         success = await service.initialize();
       }
@@ -183,9 +208,9 @@ class ServiceManager {
 
   /// Check if a specific service is available and initialized
   static bool isServiceAvailable<T>() {
-    return _isInitialized && 
-           ServiceLocator.isRegistered<T>() && 
-           (_serviceStatus[T] ?? false);
+    return _isInitialized &&
+        ServiceLocator.isRegistered<T>() &&
+        (_serviceStatus[T] ?? false);
   }
 
   /// Get service initialization status
@@ -252,7 +277,9 @@ class ServiceManager {
   /// Useful for recovering from service failures.
   static Future<void> reinitializeService<T>(String serviceName) async {
     if (!_isInitialized) {
-      throw StateError('Service Manager not initialized. Call initialize() first.');
+      throw StateError(
+        'Service Manager not initialized. Call initialize() first.',
+      );
     }
 
     try {
@@ -268,13 +295,17 @@ class ServiceManager {
   /// Private helper methods
   static void _ensureInitialized() {
     if (!_isInitialized) {
-      throw StateError('Service Manager not initialized. Call initialize() first.');
+      throw StateError(
+        'Service Manager not initialized. Call initialize() first.',
+      );
     }
   }
 
   static void _ensureServiceAvailable<T>(String serviceName) {
     if (!isServiceAvailable<T>()) {
-      throw StateError('$serviceName service is not available or failed to initialize.');
+      throw StateError(
+        '$serviceName service is not available or failed to initialize.',
+      );
     }
   }
 

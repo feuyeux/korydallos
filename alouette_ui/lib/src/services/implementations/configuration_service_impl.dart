@@ -10,7 +10,7 @@ import '../interfaces/configuration_service_interface.dart';
 import '../../models/app_configuration.dart';
 
 /// Implementation of configuration management service
-/// 
+///
 /// Provides persistent storage for application configuration using
 /// SharedPreferences for simple settings and file storage for complex configurations.
 class ConfigurationServiceImpl implements ConfigurationServiceInterface {
@@ -21,13 +21,14 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
 
   SharedPreferences? _prefs;
   AppConfiguration? _currentConfig;
-  final StreamController<AppConfiguration> _configController = StreamController<AppConfiguration>.broadcast();
+  final StreamController<AppConfiguration> _configController =
+      StreamController<AppConfiguration>.broadcast();
 
   @override
   Future<void> initialize() async {
     try {
       _prefs = await SharedPreferences.getInstance();
-      
+
       // Load existing configuration or create default
       if (await hasConfiguration()) {
         _currentConfig = await loadConfiguration();
@@ -35,14 +36,16 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
         _currentConfig = _createDefaultConfiguration();
         await saveConfiguration(_currentConfig!);
       }
-      
+
       // Check for migration needs
       final storedVersion = await getConfigurationVersion();
       if (storedVersion != null && storedVersion != _currentVersion) {
         await _performMigration(storedVersion);
       }
-      
-      debugPrint('ConfigurationService initialized with version $_currentVersion');
+
+      debugPrint(
+        'ConfigurationService initialized with version $_currentVersion',
+      );
     } catch (e) {
       debugPrint('Failed to initialize ConfigurationService: $e');
       _currentConfig = _createDefaultConfiguration();
@@ -72,17 +75,19 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
       // Validate before saving
       final validation = validateConfiguration(config);
       if (!(validation['isValid'] as bool)) {
-        throw Exception('Configuration validation failed: ${validation['errors']}');
+        throw Exception(
+          'Configuration validation failed: ${validation['errors']}',
+        );
       }
 
       // Save to both storage methods for redundancy
       await _saveToFile(config);
       await _saveToPreferences(config);
-      
+
       // Update current configuration and notify listeners
       _currentConfig = config;
       _configController.add(config);
-      
+
       debugPrint('Configuration saved successfully');
     } catch (e) {
       debugPrint('Failed to save configuration: $e');
@@ -152,23 +157,23 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
     String toVersion,
   ) async {
     debugPrint('Migrating configuration from $fromVersion to $toVersion');
-    
+
     try {
       // Version-specific migration logic
       Map<String, dynamic> migratedConfig = Map.from(oldConfig);
-      
+
       // Migration from any version to 1.0.0
       if (toVersion == '1.0.0') {
         migratedConfig = _migrateTo1_0_0(migratedConfig);
       }
-      
+
       // Update version
       migratedConfig['version'] = toVersion;
       migratedConfig['last_updated'] = DateTime.now().toIso8601String();
-      
+
       final newConfig = AppConfiguration.fromJson(migratedConfig);
       await saveConfiguration(newConfig);
-      
+
       debugPrint('Configuration migration completed successfully');
       return newConfig;
     } catch (e) {
@@ -232,12 +237,12 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
   Future<File> _getConfigFile() async {
     final directory = await getApplicationDocumentsDirectory();
     final configDir = Directory('${directory.path}/alouette');
-    
+
     // Create directory if it doesn't exist
     if (!await configDir.exists()) {
       await configDir.create(recursive: true);
     }
-    
+
     return File('${configDir.path}/$_configFileName');
   }
 
@@ -296,23 +301,26 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
 
   Future<void> _performMigration(String fromVersion) async {
     try {
-      debugPrint('Performing configuration migration from $fromVersion to $_currentVersion');
-      
+      debugPrint(
+        'Performing configuration migration from $fromVersion to $_currentVersion',
+      );
+
       // Load old configuration
       final oldConfigString = _prefs?.getString(_configKey);
       if (oldConfigString == null) {
         return;
       }
 
-      final oldConfigJson = json.decode(oldConfigString) as Map<String, dynamic>;
-      
+      final oldConfigJson =
+          json.decode(oldConfigString) as Map<String, dynamic>;
+
       // Perform migration
       final migratedConfig = await migrateConfiguration(
         oldConfigJson,
         fromVersion,
         _currentVersion,
       );
-      
+
       _currentConfig = migratedConfig;
     } catch (e) {
       debugPrint('Migration failed, using default configuration: $e');
@@ -323,10 +331,10 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
 
   Map<String, dynamic> _migrateTo1_0_0(Map<String, dynamic> oldConfig) {
     final migratedConfig = Map<String, dynamic>.from(oldConfig);
-    
+
     // Ensure all required fields exist with defaults
     migratedConfig['version'] = '1.0.0';
-    
+
     // Migrate UI preferences if they exist in old format
     if (migratedConfig['ui_preferences'] == null) {
       migratedConfig['ui_preferences'] = {
@@ -337,7 +345,7 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
         'enable_animations': true,
       };
     }
-    
+
     // Ensure app_settings exists
     if (migratedConfig['app_settings'] == null) {
       migratedConfig['app_settings'] = {
@@ -347,7 +355,7 @@ class ConfigurationServiceImpl implements ConfigurationServiceInterface {
         'backup_enabled': true,
       };
     }
-    
+
     return migratedConfig;
   }
 }

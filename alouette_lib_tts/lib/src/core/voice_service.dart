@@ -8,7 +8,7 @@ import '../utils/cache_manager.dart';
 import 'tts_service_interface.dart';
 
 /// Service for managing TTS voices and voice selection
-/// 
+///
 /// Provides advanced voice discovery, filtering, and selection capabilities
 /// with caching and preference management.
 class VoiceService extends ChangeNotifier {
@@ -36,8 +36,12 @@ class VoiceService extends ChangeNotifier {
   /// Get all available voices with caching
   Future<List<VoiceModel>> getAllVoices({bool forceRefresh = false}) async {
     // 检查统一缓存管理器中的缓存
-    if (!forceRefresh && _cachedVoices.isEmpty && _ttsService.currentBackend != null) {
-      final cachedVoices = _cacheManager.getCachedVoices(_ttsService.currentBackend!);
+    if (!forceRefresh &&
+        _cachedVoices.isEmpty &&
+        _ttsService.currentBackend != null) {
+      final cachedVoices = _cacheManager.getCachedVoices(
+        _ttsService.currentBackend!,
+      );
       if (cachedVoices != null) {
         _cachedVoices = cachedVoices;
         _updateLanguageCache();
@@ -55,12 +59,12 @@ class VoiceService extends ChangeNotifier {
 
     try {
       _cachedVoices = await _ttsService.getVoices();
-      
+
       // 缓存到统一缓存管理器
       if (_ttsService.currentBackend != null) {
         _cacheManager.cacheVoices(_ttsService.currentBackend!, _cachedVoices);
       }
-      
+
       _updateLanguageCache();
       notifyListeners();
       return _cachedVoices;
@@ -83,7 +87,7 @@ class VoiceService extends ChangeNotifier {
     bool exactMatch = false,
   }) async {
     final cacheKey = '$languageCode:$exactMatch';
-    
+
     if (_languageVoiceCache.containsKey(cacheKey)) {
       return _languageVoiceCache[cacheKey]!;
     }
@@ -93,13 +97,18 @@ class VoiceService extends ChangeNotifier {
 
     if (exactMatch) {
       filteredVoices = allVoices
-          .where((voice) => voice.languageCode.toLowerCase() == languageCode.toLowerCase())
+          .where(
+            (voice) =>
+                voice.languageCode.toLowerCase() == languageCode.toLowerCase(),
+          )
           .toList();
     } else {
       // Match language prefix (e.g., 'en' matches 'en-US', 'en-GB')
       final langPrefix = languageCode.toLowerCase().split('-')[0];
       filteredVoices = allVoices
-          .where((voice) => voice.languageCode.toLowerCase().startsWith(langPrefix))
+          .where(
+            (voice) => voice.languageCode.toLowerCase().startsWith(langPrefix),
+          )
           .toList();
     }
 
@@ -158,18 +167,72 @@ class VoiceService extends ChangeNotifier {
   /// Get default voice for a language
   Future<VoiceModel?> getDefaultVoice(String languageCode) async {
     // Try to find a neural voice first
-    final bestNeural = await findBestVoice(
-      languageCode,
-      VoiceQuality.neural,
-    );
+    final bestNeural = await findBestVoice(languageCode, VoiceQuality.neural);
 
     if (bestNeural != null) return bestNeural;
 
     // Fallback to any available voice
-    return await findBestVoice(
-      languageCode,
-      VoiceQuality.standard,
-    );
+    return await findBestVoice(languageCode, VoiceQuality.standard);
+  }
+
+  /// Get best voice for a language name (e.g., "Chinese", "English")
+  Future<VoiceModel?> getBestVoiceForLanguageName(String languageName) async {
+    // Language name to language codes mapping
+    final languageVoiceMap = {
+      'Chinese': ['zh-CN', 'zh'],
+      'English': ['en-US', 'en-GB', 'en'],
+      'Japanese': ['ja-JP', 'ja'],
+      'Korean': ['ko-KR', 'ko'],
+      'French': ['fr-FR', 'fr'],
+      'German': ['de-DE', 'de'],
+      'Spanish': ['es-ES', 'es-MX', 'es'],
+      'Italian': ['it-IT', 'it'],
+      'Russian': ['ru-RU', 'ru'],
+      'Greek': ['el-GR', 'el'],
+      'Arabic': ['ar-SA', 'ar'],
+      'Hindi': ['hi-IN', 'hi'],
+    };
+
+    final allVoices = await getAllVoices();
+    
+    // Try to find the best voice for the language
+    if (languageVoiceMap.containsKey(languageName)) {
+      final preferredCodes = languageVoiceMap[languageName]!;
+      
+      for (final code in preferredCodes) {
+        final matchingVoices = allVoices.where((voice) {
+          final voiceLanguage = voice.languageCode.toLowerCase();
+          return voiceLanguage.startsWith(code.toLowerCase());
+        }).toList();
+        
+        if (matchingVoices.isNotEmpty) {
+          // Prefer neural voices if available
+          final neuralVoices = matchingVoices.where((v) => v.isNeural).toList();
+          if (neuralVoices.isNotEmpty) {
+            return neuralVoices.first;
+          }
+          return matchingVoices.first;
+        }
+      }
+    }
+    
+    // Smart fallback: try to find a reasonable alternative
+    // For languages without available voices, use English as fallback
+    final englishVoices = allVoices.where((voice) {
+      final voiceLanguage = voice.languageCode.toLowerCase();
+      return voiceLanguage.startsWith('en');
+    }).toList();
+    
+    if (englishVoices.isNotEmpty) {
+      return englishVoices.first;
+    }
+    
+    // Final fallback to first available voice
+    if (allVoices.isNotEmpty) {
+      return allVoices.first;
+    }
+    
+    return null;
   }
 
   /// Filter voices by criteria
@@ -181,7 +244,7 @@ class VoiceService extends ChangeNotifier {
     String? searchTerm,
   }) {
     final voicesToFilter = voices ?? _cachedVoices;
-    
+
     return voicesToFilter.where((voice) {
       // Language filter
       if (languageCode != null) {
@@ -209,8 +272,8 @@ class VoiceService extends ChangeNotifier {
       if (searchTerm != null && searchTerm.isNotEmpty) {
         final term = searchTerm.toLowerCase();
         return voice.displayName.toLowerCase().contains(term) ||
-               voice.id.toLowerCase().contains(term) ||
-               voice.languageCode.toLowerCase().contains(term);
+            voice.id.toLowerCase().contains(term) ||
+            voice.languageCode.toLowerCase().contains(term);
       }
 
       return true;
@@ -218,7 +281,9 @@ class VoiceService extends ChangeNotifier {
   }
 
   /// Group voices by language
-  Map<String, List<VoiceModel>> groupVoicesByLanguage([List<VoiceModel>? voices]) {
+  Map<String, List<VoiceModel>> groupVoicesByLanguage([
+    List<VoiceModel>? voices,
+  ]) {
     final voicesToGroup = voices ?? _cachedVoices;
     final grouped = <String, List<VoiceModel>>{};
 
@@ -233,7 +298,7 @@ class VoiceService extends ChangeNotifier {
         // Neural voices first
         if (a.isNeural && !b.isNeural) return -1;
         if (!a.isNeural && b.isNeural) return 1;
-        
+
         // Then by display name
         return a.displayName.compareTo(b.displayName);
       });
@@ -257,17 +322,18 @@ class VoiceService extends ChangeNotifier {
   /// Get voice statistics
   Map<String, dynamic> getVoiceStatistics([List<VoiceModel>? voices]) {
     final voicesToAnalyze = voices ?? _cachedVoices;
-    
+
     final totalVoices = voicesToAnalyze.length;
     final neuralVoices = voicesToAnalyze.where((v) => v.isNeural).length;
     final standardVoices = voicesToAnalyze.where((v) => v.isStandard).length;
-    
+
     final languageGroups = groupVoicesByLanguage(voicesToAnalyze);
     final languageCount = languageGroups.length;
-    
+
     final genderCounts = <String, int>{};
     for (final voice in voicesToAnalyze) {
-      genderCounts[voice.gender.name] = (genderCounts[voice.gender.name] ?? 0) + 1;
+      genderCounts[voice.gender.name] =
+          (genderCounts[voice.gender.name] ?? 0) + 1;
     }
 
     return {
@@ -277,7 +343,9 @@ class VoiceService extends ChangeNotifier {
       'languageCount': languageCount,
       'languages': languageGroups.keys.toList(),
       'genderDistribution': genderCounts,
-      'neuralPercentage': totalVoices > 0 ? (neuralVoices / totalVoices * 100).round() : 0,
+      'neuralPercentage': totalVoices > 0
+          ? (neuralVoices / totalVoices * 100).round()
+          : 0,
     };
   }
 
@@ -291,12 +359,12 @@ class VoiceService extends ChangeNotifier {
   void clearCache() {
     _cachedVoices.clear();
     _languageVoiceCache.clear();
-    
+
     // 也清理统一缓存管理器中的语音缓存
     if (_ttsService.currentBackend != null) {
       _cacheManager.clearVoiceCache(_ttsService.currentBackend!);
     }
-    
+
     notifyListeners();
   }
 
@@ -326,7 +394,7 @@ class VoiceService extends ChangeNotifier {
     int maxCount = 3,
   }) async {
     final voices = await getVoicesByLanguage(languageCode);
-    
+
     if (voices.isEmpty) return [];
 
     // Sort by recommendation criteria
@@ -335,14 +403,14 @@ class VoiceService extends ChangeNotifier {
       // Neural voices first
       if (a.isNeural && !b.isNeural) return -1;
       if (!a.isNeural && b.isNeural) return 1;
-      
+
       // Exact locale match
       final exactLocale = languageCode.toLowerCase();
       final aExact = a.languageCode.toLowerCase() == exactLocale;
       final bExact = b.languageCode.toLowerCase() == exactLocale;
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
-      
+
       // Gender diversity (prefer alternating male/female)
       return a.displayName.compareTo(b.displayName);
     });

@@ -7,7 +7,7 @@ import '../implementations/configuration_service_impl.dart';
 import '../../models/app_configuration.dart';
 
 /// High-level configuration manager for Alouette applications
-/// 
+///
 /// Provides a simplified API for configuration management with automatic
 /// initialization, validation, and error handling.
 class ConfigurationManager {
@@ -34,10 +34,10 @@ class ConfigurationManager {
     try {
       _configService = customService ?? ConfigurationServiceImpl();
       await _configService!.initialize();
-      
+
       _isInitialized = true;
       _initializationCompleter.complete();
-      
+
       debugPrint('ConfigurationManager initialized successfully');
     } catch (e) {
       debugPrint('Failed to initialize ConfigurationManager: $e');
@@ -85,7 +85,9 @@ class ConfigurationManager {
   Future<bool> updateTranslationConfig(dynamic translationConfig) async {
     await _ensureInitialized();
     final currentConfig = _configService!.currentConfiguration;
-    final updatedConfig = currentConfig.copyWith(translationConfig: translationConfig);
+    final updatedConfig = currentConfig.copyWith(
+      translationConfig: translationConfig,
+    );
     return await _configService!.updateConfiguration(updatedConfig);
   }
 
@@ -108,9 +110,11 @@ class ConfigurationManager {
   Future<bool> setAppSetting<T>(String key, T value) async {
     await _ensureInitialized();
     final currentConfig = _configService!.currentConfiguration;
-    final updatedSettings = Map<String, dynamic>.from(currentConfig.appSettings);
+    final updatedSettings = Map<String, dynamic>.from(
+      currentConfig.appSettings,
+    );
     updatedSettings[key] = value;
-    
+
     final updatedConfig = currentConfig.copyWith(appSettings: updatedSettings);
     return await _configService!.updateConfiguration(updatedConfig);
   }
@@ -184,7 +188,9 @@ class ConfigurationManager {
   /// Set theme mode
   Future<bool> setThemeMode(String themeMode) async {
     final config = await getConfiguration();
-    final updatedPreferences = config.uiPreferences.copyWith(themeMode: themeMode);
+    final updatedPreferences = config.uiPreferences.copyWith(
+      themeMode: themeMode,
+    );
     return await updateUIPreferences(updatedPreferences);
   }
 
@@ -197,7 +203,9 @@ class ConfigurationManager {
   /// Set primary language
   Future<bool> setPrimaryLanguage(String language) async {
     final config = await getConfiguration();
-    final updatedPreferences = config.uiPreferences.copyWith(primaryLanguage: language);
+    final updatedPreferences = config.uiPreferences.copyWith(
+      primaryLanguage: language,
+    );
     return await updateUIPreferences(updatedPreferences);
   }
 
@@ -223,7 +231,9 @@ class ConfigurationManager {
   /// Set advanced options visibility
   Future<bool> setShowAdvancedOptions(bool show) async {
     final config = await getConfiguration();
-    final updatedPreferences = config.uiPreferences.copyWith(showAdvancedOptions: show);
+    final updatedPreferences = config.uiPreferences.copyWith(
+      showAdvancedOptions: show,
+    );
     return await updateUIPreferences(updatedPreferences);
   }
 
@@ -236,7 +246,9 @@ class ConfigurationManager {
   /// Set animations enabled
   Future<bool> setAnimationsEnabled(bool enabled) async {
     final config = await getConfiguration();
-    final updatedPreferences = config.uiPreferences.copyWith(enableAnimations: enabled);
+    final updatedPreferences = config.uiPreferences.copyWith(
+      enableAnimations: enabled,
+    );
     return await updateUIPreferences(updatedPreferences);
   }
 

@@ -48,7 +48,7 @@ class _VoiceSelectionPageState extends State<VoiceSelectionPage> {
       }
 
       // Language filter
-      if (_selectedLanguage != null && 
+      if (_selectedLanguage != null &&
           _selectedLanguage!.isNotEmpty &&
           !voice.languageCode.startsWith(_selectedLanguage!)) {
         return false;
@@ -154,11 +154,12 @@ class _VoiceSelectionPageState extends State<VoiceSelectionPage> {
                                 value: null,
                                 child: Text('All Genders'),
                               ),
-                              ...VoiceGender.values.map((gender) =>
-                                  DropdownMenuItem<VoiceGender?>(
-                                    value: gender,
-                                    child: Text(gender.name.toUpperCase()),
-                                  )),
+                              ...VoiceGender.values.map(
+                                (gender) => DropdownMenuItem<VoiceGender?>(
+                                  value: gender,
+                                  child: Text(gender.name.toUpperCase()),
+                                ),
+                              ),
                             ],
                             onChanged: (value) {
                               setState(() {
@@ -179,11 +180,12 @@ class _VoiceSelectionPageState extends State<VoiceSelectionPage> {
                                 value: null,
                                 child: Text('All Languages'),
                               ),
-                              ..._availableLanguages.map((lang) =>
-                                  DropdownMenuItem<String?>(
-                                    value: lang,
-                                    child: Text(lang.toUpperCase()),
-                                  )),
+                              ..._availableLanguages.map(
+                                (lang) => DropdownMenuItem<String?>(
+                                  value: lang,
+                                  child: Text(lang.toUpperCase()),
+                                ),
+                              ),
                             ],
                             onChanged: (value) {
                               setState(() {
@@ -209,7 +211,8 @@ class _VoiceSelectionPageState extends State<VoiceSelectionPage> {
                         itemCount: _filteredVoices.length,
                         itemBuilder: (context, index) {
                           final voice = _filteredVoices[index];
-                          final isSelected = voice.id == _voiceController.selectedVoiceId;
+                          final isSelected =
+                              voice.id == _voiceController.selectedVoiceId;
 
                           return Container(
                             margin: const EdgeInsets.symmetric(
@@ -218,73 +221,76 @@ class _VoiceSelectionPageState extends State<VoiceSelectionPage> {
                             ),
                             child: ModernCard(
                               child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isSelected
-                                    ? AppTheme.primaryColor
-                                    : Colors.grey[300],
-                                child: Icon(
-                                  voice.gender == VoiceGender.male
-                                      ? Icons.person
-                                      : voice.gender == VoiceGender.female
-                                          ? Icons.person_outline
-                                          : Icons.record_voice_over,
-                                  color: isSelected ? Colors.white : Colors.grey[600],
+                                leading: CircleAvatar(
+                                  backgroundColor: isSelected
+                                      ? AppTheme.primaryColor
+                                      : Colors.grey[300],
+                                  child: Icon(
+                                    voice.gender == VoiceGender.male
+                                        ? Icons.person
+                                        : voice.gender == VoiceGender.female
+                                        ? Icons.person_outline
+                                        : Icons.record_voice_over,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                  ),
                                 ),
-                              ),
-                              title: Text(
-                                voice.displayName.isNotEmpty 
-                                    ? voice.displayName 
-                                    : voice.id,
-                                style: TextStyle(
-                                  fontWeight: isSelected 
-                                      ? FontWeight.bold 
-                                      : FontWeight.normal,
+                                title: Text(
+                                  voice.displayName.isNotEmpty
+                                      ? voice.displayName
+                                      : voice.id,
+                                  style: TextStyle(
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
                                 ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Language: ${voice.languageCode}'),
-                                  Text('Gender: ${voice.gender.name}'),
-                                  if (voice.isNeural)
-                                    const Text(
-                                      'Neural Voice',
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.w500,
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Language: ${voice.languageCode}'),
+                                    Text('Gender: ${voice.gender.name}'),
+                                    if (voice.isNeural)
+                                      const Text(
+                                        'Neural Voice',
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
+                                  ],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Test voice button
+                                    IconButton(
+                                      icon: const Icon(Icons.play_arrow),
+                                      onPressed: () =>
+                                          _voiceController.testVoice(voice.id),
+                                      tooltip: 'Test Voice',
                                     ),
-                                ],
+                                    // Select button
+                                    ModernButton(
+                                      onPressed: () {
+                                        _voiceController.selectVoice(voice.id);
+                                        Navigator.of(context).pop(voice.id);
+                                      },
+                                      text: isSelected ? 'Selected' : 'Select',
+                                      type: isSelected
+                                          ? ModernButtonType.primary
+                                          : ModernButtonType.secondary,
+                                      size: ModernButtonSize.small,
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  _voiceController.selectVoice(voice.id);
+                                  Navigator.of(context).pop(voice.id);
+                                },
                               ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Test voice button
-                                  IconButton(
-                                    icon: const Icon(Icons.play_arrow),
-                                    onPressed: () => _voiceController.testVoice(voice.id),
-                                    tooltip: 'Test Voice',
-                                  ),
-                                  // Select button
-                                  ModernButton(
-                                    onPressed: () {
-                                      _voiceController.selectVoice(voice.id);
-                                      Navigator.of(context).pop(voice.id);
-                                    },
-                                    text: isSelected ? 'Selected' : 'Select',
-                                    type: isSelected 
-                                        ? ModernButtonType.primary 
-                                        : ModernButtonType.secondary,
-                                    size: ModernButtonSize.small,
-                                  ),
-                                ],
-                              ),
-                              onTap: () {
-                                _voiceController.selectVoice(voice.id);
-                                Navigator.of(context).pop(voice.id);
-                              },
                             ),
-                          ),
                           );
                         },
                       ),

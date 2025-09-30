@@ -2,35 +2,31 @@
 abstract class AlouetteTTSError extends Error {
   /// The error message
   final String message;
-  
+
   /// Consistent error code for programmatic handling
   final String code;
-  
+
   /// Optional additional details about the error
   final Map<String, dynamic>? details;
-  
+
   /// The original error that caused this error (if any)
   final dynamic originalError;
-  
+
   /// Timestamp when the error occurred
   final DateTime timestamp;
 
-  AlouetteTTSError(
-    this.message,
-    this.code, {
-    this.details,
-    this.originalError,
-  }) : timestamp = DateTime.now();
+  AlouetteTTSError(this.message, this.code, {this.details, this.originalError})
+    : timestamp = DateTime.now();
 
   /// Get user-friendly error message
   String get userMessage => _getUserMessage();
-  
+
   /// Get technical error message for logging
   String get technicalMessage => _getTechnicalMessage();
-  
+
   /// Check if this error is recoverable
   bool get isRecoverable => _isRecoverable();
-  
+
   /// Get suggested recovery actions
   List<String> get recoveryActions => _getRecoveryActions();
 
@@ -60,7 +56,7 @@ abstract class AlouetteTTSError extends Error {
         return message;
     }
   }
-  
+
   String _getTechnicalMessage() {
     final buffer = StringBuffer();
     buffer.write('[$code] $message');
@@ -72,7 +68,7 @@ abstract class AlouetteTTSError extends Error {
     }
     return buffer.toString();
   }
-  
+
   bool _isRecoverable() {
     switch (code) {
       case TTSErrorCodes.engineNotAvailable:
@@ -91,7 +87,7 @@ abstract class AlouetteTTSError extends Error {
         return false;
     }
   }
-  
+
   List<String> _getRecoveryActions() {
     switch (code) {
       case TTSErrorCodes.engineNotAvailable:
@@ -137,7 +133,7 @@ class TTSErrorCodes {
   static const String synthesisError = 'TTS_SYNTHESIS_ERROR';
   static const String stopFailed = 'TTS_STOP_FAILED';
   static const String notInitialized = 'TTS_NOT_INITIALIZED';
-  
+
   // Additional error codes used in the codebase
   static const String noVoicesAvailable = 'TTS_NO_VOICES_AVAILABLE';
   static const String speakError = 'TTS_SPEAK_ERROR';
@@ -166,21 +162,18 @@ class TTSEngineNotAvailableException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.engineNotAvailable,
-    details: {
-      'engineType': engineType,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.engineNotAvailable,
+         details: {'engineType': engineType, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when a voice is not found
 class TTSVoiceNotFoundException extends AlouetteTTSError {
   /// The voice ID that was not found
   final String voiceId;
-  
+
   /// Available voices (if any)
   final List<String>? availableVoices;
 
@@ -191,22 +184,22 @@ class TTSVoiceNotFoundException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.voiceNotFound,
-    details: {
-      'voiceId': voiceId,
-      if (availableVoices != null) 'availableVoices': availableVoices,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.voiceNotFound,
+         details: {
+           'voiceId': voiceId,
+           if (availableVoices != null) 'availableVoices': availableVoices,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when speech synthesis fails
 class TTSSynthesisException extends AlouetteTTSError {
   /// The text that failed to synthesize
   final String text;
-  
+
   /// The voice used for synthesis
   final String? voiceId;
 
@@ -217,15 +210,15 @@ class TTSSynthesisException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.synthesisFailure,
-    details: {
-      'textLength': text.length,
-      if (voiceId != null) 'voiceId': voiceId,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.synthesisFailure,
+         details: {
+           'textLength': text.length,
+           if (voiceId != null) 'voiceId': voiceId,
+           ...?details,
+         },
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when audio playback fails
@@ -239,14 +232,11 @@ class TTSAudioPlaybackException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.audioPlaybackError,
-    details: {
-      if (audioPath != null) 'audioPath': audioPath,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.audioPlaybackError,
+         details: {if (audioPath != null) 'audioPath': audioPath, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when platform is not supported
@@ -260,14 +250,11 @@ class TTSPlatformNotSupportedException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.platformNotSupported,
-    details: {
-      'platform': platform,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.platformNotSupported,
+         details: {'platform': platform, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when TTS configuration is invalid
@@ -281,14 +268,11 @@ class TTSConfigurationException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.configurationError,
-    details: {
-      if (field != null) 'field': field,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.configurationError,
+         details: {if (field != null) 'field': field, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when network operations fail
@@ -298,11 +282,11 @@ class TTSNetworkException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.networkError,
-    details: details,
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.networkError,
+         details: details,
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when permissions are denied
@@ -316,21 +300,18 @@ class TTSPermissionDeniedException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.permissionDenied,
-    details: {
-      'permission': permission,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.permissionDenied,
+         details: {'permission': permission, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when engine switching fails
 class TTSEngineSwitchException extends AlouetteTTSError {
   /// The source engine
   final String fromEngine;
-  
+
   /// The target engine
   final String toEngine;
 
@@ -341,15 +322,11 @@ class TTSEngineSwitchException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.engineSwitchFailed,
-    details: {
-      'fromEngine': fromEngine,
-      'toEngine': toEngine,
-      ...?details,
-    },
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.engineSwitchFailed,
+         details: {'fromEngine': fromEngine, 'toEngine': toEngine, ...?details},
+         originalError: originalError,
+       );
 }
 
 /// Exception thrown when TTS initialization fails
@@ -359,9 +336,9 @@ class TTSInitializationException extends AlouetteTTSError {
     Map<String, dynamic>? details,
     dynamic originalError,
   }) : super(
-    message,
-    TTSErrorCodes.initializationFailed,
-    details: details,
-    originalError: originalError,
-  );
+         message,
+         TTSErrorCodes.initializationFailed,
+         details: details,
+         originalError: originalError,
+       );
 }

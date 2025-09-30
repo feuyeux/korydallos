@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import '../controllers/tts_controller.dart' as local;
 import 'tts_page.dart';
-import '../../../widgets/tts_status_widget.dart';
 import '../../../config/tts_app_config.dart';
 
 /// Home page for the TTS application
@@ -13,8 +11,8 @@ class TTSHomePage extends StatefulWidget {
   State<TTSHomePage> createState() => _TTSHomePageState();
 }
 
-class _TTSHomePageState extends State<TTSHomePage> {
-  late local.TTSController _ttsController;
+class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
+  late ITTSController _ttsController;
   final TextEditingController _textController = TextEditingController(
     text: TTSAppConfig.defaultText,
   );
@@ -22,41 +20,26 @@ class _TTSHomePageState extends State<TTSHomePage> {
   @override
   void initState() {
     super.initState();
-    _ttsController = local.TTSController();
-    _ttsController.addListener(_onControllerChanged);
-    _initializeTTS();
+    _ttsController = createTTSController();
+    _ttsController.text = _textController.text;
+    // Sync text controller with TTS controller
+    _textController.addListener(_onTextChanged);
   }
 
-  Future<void> _initializeTTS() async {
-    await _ttsController.initialize();
+  void _onTextChanged() {
+    _ttsController.text = _textController.text;
   }
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
-    _ttsController.removeListener(_onControllerChanged);
-    _ttsController.dispose();
     super.dispose();
   }
 
-  void _onControllerChanged() {
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  void _showError(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-  }
+  // Removed duplicate error handling - using UI library's unified error handling
 
   Future<void> _showTTSSettings() async {
-    // Show TTS configuration dialog
-    final platformInfo = await _ttsController.getPlatformInfo();
-    
     if (mounted) {
       showDialog(
         context: context,
@@ -67,29 +50,32 @@ class _TTSHomePageState extends State<TTSHomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Current Engine: ${_ttsController.currentEngine?.name ?? 'None'}'),
+                Text(
+                  'Available Voices: ${_ttsController.availableVoices.length}',
+                ),
                 const SizedBox(height: 8),
-                Text('Platform: ${platformInfo['platform'] ?? 'Unknown'}'),
-                const SizedBox(height: 8),
-                Text('Backend: ${platformInfo['currentBackend'] ?? 'Unknown'}'),
-                const SizedBox(height: 8),
-                Text('Supported Engines: ${platformInfo['supportedEngines']?.join(', ') ?? 'None'}'),
-                const SizedBox(height: 8),
-                Text('Available Engines: ${platformInfo['availableEngines']?.join(', ') ?? 'None'}'),
-                const SizedBox(height: 8),
-                Text('Recommended Engine: ${platformInfo['recommendedEngine'] ?? 'None'}'),
+                Text(
+                  'Selected Voice: ${_ttsController.selectedVoice ?? 'None'}',
+                ),
                 const SizedBox(height: 16),
-                const Text('Voice Parameters:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Rate: ${_ttsController.rate.toStringAsFixed(1)}x'),
-                Text('Pitch: ${_ttsController.pitch.toStringAsFixed(1)}x'),
-                Text('Volume: ${(_ttsController.volume * 100).toInt()}%'),
+                const Text(
+                  'Voice Parameters:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Rate: ${(_ttsController.speechRate * 2).toStringAsFixed(1)}x',
+                ),
+                Text(
+                  'Pitch: ${(_ttsController.speechPitch * 2).toStringAsFixed(1)}x',
+                ),
+                Text('Volume: ${(_ttsController.speechVolume * 100).toInt()}%'),
                 const SizedBox(height: 16),
-                const Text('Platform Features:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Desktop: ${platformInfo['isDesktop'] ?? false}'),
-                Text('Mobile: ${platformInfo['isMobile'] ?? false}'),
-                Text('Web: ${platformInfo['isWeb'] ?? false}'),
-                Text('Process Execution: ${platformInfo['supportsProcessExecution'] ?? false}'),
-                Text('File System: ${platformInfo['supportsFileSystem'] ?? false}'),
+                const Text(
+                  'Status:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text('Speaking: ${_ttsController.isSpeaking ? 'Yes' : 'No'}'),
+                Text('Paused: ${_ttsController.isPaused ? 'Yes' : 'No'}'),
               ],
             ),
           ),
@@ -106,22 +92,44 @@ class _TTSHomePageState extends State<TTSHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Show error if there's one
-    if (_ttsController.lastError != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showError(_ttsController.lastError!);
-      });
-    }
+    // Error handling is now managed by the UI library's unified error system
 
     return Scaffold(
       appBar: ModernAppBar(
         title: TTSAppConfig.appTitle,
         showLogo: true,
-        statusWidget: TTSStatusWidget(
-          isInitialized: _ttsController.isInitialized,
-          isPlaying: _ttsController.isPlaying,
-          currentEngine: _ttsController.currentEngine,
-          lastError: _ttsController.lastError,
+        statusWidget: StreamBuilder<bool>(
+          stream: _ttsController.speakingStream,
+          initialData: _ttsController.isSpeaking,
+          builder: (context, speakingSnapshot) {
+            return StreamBuilder<String?>(
+              stream: _ttsController.errorStream,
+              initialData: _ttsController.errorMessage,
+              builder: (context, errorSnapshot) {
+                final isPlaying = speakingSnapshot.data ?? false;
+                final error = errorSnapshot.data;
+
+                if (error != null) {
+                  return CompactStatusIndicator(
+                    status: StatusType.error,
+                    message: 'TTS Error',
+                  );
+                }
+
+                if (isPlaying) {
+                  return CompactStatusIndicator(
+                    status: StatusType.info,
+                    message: 'Speaking...',
+                  );
+                }
+
+                return CompactStatusIndicator(
+                  status: StatusType.success,
+                  message: 'Ready',
+                );
+              },
+            );
+          },
         ),
         actions: [
           Padding(

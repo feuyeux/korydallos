@@ -27,6 +27,21 @@ abstract class ITTSService {
     double pitch = 1.0,
   });
 
+  /// Speak the given text using the best voice for the specified language
+  ///
+  /// [text] - The text to speak
+  /// [languageName] - Language name (e.g., "Chinese", "English", "French")
+  /// [rate] - Speech rate (0.1 to 2.0, default 1.0)
+  /// [volume] - Volume level (0.0 to 1.0, default 1.0)
+  /// [pitch] - Pitch level (0.5 to 2.0, default 1.0)
+  Future<void> speakInLanguage(
+    String text,
+    String languageName, {
+    double rate = 1.0,
+    double volume = 1.0,
+    double pitch = 1.0,
+  });
+
   /// Stop current speech
   Future<void> stop();
 

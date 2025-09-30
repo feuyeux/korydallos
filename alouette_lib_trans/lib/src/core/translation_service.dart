@@ -11,7 +11,7 @@ import 'dart:io';
 import 'dart:async';
 
 /// Core unified translation service that handles all translation operations
-/// 
+///
 /// This service provides a consistent API for translation functionality across
 /// all applications, with comprehensive error handling and provider management.
 class TranslationService extends ChangeNotifier {
@@ -22,28 +22,31 @@ class TranslationService extends ChangeNotifier {
   bool _isTestingConnection = false;
   bool _isAutoConfiguring = false;
   LLMConfig? _autoDetectedConfig;
-  
+
   /// Notifier for translation state changes
   final ValueNotifier<bool> isTranslatingNotifier = ValueNotifier<bool>(false);
-  
+
   /// Notifier for connection testing state
-  final ValueNotifier<bool> isTestingConnectionNotifier = ValueNotifier<bool>(false);
-  
+  final ValueNotifier<bool> isTestingConnectionNotifier = ValueNotifier<bool>(
+    false,
+  );
+
   /// Notifier for auto-configuration state
-  final ValueNotifier<bool> isAutoConfiguringNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isAutoConfiguringNotifier = ValueNotifier<bool>(
+    false,
+  );
 
   final Map<String, TranslationProvider> _providers;
 
   /// Constructor with optional provider injection for better testability
   TranslationService({Map<String, TranslationProvider>? providers})
-    : _providers = providers ?? {
-        'ollama': OllamaProvider(),
-        'lmstudio': LMStudioProvider(),
-      };
+    : _providers =
+          providers ??
+          {'ollama': OllamaProvider(), 'lmstudio': LMStudioProvider()};
 
   /// Get the current translation result
   TranslationResult? get currentTranslation => _currentTranslation;
-  
+
   /// Check if a translation is currently in progress
   bool get isTranslating => _isTranslating;
 
@@ -55,10 +58,10 @@ class TranslationService extends ChangeNotifier {
 
   /// Check if a connection test is currently in progress
   bool get isTestingConnection => _isTestingConnection;
-  
+
   /// Check if auto-configuration is in progress
   bool get isAutoConfiguring => _isAutoConfiguring;
-  
+
   /// Get the auto-detected configuration
   LLMConfig? get autoDetectedConfig => _autoDetectedConfig;
 
@@ -85,7 +88,7 @@ class TranslationService extends ChangeNotifier {
     _isTranslating = true;
     isTranslatingNotifier.value = true;
     notifyListeners();
-    
+
     try {
       final translations = <String, String>{};
       final cleanedText = inputText.trim();
@@ -94,7 +97,7 @@ class TranslationService extends ChangeNotifier {
       // Translate to each target language with retry logic
       for (int i = 0; i < targetLanguages.length; i++) {
         final language = targetLanguages[i];
-        
+
         try {
           final translation = enableRetry
               ? await _translateWithRetry(
@@ -112,8 +115,11 @@ class TranslationService extends ChangeNotifier {
                 );
 
           // Clean the translation result
-          final cleanedTranslation = cleanTranslationResult(translation, language);
-          
+          final cleanedTranslation = cleanTranslationResult(
+            translation,
+            language,
+          );
+
           if (cleanedTranslation.trim().isEmpty) {
             throw InvalidTranslationException(
               'Translation result is empty after cleaning',
@@ -126,7 +132,7 @@ class TranslationService extends ChangeNotifier {
         } catch (e) {
           // Store error for this language but continue with others
           errors[language] = e.toString();
-          
+
           // If it's a critical error that affects all translations, rethrow
           if (e is LLMConnectionException ||
               e is LLMAuthenticationException ||
@@ -169,9 +175,13 @@ class TranslationService extends ChangeNotifier {
       if (error is TranslationException) {
         rethrow;
       }
-      
+
       // Convert unknown errors to appropriate exception types
-      final handledException = handleException(error, config.provider, config.serverUrl);
+      final handledException = handleException(
+        error,
+        config.provider,
+        config.serverUrl,
+      );
       throw handledException;
     } finally {
       _isTranslating = false;
@@ -335,17 +345,18 @@ class TranslationService extends ChangeNotifier {
 
     final completed = trans.availableLanguages.length;
     final total = trans.languages.length;
-    
+
     return {
       'totalTranslations': total,
       'completedTranslations': completed,
       'completionRate': total > 0 ? completed / total : 0.0,
       'originalLength': trans.original.length,
-      'averageTranslationLength': completed > 0 
+      'averageTranslationLength': completed > 0
           ? trans.translations.values
-              .where((t) => t.isNotEmpty)
-              .map((t) => t.length)
-              .reduce((a, b) => a + b) / completed
+                    .where((t) => t.isNotEmpty)
+                    .map((t) => t.length)
+                    .reduce((a, b) => a + b) /
+                completed
           : 0.0,
     };
   }
@@ -436,7 +447,7 @@ class TranslationService extends ChangeNotifier {
   }) async {
     // Use different base URL for Android to avoid localhost issues
     final baseUrl = isAndroid ? 'http://10.0.2.2' : 'http://localhost';
-    
+
     final commonConfigs = [
       // Ollama configurations
       LLMConfig(
@@ -471,7 +482,7 @@ class TranslationService extends ChangeNotifier {
   /// Select the best available model from a list
   String _selectBestModel(List<String> models) {
     if (models.isEmpty) return '';
-    
+
     // Prefer qwen2.5 models
     final qwenModels = models
         .where((model) => model.toLowerCase().contains('qwen2.5'))
@@ -518,13 +529,17 @@ class TranslationService extends ChangeNotifier {
 
     try {
       // Use enhanced auto-detection logic with platform support and retry mechanism
-      for (int attempt = 1; attempt <= (enableRetry ? maxRetries : 1); attempt++) {
+      for (
+        int attempt = 1;
+        attempt <= (enableRetry ? maxRetries : 1);
+        attempt++
+      ) {
         try {
           // Try platform-specific auto-detection first
           final autoDetected = await autoDetectConfigWithPlatformSupport(
             isAndroid: isAndroid,
           );
-          
+
           if (autoDetected != null) {
             _autoDetectedConfig = autoDetected;
             notifyListeners();
@@ -542,7 +557,6 @@ class TranslationService extends ChangeNotifier {
           if (attempt < (enableRetry ? maxRetries : 1)) {
             await Future.delayed(retryDelay);
           }
-
         } catch (e) {
           if (attempt < (enableRetry ? maxRetries : 1)) {
             await Future.delayed(retryDelay);
@@ -694,7 +708,7 @@ class TranslationService extends ChangeNotifier {
         };
     }
   }
-  
+
   /// Clear auto-detected configuration
   void clearAutoConfig() {
     _autoDetectedConfig = null;
@@ -726,7 +740,7 @@ class TranslationService extends ChangeNotifier {
     // If no config provided or config is invalid, try auto-configuration
     if (workingConfig == null || !validateConfig(workingConfig)['isValid']) {
       workingConfig = await attemptAutoConfiguration(isAndroid: isAndroid);
-      
+
       if (workingConfig == null) {
         throw ConfigurationException(
           'No valid configuration available and auto-configuration failed. Please configure LLM settings manually.',
@@ -746,8 +760,8 @@ class TranslationService extends ChangeNotifier {
 
   /// Check if the service is ready for translation (has valid config)
   bool get isReady {
-    return _autoDetectedConfig != null && 
-           validateConfig(_autoDetectedConfig!)['isValid'] as bool;
+    return _autoDetectedConfig != null &&
+        validateConfig(_autoDetectedConfig!)['isValid'] as bool;
   }
 
   /// Get the current working configuration
@@ -762,15 +776,19 @@ class TranslationService extends ChangeNotifier {
       return false;
     }
   }
-  
+
   /// Convert generic exceptions to specific translation exceptions with enhanced error handling
-  AlouetteTranslationError handleException(Object error, String providerName, String serverUrl) {
+  AlouetteTranslationError handleException(
+    Object error,
+    String providerName,
+    String serverUrl,
+  ) {
     if (error is TranslationException) {
       return error;
     }
 
     if (error is SocketException) {
-      if (error.message.contains('Connection refused') || 
+      if (error.message.contains('Connection refused') ||
           error.message.contains('network is unreachable') ||
           error.message.contains('No route to host')) {
         return LLMConnectionException(
@@ -781,23 +799,17 @@ class TranslationService extends ChangeNotifier {
             'originalError': error.message,
           },
         );
-      } else if (error.message.contains('timeout') || 
-                 error.message.contains('timed out')) {
+      } else if (error.message.contains('timeout') ||
+          error.message.contains('timed out')) {
         return TranslationTimeoutException(
           'Translation request timed out. The server may be overloaded.',
-          details: {
-            'provider': providerName,
-            'serverUrl': serverUrl,
-          },
+          details: {'provider': providerName, 'serverUrl': serverUrl},
         );
       } else if (error.message.contains('Connection reset') ||
-                 error.message.contains('Broken pipe')) {
+          error.message.contains('Broken pipe')) {
         return LLMConnectionException(
           'Connection to $providerName server was reset. The server may have restarted.',
-          details: {
-            'provider': providerName,
-            'serverUrl': serverUrl,
-          },
+          details: {'provider': providerName, 'serverUrl': serverUrl},
         );
       }
     }
@@ -806,10 +818,7 @@ class TranslationService extends ChangeNotifier {
       return TranslationException(
         'Invalid response format from $providerName server. The server may be misconfigured.',
         code: 'INVALID_RESPONSE_FORMAT',
-        details: {
-          'provider': providerName,
-          'originalError': error.message,
-        },
+        details: {'provider': providerName, 'originalError': error.message},
       );
     }
 
@@ -817,10 +826,7 @@ class TranslationService extends ChangeNotifier {
       return TranslationTimeoutException(
         'Translation request timed out after waiting for server response.',
         timeout: error.duration,
-        details: {
-          'provider': providerName,
-          'serverUrl': serverUrl,
-        },
+        details: {'provider': providerName, 'serverUrl': serverUrl},
       );
     }
 
@@ -848,7 +854,11 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Create HTTP-specific exceptions based on status codes
-  AlouetteTranslationError createHttpException(int statusCode, String body, String providerName) {
+  AlouetteTranslationError createHttpException(
+    int statusCode,
+    String body,
+    String providerName,
+  ) {
     switch (statusCode) {
       case 401:
         return LLMAuthenticationException(
@@ -860,9 +870,7 @@ class TranslationService extends ChangeNotifier {
           'unknown',
         );
       case 429:
-        return RateLimitException(
-          '$providerName rate limit exceeded',
-        );
+        return RateLimitException('$providerName rate limit exceeded');
       case 500:
         return TranslationException(
           '$providerName server error: $body',
@@ -934,7 +942,7 @@ class TranslationService extends ChangeNotifier {
     int maxRetries = 2,
   }) async {
     Exception? lastException;
-    
+
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await provider.translateText(
@@ -945,25 +953,25 @@ class TranslationService extends ChangeNotifier {
         );
       } catch (e) {
         lastException = e is Exception ? e : Exception(e.toString());
-        
+
         // Don't retry on certain errors
         if (e is LLMAuthenticationException ||
             e is UnsupportedProviderException ||
             e is ConfigurationException) {
           rethrow;
         }
-        
+
         // Wait before retry (exponential backoff)
         if (attempt < maxRetries) {
           await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
         }
       }
     }
-    
+
     // All retries failed
     throw lastException!;
   }
-  
+
   /// Clean translation result by removing unwanted prefixes, suffixes, and formatting
   String cleanTranslationResult(String rawText, String targetLanguage) {
     if (rawText.trim().isEmpty) {

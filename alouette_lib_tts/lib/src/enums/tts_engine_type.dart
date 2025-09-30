@@ -2,7 +2,7 @@
 enum TTSEngineType {
   /// Edge TTS 引擎
   edge,
-  
-  /// Flutter TTS 引擎  
+
+  /// Flutter TTS 引擎
   flutter,
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
-import 'tts_controller.dart';
+import 'package:alouette_ui/alouette_ui.dart';
 
 class TTSPage extends StatefulWidget {
   const TTSPage({super.key});
@@ -9,8 +8,8 @@ class TTSPage extends StatefulWidget {
   State<TTSPage> createState() => _TTSPageState();
 }
 
-class _TTSPageState extends State<TTSPage> {
-  late final TTSController _controller;
+class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
+  late final ITTSController _controller;
   final TextEditingController _textController = TextEditingController(
     text: 'Hello, this is a test message.',
   );
@@ -18,207 +17,161 @@ class _TTSPageState extends State<TTSPage> {
   @override
   void initState() {
     super.initState();
-    _controller = TTSController();
-    _controller.initialize();
+    _controller = createTTSController();
+    _controller.text = _textController.text;
+    // Sync text controller with TTS controller
+    _textController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
-    _controller.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    _controller.text = _textController.text;
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _controller.isInitializedNotifier,
-      builder: (context, isInitialized, child) {
-        if (!isInitialized) {
-          return ValueListenableBuilder<String?>(
-            valueListenable: _controller.errorMessageNotifier,
-            builder: (context, errorMessage, child) {
-              if (errorMessage != null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Error: $errorMessage'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => _controller.initialize(),
-                        child: const Text('Retry'),
-                      ),
-                    ],
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Voice selector
+          if (_controller.availableVoices.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Voice Selection',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                DropdownButton<String>(
+                  value: _controller.selectedVoice,
+                  isExpanded: true,
+                  items: _controller.availableVoices.map((voice) {
+                    return DropdownMenuItem(value: voice, child: Text(voice));
+                  }).toList(),
+                  onChanged: (voiceName) {
+                    if (voiceName != null) {
+                      _controller.setVoice(voiceName);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+
+          // Speech parameters
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Speech Parameters',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                );
-              }
+                  const SizedBox(height: 16),
 
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Initializing TTS Service...'),
-                  ],
-                ),
-              );
-            },
-          );
-        }
+                  // Speech Rate
+                  Text(
+                    'Rate: ${(_controller.speechRate * 2).toStringAsFixed(1)}x',
+                  ),
+                  Slider(
+                    value: _controller.speechRate,
+                    onChanged: (value) => _controller.setSpeechRate(value),
+                    min: 0.0,
+                    max: 1.0,
+                  ),
 
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+                  // Speech Pitch
+                  Text(
+                    'Pitch: ${(_controller.speechPitch * 2).toStringAsFixed(1)}x',
+                  ),
+                  Slider(
+                    value: _controller.speechPitch,
+                    onChanged: (value) => _controller.setSpeechPitch(value),
+                    min: 0.0,
+                    max: 1.0,
+                  ),
+
+                  // Speech Volume
+                  Text('Volume: ${(_controller.speechVolume * 100).toInt()}%'),
+                  Slider(
+                    value: _controller.speechVolume,
+                    onChanged: (value) => _controller.setSpeechVolume(value),
+                    min: 0.0,
+                    max: 1.0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Text input
+          TextField(
+            controller: _textController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Enter text to speak',
+              labelText: 'Text to Synthesize',
+            ),
+            onChanged: (text) => _controller.text = text,
+          ),
+
+          const SizedBox(height: 16),
+
+          // Control buttons
+          Row(
             children: [
-              // Current engine info
-              ValueListenableBuilder<tts_lib.TTSEngineType?>(
-                valueListenable: _controller.currentEngineNotifier,
-                builder: (context, currentEngine, child) {
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Current Engine: ${currentEngine?.name ?? 'Unknown'}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Platform: ${tts_lib.PlatformUtils.isDesktop
-                                ? 'Desktop'
-                                : tts_lib.PlatformUtils.isMobile
-                                ? 'Mobile'
-                                : 'Web'}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Engine selector
-              ValueListenableBuilder<tts_lib.TTSEngineType?>(
-                valueListenable: _controller.currentEngineNotifier,
-                builder: (context, currentEngine, child) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: currentEngine == tts_lib.TTSEngineType.edge
-                              ? null
-                              : () => _controller.switchEngine(tts_lib.TTSEngineType.edge),
-                          child: const Text('Edge TTS'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: currentEngine == tts_lib.TTSEngineType.flutter
-                              ? null
-                              : () => _controller.switchEngine(tts_lib.TTSEngineType.flutter),
-                          child: const Text('Flutter TTS'),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Voice selector
-              ValueListenableBuilder<bool>(
-                valueListenable: _controller.isLoadingVoicesNotifier,
-                builder: (context, isLoading, child) {
-                  if (isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  return ValueListenableBuilder<List<tts_lib.VoiceModel>>(
-                    valueListenable: _controller.availableVoicesNotifier,
-                    builder: (context, voices, child) {
-                      if (voices.isEmpty) {
-                        return const Text('No voices available');
-                      }
-
-                      return Column(
-                        children: [
-                          ValueListenableBuilder<String?>(
-                            valueListenable: _controller.currentVoiceNameNotifier,
-                            builder: (context, currentVoiceName, child) {
-                              return DropdownButton<String>(
-                                value: currentVoiceName,
-                                isExpanded: true,
-                                items: voices.map((voice) {
-                                  return DropdownMenuItem(
-                                    value: voice.name,
-                                    child: Text(
-                                      '${voice.displayName} (${voice.locale}, ${voice.gender})',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (voiceName) {
-                                  if (voiceName != null) {
-                                    _controller.setCurrentVoice(voiceName);
-                                  }
-                                },
-                              );
+              Expanded(
+                child: StreamBuilder<bool>(
+                  stream: _controller.speakingStream,
+                  initialData: _controller.isSpeaking,
+                  builder: (context, snapshot) {
+                    final isSpeaking = snapshot.data ?? false;
+                    return ElevatedButton.icon(
+                      onPressed: isSpeaking
+                          ? () => _controller.stop()
+                          : () {
+                              _controller.text = _textController.text;
+                              _controller.speak();
                             },
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Available voices: ${voices.length} (Neural: ${voices.where((v) => v.isNeural).length})',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Text input
-              TextField(
-                controller: _textController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter text to speak',
-                  labelText: 'Text to Synthesize',
+                      icon: Icon(isSpeaking ? Icons.stop : Icons.play_arrow),
+                      label: Text(isSpeaking ? 'Stop' : 'Speak'),
+                    );
+                  },
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Play/Stop button
-              ValueListenableBuilder<bool>(
-                valueListenable: _controller.isPlayingNotifier,
-                builder: (context, isPlaying, child) {
-                  return ValueListenableBuilder<String?>(
-                    valueListenable: _controller.currentVoiceNameNotifier,
-                    builder: (context, currentVoiceName, child) {
+              const SizedBox(width: 8),
+              StreamBuilder<bool>(
+                stream: _controller.pausedStream,
+                initialData: _controller.isPaused,
+                builder: (context, snapshot) {
+                  final isPaused = snapshot.data ?? false;
+                  return StreamBuilder<bool>(
+                    stream: _controller.speakingStream,
+                    initialData: _controller.isSpeaking,
+                    builder: (context, speakingSnapshot) {
+                      final isSpeaking = speakingSnapshot.data ?? false;
                       return ElevatedButton.icon(
-                        onPressed: isPlaying
-                            ? _controller.stop
-                            : (currentVoiceName != null 
-                                ? () => _controller.speak(_textController.text)
-                                : null),
-                        icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow),
-                        label: Text(isPlaying ? 'Stop' : 'Speak'),
+                        onPressed: isSpeaking
+                            ? (isPaused
+                                  ? () => _controller.resume()
+                                  : () => _controller.pause())
+                            : null,
+                        icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                        label: Text(isPaused ? 'Resume' : 'Pause'),
                       );
                     },
                   );
@@ -226,8 +179,27 @@ class _TTSPageState extends State<TTSPage> {
               ),
             ],
           ),
-        );
-      },
+
+          // Error display using unified UI library component
+          StreamBuilder<String?>(
+            stream: _controller.errorStream,
+            initialData: _controller.errorMessage,
+            builder: (context, snapshot) {
+              final error = snapshot.data;
+              if (error != null) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ErrorDisplayWidget(
+                    error: UnifiedError.tts(message: error),
+                    onRetry: () => _controller.clearError(),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
     );
   }
 }

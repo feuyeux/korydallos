@@ -2,25 +2,25 @@ import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 
 /// Unified application configuration model
-/// 
+///
 /// This is the standardized data model used across all Alouette applications
 /// for application configuration. It includes comprehensive validation and serialization.
 class AppConfiguration {
   /// Translation configuration
   final LLMConfig? translationConfig;
-  
+
   /// TTS configuration
   final TTSConfig? ttsConfig;
-  
+
   /// UI preferences
   final UIPreferences uiPreferences;
-  
+
   /// Application-specific settings
   final Map<String, dynamic> appSettings;
-  
+
   /// Last updated timestamp
   final DateTime lastUpdated;
-  
+
   /// Configuration version for migration purposes
   final String version;
 
@@ -60,7 +60,9 @@ class AppConfiguration {
       appSettings: json['app_settings'] != null
           ? Map<String, dynamic>.from(json['app_settings'])
           : {},
-      lastUpdated: DateTime.parse(json['last_updated'] ?? DateTime.now().toIso8601String()),
+      lastUpdated: DateTime.parse(
+        json['last_updated'] ?? DateTime.now().toIso8601String(),
+      ),
       version: json['version'] ?? '1.0.0',
     );
   }
@@ -115,14 +117,12 @@ class AppConfiguration {
 
     // Version validation
     if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(version)) {
-      warnings.add('Version format should follow semantic versioning (e.g., 1.0.0)');
+      warnings.add(
+        'Version format should follow semantic versioning (e.g., 1.0.0)',
+      );
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   /// Check if the configuration is valid (no validation errors)
@@ -136,7 +136,9 @@ class AppConfiguration {
         other.ttsConfig == ttsConfig &&
         other.uiPreferences == uiPreferences &&
         other.appSettings.length == appSettings.length &&
-        other.appSettings.keys.every((key) => appSettings[key] == other.appSettings[key]) &&
+        other.appSettings.keys.every(
+          (key) => appSettings[key] == other.appSettings[key],
+        ) &&
         other.version == version;
   }
 
@@ -146,7 +148,9 @@ class AppConfiguration {
       translationConfig,
       ttsConfig,
       uiPreferences,
-      Object.hashAll(appSettings.entries.map((e) => Object.hash(e.key, e.value))),
+      Object.hashAll(
+        appSettings.entries.map((e) => Object.hash(e.key, e.value)),
+      ),
       version,
     );
   }
@@ -154,7 +158,7 @@ class AppConfiguration {
   @override
   String toString() {
     return 'AppConfiguration(version: $version, hasTranslation: ${translationConfig != null}, '
-           'hasTTS: ${ttsConfig != null}, lastUpdated: $lastUpdated)';
+        'hasTTS: ${ttsConfig != null}, lastUpdated: $lastUpdated)';
   }
 }
 
@@ -162,22 +166,22 @@ class AppConfiguration {
 class UIPreferences {
   /// Theme mode (light, dark, system)
   final String themeMode;
-  
+
   /// Primary language for the UI
   final String primaryLanguage;
-  
+
   /// Font size scale factor
   final double fontScale;
-  
+
   /// Whether to show advanced options
   final bool showAdvancedOptions;
-  
+
   /// Whether to enable animations
   final bool enableAnimations;
-  
+
   /// Window size preferences
   final WindowPreferences? windowPreferences;
-  
+
   /// Custom UI settings
   final Map<String, dynamic> customSettings;
 
@@ -255,7 +259,9 @@ class UIPreferences {
 
     // Language code validation
     if (!RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(primaryLanguage)) {
-      warnings.add('Primary language "$primaryLanguage" may not be in standard format (e.g., "en", "en-US")');
+      warnings.add(
+        'Primary language "$primaryLanguage" may not be in standard format (e.g., "en", "en-US")',
+      );
     }
 
     // Font scale validation
@@ -272,11 +278,7 @@ class UIPreferences {
       warnings.addAll(List<String>.from(windowValidation['warnings']));
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   @override
@@ -290,7 +292,9 @@ class UIPreferences {
         other.enableAnimations == enableAnimations &&
         other.windowPreferences == windowPreferences &&
         other.customSettings.length == customSettings.length &&
-        other.customSettings.keys.every((key) => customSettings[key] == other.customSettings[key]);
+        other.customSettings.keys.every(
+          (key) => customSettings[key] == other.customSettings[key],
+        );
   }
 
   @override
@@ -302,7 +306,9 @@ class UIPreferences {
       showAdvancedOptions,
       enableAnimations,
       windowPreferences,
-      Object.hashAll(customSettings.entries.map((e) => Object.hash(e.key, e.value))),
+      Object.hashAll(
+        customSettings.entries.map((e) => Object.hash(e.key, e.value)),
+      ),
     );
   }
 
@@ -316,19 +322,19 @@ class UIPreferences {
 class WindowPreferences {
   /// Window width
   final double width;
-  
+
   /// Window height
   final double height;
-  
+
   /// Window X position
   final double? x;
-  
+
   /// Window Y position
   final double? y;
-  
+
   /// Whether window is maximized
   final bool isMaximized;
-  
+
   /// Whether window is minimized
   final bool isMinimized;
 
@@ -412,11 +418,7 @@ class WindowPreferences {
       errors.add('Window cannot be both maximized and minimized');
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   @override

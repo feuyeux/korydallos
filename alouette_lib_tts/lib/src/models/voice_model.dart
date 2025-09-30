@@ -44,12 +44,35 @@ class VoiceModel {
   factory VoiceModel.fromJson(Map<String, dynamic> json) {
     return VoiceModel(
       id: json['Name'] ?? json['id'] ?? json['name'] ?? '',
-      displayName: json['DisplayName'] ?? json['displayName'] ?? json['display_name'] ?? '',
-      languageCode: json['Locale'] ?? json['languageCode'] ?? json['locale'] ?? json['language_code'] ?? '',
+      displayName:
+          json['DisplayName'] ??
+          json['displayName'] ??
+          json['display_name'] ??
+          '',
+      languageCode:
+          json['Locale'] ??
+          json['languageCode'] ??
+          json['locale'] ??
+          json['language_code'] ??
+          '',
       gender: _parseGender(json['Gender'] ?? json['gender'] ?? ''),
-      quality: _parseQuality(json['VoiceType'] ?? json['voiceType'] ?? json['voice_type'] ?? json['quality'] ?? ''),
-      isNeural: (json['VoiceType'] ?? json['voiceType'] ?? json['voice_type'] ?? json['is_neural'] ?? '').toString().toLowerCase().contains('neural') ||
-                json['is_neural'] == true,
+      quality: _parseQuality(
+        json['VoiceType'] ??
+            json['voiceType'] ??
+            json['voice_type'] ??
+            json['quality'] ??
+            '',
+      ),
+      isNeural:
+          (json['VoiceType'] ??
+                  json['voiceType'] ??
+                  json['voice_type'] ??
+                  json['is_neural'] ??
+                  '')
+              .toString()
+              .toLowerCase()
+              .contains('neural') ||
+          json['is_neural'] == true,
     );
   }
 
@@ -132,8 +155,11 @@ class VoiceModel {
     }
 
     // Language code format validation
-    if (languageCode.isNotEmpty && !RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(languageCode)) {
-      warnings.add('Language code "$languageCode" may not be in standard format (e.g., "en-US")');
+    if (languageCode.isNotEmpty &&
+        !RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(languageCode)) {
+      warnings.add(
+        'Language code "$languageCode" may not be in standard format (e.g., "en-US")',
+      );
     }
 
     // Gender validation
@@ -141,11 +167,7 @@ class VoiceModel {
       warnings.add('Voice gender is unknown');
     }
 
-    return {
-      'isValid': errors.isEmpty,
-      'errors': errors,
-      'warnings': warnings,
-    };
+    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
   /// Check if the voice model is valid (no validation errors)

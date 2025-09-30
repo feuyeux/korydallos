@@ -21,10 +21,8 @@ class TranslationActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isEnabled = isConfigured && 
-                          hasSelectedLanguages && 
-                          hasText && 
-                          !isTranslating;
+    final bool isEnabled =
+        isConfigured && hasSelectedLanguages && hasText && !isTranslating;
 
     return SizedBox(
       width: double.infinity,

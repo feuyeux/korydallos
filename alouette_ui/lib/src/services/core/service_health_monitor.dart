@@ -10,7 +10,7 @@ import '../interfaces/translation_service_interface.dart';
 class ServiceHealthMonitor {
   static Timer? _healthCheckTimer;
   static final Map<Type, ServiceHealthStatus> _healthStatus = {};
-  static final StreamController<ServiceHealthReport> _healthReportController = 
+  static final StreamController<ServiceHealthReport> _healthReportController =
       StreamController<ServiceHealthReport>.broadcast();
 
   /// Start health monitoring
@@ -42,7 +42,7 @@ class ServiceHealthMonitor {
   }
 
   /// Get health report stream
-  static Stream<ServiceHealthReport> get healthReportStream => 
+  static Stream<ServiceHealthReport> get healthReportStream =>
       _healthReportController.stream;
 
   /// Check if a specific service is healthy
@@ -78,7 +78,7 @@ class ServiceHealthMonitor {
   static Future<ServiceHealthStatus> _checkTTSHealth() async {
     try {
       final service = ServiceLocator.get<ITTSService>();
-      
+
       if (!service.isInitialized) {
         return ServiceHealthStatus(
           isHealthy: false,
@@ -89,11 +89,8 @@ class ServiceHealthMonitor {
 
       // Try to get voices as a health check
       await service.getAvailableVoices();
-      
-      return ServiceHealthStatus(
-        isHealthy: true,
-        lastChecked: DateTime.now(),
-      );
+
+      return ServiceHealthStatus(isHealthy: true, lastChecked: DateTime.now());
     } catch (e) {
       return ServiceHealthStatus(
         isHealthy: false,
@@ -107,7 +104,7 @@ class ServiceHealthMonitor {
   static Future<ServiceHealthStatus> _checkTranslationHealth() async {
     try {
       final service = ServiceLocator.get<ITranslationService>();
-      
+
       if (!service.isInitialized) {
         return ServiceHealthStatus(
           isHealthy: false,
@@ -118,11 +115,8 @@ class ServiceHealthMonitor {
 
       // Try to get supported languages as a health check
       await service.getSupportedLanguages();
-      
-      return ServiceHealthStatus(
-        isHealthy: true,
-        lastChecked: DateTime.now(),
-      );
+
+      return ServiceHealthStatus(isHealthy: true, lastChecked: DateTime.now());
     } catch (e) {
       return ServiceHealthStatus(
         isHealthy: false,

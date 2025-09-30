@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 import '../../constants/ui_constants.dart';
 import '../modern_button.dart';
@@ -29,10 +30,10 @@ class LanguageSelectionSection extends StatelessWidget {
         // 头部标题和计数
         _buildHeader(context),
         const SizedBox(height: 6),
-        
+
         // 语言筛选标签
         _buildLanguageChips(context),
-        
+
         if (showCompactButtons) ...[
           const SizedBox(height: 8),
           _buildActionButtons(),
@@ -73,9 +74,9 @@ class LanguageSelectionSection extends StatelessWidget {
         Text(
           'Selected: ${selectedLanguages.length}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-                fontSize: 10.0,
-              ),
+            color: Colors.grey.shade600,
+            fontSize: 10.0,
+          ),
         ),
       ],
     );
@@ -96,12 +97,13 @@ class LanguageSelectionSection extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '${language.flag} ${language.name}',
-                  style: const TextStyle(fontSize: 10.0),
+                  style: TextStyle(fontSize: PlatformDetector().flagFontSize * 0.625), // 10.0 equivalent
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               selected: isSelected,
-              onSelected: (selected) => onLanguageToggle(language.code, selected),
+              onSelected: (selected) =>
+                  onLanguageToggle(language.code, selected),
               padding: EdgeInsets.zero,
               selectedColor: Theme.of(context).colorScheme.primaryContainer,
               backgroundColor: Colors.grey.shade100,
@@ -137,10 +139,7 @@ class LanguageSelectionSection extends StatelessWidget {
 
   Widget _buildCompactButton(String text, VoidCallback? onPressed) {
     return Container(
-      constraints: const BoxConstraints(
-        minWidth: 60.0,
-        maxWidth: 120.0,
-      ),
+      constraints: const BoxConstraints(minWidth: 60.0, maxWidth: 120.0),
       child: ModernButton(
         text: text,
         onPressed: onPressed,

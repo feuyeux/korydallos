@@ -30,8 +30,6 @@ export 'src/services/implementations/tts_service_impl.dart';
 export 'src/services/implementations/translation_service_impl.dart';
 export 'src/services/implementations/configuration_service_impl.dart';
 
-
-
 // Design Tokens
 export 'src/tokens/color_tokens.dart';
 export 'src/tokens/dimension_tokens.dart';
@@ -73,8 +71,6 @@ export 'src/widgets/translation_result_widget.dart';
 // Removed: export 'src/widgets/tts_control_widget.dart' - Use components/organisms/tts_control_panel.dart instead
 // Removed: export 'src/widgets/tts_input_widget.dart' - Use refactored TTSInputSection instead
 export 'src/widgets/tts_status_card.dart';
-export 'src/widgets/tts_status_indicator.dart';
-
 
 // Models
 export 'src/models/app_configuration.dart';
@@ -90,6 +86,7 @@ export 'src/dialogs/tts_config_dialog.dart';
 // Utilities
 export 'src/utils/validation_utils.dart';
 export 'src/utils/error_handler.dart';
+export 'src/utils/ui_utils.dart';
 
 // Translation Components (new refactored widgets)
 export 'src/widgets/translation/translation_text_input.dart';

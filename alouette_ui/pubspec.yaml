@@ -16,11 +16,11 @@ dependencies:
   alouette_lib_tts:
     path: ../alouette_lib_tts
   # Persistent storage for configuration and preferences
-  shared_preferences: ^2.4.0
+  shared_preferences: ^2.5.3
   # Path provider for file operations
   path_provider: ^2.1.5
   # Meta annotations for better code analysis
-  meta: ^1.15.0
+  meta: ^1.16.0
 
 dev_dependencies:
   flutter_test:

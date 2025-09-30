@@ -8,7 +8,7 @@ import '../tokens/effect_tokens.dart';
 import '../services/theme_service.dart';
 
 /// App theme for Alouette applications
-/// 
+///
 /// This class provides theme configurations using design tokens
 /// for consistent styling across all applications.
 class AppTheme {
@@ -21,7 +21,7 @@ class AppTheme {
   static const Duration animationDuration = MotionTokens.normal;
 
   /// Get light theme using design tokens
-  /// 
+  ///
   /// For new applications, prefer using ThemeService.getLightTheme()
   /// which provides more customization options.
   static ThemeData get lightTheme {
@@ -69,9 +69,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: ElevationTokens.level1,
         shadowColor: ColorTokens.shadow,
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusLarge),
         color: ColorTokens.surface,
         clipBehavior: Clip.antiAlias,
       ),
@@ -122,9 +120,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: EffectTokens.radiusSmall,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusSmall),
           padding: const EdgeInsets.symmetric(
             horizontal: SpacingTokens.l,
             vertical: SpacingTokens.s,
@@ -144,9 +140,7 @@ class AppTheme {
         backgroundColor: ColorTokens.primary,
         foregroundColor: ColorTokens.onPrimary,
         elevation: ElevationTokens.level3,
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusLarge),
       ),
       dividerTheme: DividerThemeData(
         color: ColorTokens.outline,
@@ -159,9 +153,7 @@ class AppTheme {
         contentTextStyle: TypographyTokens.bodyMediumStyle.copyWith(
           color: ColorTokens.gray100,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusSmall,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusSmall),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -196,7 +188,7 @@ class AppTheme {
   }
 
   /// Get dark theme using design tokens
-  /// 
+  ///
   /// For new applications, prefer using ThemeService.getDarkTheme()
   /// which provides more customization options.
   static ThemeData get darkTheme {
@@ -245,9 +237,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: ElevationTokens.level2,
         shadowColor: ColorTokens.shadowStrong,
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusLarge),
         color: ColorTokens.darkSurface,
         clipBehavior: Clip.antiAlias,
       ),
@@ -298,9 +288,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.darkPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: EffectTokens.radiusSmall,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusSmall),
           padding: const EdgeInsets.symmetric(
             horizontal: SpacingTokens.l,
             vertical: SpacingTokens.s,
@@ -312,7 +300,7 @@ class AppTheme {
         style: IconButton.styleFrom(
           foregroundColor: ColorTokens.darkOnSurface,
           backgroundColor: Colors.transparent,
-          hoverColor: ColorTokens.darkOnSurface.withValues(alpha:0.1),
+          hoverColor: ColorTokens.darkOnSurface.withValues(alpha: 0.1),
           iconSize: DimensionTokens.iconL,
         ),
       ),
@@ -320,9 +308,7 @@ class AppTheme {
         backgroundColor: ColorTokens.darkPrimary,
         foregroundColor: ColorTokens.darkOnPrimary,
         elevation: ElevationTokens.level3,
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusLarge),
       ),
       dividerTheme: DividerThemeData(
         color: ColorTokens.darkOutline,
@@ -335,9 +321,7 @@ class AppTheme {
         contentTextStyle: TypographyTokens.bodyMediumStyle.copyWith(
           color: ColorTokens.gray800,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: EffectTokens.radiusSmall,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: EffectTokens.radiusSmall),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -372,7 +356,7 @@ class AppTheme {
   }
 
   /// Create a theme service instance for advanced theme management
-  /// 
+  ///
   /// This provides theme switching, customization, and persistence.
   static ThemeService createThemeService() {
     return ThemeService();

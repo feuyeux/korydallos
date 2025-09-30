@@ -18,7 +18,8 @@ class PlatformDetector {
 
   /// Check if current platform is desktop
   bool get isDesktop {
-    return !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+    return !kIsWeb &&
+        (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
   }
 
   /// Check if current platform is mobile
@@ -44,6 +45,26 @@ class PlatformDetector {
     // Flutter TTS is supported on all platforms
     return true;
   }
+
+  /// Check if current platform supports emoji flags
+  bool get supportsEmojiFlags {
+    // Most modern platforms support emoji flags
+    // Only disable for very specific cases where we know it doesn't work
+    return true; // Let's try emoji flags on all platforms for now
+  }
+
+  /// Get platform-appropriate flag representation
+  String getFlag(String emojiFlag, String languageCode) {
+    if (supportsEmojiFlags) {
+      return emojiFlag;
+    }
+    
+    // For Windows, use language codes in brackets
+    return '[$languageCode]';
+  }
+
+  /// Get platform-appropriate flag widget font size
+  double get flagFontSize => supportsEmojiFlags ? 16.0 : 12.0;
 
   /// Get recommended TTS engine for current platform
   TTSEngineType getRecommendedEngine() {
@@ -91,13 +112,13 @@ class PlatformDetector {
 abstract class TTSStrategy {
   /// Get the preferred engine for this platform
   TTSEngineType get preferredEngine;
-  
+
   /// Get fallback engines in order of preference
   List<TTSEngineType> getFallbackEngines();
-  
+
   /// Check if engine is supported on this platform
   bool isEngineSupported(TTSEngineType engine);
-  
+
   /// Get platform-specific engine configuration
   Map<String, dynamic> getEngineConfig(TTSEngineType engine);
 }
@@ -106,12 +127,12 @@ abstract class TTSStrategy {
 class DesktopTTSStrategy implements TTSStrategy {
   @override
   TTSEngineType get preferredEngine => TTSEngineType.edge;
-  
+
   @override
   List<TTSEngineType> getFallbackEngines() {
     return [TTSEngineType.edge, TTSEngineType.flutter];
   }
-  
+
   @override
   bool isEngineSupported(TTSEngineType engine) {
     switch (engine) {
@@ -121,21 +142,14 @@ class DesktopTTSStrategy implements TTSStrategy {
         return true; // Flutter TTS works on desktop
     }
   }
-  
+
   @override
   Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
     switch (engine) {
       case TTSEngineType.edge:
-        return {
-          'quality': 'high',
-          'format': 'mp3',
-          'timeout': 30000,
-        };
+        return {'quality': 'high', 'format': 'mp3', 'timeout': 30000};
       case TTSEngineType.flutter:
-        return {
-          'quality': 'standard',
-          'useSystemVoices': true,
-        };
+        return {'quality': 'standard', 'useSystemVoices': true};
     }
   }
 }
@@ -144,12 +158,12 @@ class DesktopTTSStrategy implements TTSStrategy {
 class MobileTTSStrategy implements TTSStrategy {
   @override
   TTSEngineType get preferredEngine => TTSEngineType.flutter;
-  
+
   @override
   List<TTSEngineType> getFallbackEngines() {
     return [TTSEngineType.flutter]; // Only Flutter TTS on mobile
   }
-  
+
   @override
   bool isEngineSupported(TTSEngineType engine) {
     switch (engine) {
@@ -159,7 +173,7 @@ class MobileTTSStrategy implements TTSStrategy {
         return true; // Flutter TTS is native on mobile
     }
   }
-  
+
   @override
   Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
     switch (engine) {
@@ -179,12 +193,12 @@ class MobileTTSStrategy implements TTSStrategy {
 class WebTTSStrategy implements TTSStrategy {
   @override
   TTSEngineType get preferredEngine => TTSEngineType.flutter;
-  
+
   @override
   List<TTSEngineType> getFallbackEngines() {
     return [TTSEngineType.flutter]; // Only Flutter TTS on web
   }
-  
+
   @override
   bool isEngineSupported(TTSEngineType engine) {
     switch (engine) {
@@ -194,7 +208,7 @@ class WebTTSStrategy implements TTSStrategy {
         return true; // Flutter TTS uses Web Speech API
     }
   }
-  
+
   @override
   Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
     switch (engine) {

@@ -7,18 +7,16 @@ import '../utils/tts_logger.dart';
 abstract class CacheEntry {
   final DateTime createdAt;
   final DateTime? expiresAt;
-  
-  CacheEntry({
-    DateTime? createdAt,
-    this.expiresAt,
-  }) : createdAt = createdAt ?? DateTime.now();
-  
+
+  CacheEntry({DateTime? createdAt, this.expiresAt})
+    : createdAt = createdAt ?? DateTime.now();
+
   /// 检查缓存是否已过期
   bool get isExpired {
     if (expiresAt == null) return false;
     return DateTime.now().isAfter(expiresAt!);
   }
-  
+
   /// 获取缓存的大小（字节）
   int get sizeInBytes;
 }
@@ -27,14 +25,14 @@ abstract class CacheEntry {
 class VoiceCacheEntry extends CacheEntry {
   final List<VoiceModel> voices;
   final String engineType;
-  
+
   VoiceCacheEntry({
     required this.voices,
     required this.engineType,
     super.createdAt,
     super.expiresAt,
   });
-  
+
   @override
   int get sizeInBytes {
     // Estimate memory size of voice list
@@ -56,7 +54,7 @@ class AudioCacheEntry extends CacheEntry {
   final String textHash;
   final String voiceName;
   final String format;
-  
+
   AudioCacheEntry({
     required this.audioData,
     required this.textHash,
@@ -65,23 +63,27 @@ class AudioCacheEntry extends CacheEntry {
     super.createdAt,
     super.expiresAt,
   });
-  
+
   @override
-  int get sizeInBytes => audioData.length + textHash.length * 2 + voiceName.length * 2 + format.length * 2;
+  int get sizeInBytes =>
+      audioData.length +
+      textHash.length * 2 +
+      voiceName.length * 2 +
+      format.length * 2;
 }
 
 /// 配置缓存条目
 class ConfigCacheEntry extends CacheEntry {
   final Map<String, dynamic> config;
   final String configPath;
-  
+
   ConfigCacheEntry({
     required this.config,
     required this.configPath,
     super.createdAt,
     super.expiresAt,
   });
-  
+
   @override
   int get sizeInBytes {
     final jsonString = jsonEncode(config);
@@ -93,28 +95,28 @@ class ConfigCacheEntry extends CacheEntry {
 class CacheConfig {
   /// 语音列表缓存的过期时间
   final Duration voiceCacheExpiry;
-  
+
   /// 音频数据缓存的过期时间
   final Duration audioCacheExpiry;
-  
+
   /// 配置缓存的过期时间
   final Duration configCacheExpiry;
-  
+
   /// 最大缓存大小（字节）
   final int maxCacheSize;
-  
+
   /// 最大缓存条目数
   final int maxCacheEntries;
-  
+
   /// 是否启用音频缓存
   final bool enableAudioCache;
-  
+
   /// 是否启用语音缓存
   final bool enableVoiceCache;
-  
+
   /// 是否启用配置缓存
   final bool enableConfigCache;
-  
+
   const CacheConfig({
     this.voiceCacheExpiry = const Duration(hours: 24),
     this.audioCacheExpiry = const Duration(hours: 1),
@@ -132,51 +134,51 @@ class CacheConfig {
 class CacheManager {
   static CacheManager? _instance;
   static CacheManager get instance => _instance ??= CacheManager._();
-  
+
   CacheManager._();
-  
+
   CacheConfig _config = const CacheConfig();
-  
+
   final Map<String, VoiceCacheEntry> _voiceCache = {};
   final Map<String, AudioCacheEntry> _audioCache = {};
   final Map<String, ConfigCacheEntry> _configCache = {};
-  
+
   /// 更新缓存配置
   void updateConfig(CacheConfig config) {
     _config = config;
     TTSLogger.debug('Cache configuration updated');
     _enforceSize();
   }
-  
+
   /// 获取当前缓存配置
   CacheConfig get config => _config;
-  
+
   // ============ 语音缓存管理 ============
-  
+
   /// Cache voice list
   void cacheVoices(String engineType, List<VoiceModel> voices) {
     if (!_config.enableVoiceCache) return;
-    
+
     final key = _generateVoiceCacheKey(engineType);
     final expiresAt = DateTime.now().add(_config.voiceCacheExpiry);
-    
+
     _voiceCache[key] = VoiceCacheEntry(
       voices: voices,
       engineType: engineType,
       expiresAt: expiresAt,
     );
-    
+
     TTSLogger.debug('Cached ${voices.length} voices for $engineType');
     _enforceSize();
   }
-  
+
   /// Get cached voice list
   List<VoiceModel>? getCachedVoices(String engineType) {
     if (!_config.enableVoiceCache) return null;
-    
+
     final key = _generateVoiceCacheKey(engineType);
     final entry = _voiceCache[key];
-    
+
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _voiceCache.remove(key);
@@ -184,11 +186,13 @@ class CacheManager {
       }
       return null;
     }
-    
-    TTSLogger.debug('Retrieved ${entry.voices.length} cached voices for $engineType');
+
+    TTSLogger.debug(
+      'Retrieved ${entry.voices.length} cached voices for $engineType',
+    );
     return entry.voices;
   }
-  
+
   /// 清除语音缓存
   void clearVoiceCache([String? engineType]) {
     if (engineType != null) {
@@ -200,21 +204,26 @@ class CacheManager {
       TTSLogger.debug('Cleared all voice caches');
     }
   }
-  
+
   String _generateVoiceCacheKey(String engineType) {
     return 'voices_$engineType';
   }
-  
+
   // ============ 音频缓存管理 ============
-  
+
   /// 缓存音频数据
-  void cacheAudio(String text, String voiceName, String format, Uint8List audioData) {
+  void cacheAudio(
+    String text,
+    String voiceName,
+    String format,
+    Uint8List audioData,
+  ) {
     if (!_config.enableAudioCache) return;
-    
+
     final key = _generateAudioCacheKey(text, voiceName, format);
     final textHash = _generateTextHash(text);
     final expiresAt = DateTime.now().add(_config.audioCacheExpiry);
-    
+
     _audioCache[key] = AudioCacheEntry(
       audioData: audioData,
       textHash: textHash,
@@ -222,18 +231,18 @@ class CacheManager {
       format: format,
       expiresAt: expiresAt,
     );
-    
+
     TTSLogger.debug('Cached audio data');
     _enforceSize();
   }
-  
+
   /// 获取缓存的音频数据
   Uint8List? getCachedAudio(String text, String voiceName, String format) {
     if (!_config.enableAudioCache) return null;
-    
+
     final key = _generateAudioCacheKey(text, voiceName, format);
     final entry = _audioCache[key];
-    
+
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _audioCache.remove(key);
@@ -241,22 +250,22 @@ class CacheManager {
       }
       return null;
     }
-    
+
     TTSLogger.debug('Retrieved cached audio data');
     return entry.audioData;
   }
-  
+
   /// 清除音频缓存
   void clearAudioCache() {
     _audioCache.clear();
     TTSLogger.debug('Cleared all audio caches');
   }
-  
+
   String _generateAudioCacheKey(String text, String voiceName, String format) {
     final textHash = _generateTextHash(text);
     return 'audio_${textHash}_${voiceName}_$format';
   }
-  
+
   String _generateTextHash(String text) {
     // 使用简单的哈希算法
     int hash = 0;
@@ -265,33 +274,33 @@ class CacheManager {
     }
     return hash.abs().toString();
   }
-  
+
   // ============ 配置缓存管理 ============
-  
+
   /// 缓存配置数据
   void cacheConfig(String configPath, Map<String, dynamic> config) {
     if (!_config.enableConfigCache) return;
-    
+
     final key = _generateConfigCacheKey(configPath);
     final expiresAt = DateTime.now().add(_config.configCacheExpiry);
-    
+
     _configCache[key] = ConfigCacheEntry(
       config: Map.from(config),
       configPath: configPath,
       expiresAt: expiresAt,
     );
-    
+
     TTSLogger.debug('Cached configuration for $configPath');
     _enforceSize();
   }
-  
+
   /// 获取缓存的配置数据
   Map<String, dynamic>? getCachedConfig(String configPath) {
     if (!_config.enableConfigCache) return null;
-    
+
     final key = _generateConfigCacheKey(configPath);
     final entry = _configCache[key];
-    
+
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _configCache.remove(key);
@@ -299,11 +308,11 @@ class CacheManager {
       }
       return null;
     }
-    
+
     TTSLogger.debug('Retrieved cached configuration for $configPath');
     return Map.from(entry.config);
   }
-  
+
   /// 清除配置缓存
   void clearConfigCache([String? configPath]) {
     if (configPath != null) {
@@ -315,13 +324,13 @@ class CacheManager {
       TTSLogger.debug('Cleared all config caches');
     }
   }
-  
+
   String _generateConfigCacheKey(String configPath) {
     return 'config_$configPath';
   }
-  
+
   // ============ 通用缓存管理 ============
-  
+
   /// 清除所有缓存
   void clearAll() {
     _voiceCache.clear();
@@ -329,11 +338,11 @@ class CacheManager {
     _configCache.clear();
     TTSLogger.info('Cleared all caches');
   }
-  
+
   /// 清除过期的缓存条目
   void clearExpired() {
     int removedCount = 0;
-    
+
     // 清除过期的语音缓存
     _voiceCache.removeWhere((key, entry) {
       if (entry.isExpired) {
@@ -342,7 +351,7 @@ class CacheManager {
       }
       return false;
     });
-    
+
     // 清除过期的音频缓存
     _audioCache.removeWhere((key, entry) {
       if (entry.isExpired) {
@@ -351,7 +360,7 @@ class CacheManager {
       }
       return false;
     });
-    
+
     // 清除过期的配置缓存
     _configCache.removeWhere((key, entry) {
       if (entry.isExpired) {
@@ -360,17 +369,18 @@ class CacheManager {
       }
       return false;
     });
-    
+
     if (removedCount > 0) {
       TTSLogger.debug('Removed $removedCount expired cache entries');
     }
   }
-  
+
   /// 获取缓存统计信息
   Map<String, dynamic> getStats() {
     final totalSize = _calculateTotalSize();
-    final totalEntries = _voiceCache.length + _audioCache.length + _configCache.length;
-    
+    final totalEntries =
+        _voiceCache.length + _audioCache.length + _configCache.length;
+
     return {
       'totalEntries': totalEntries,
       'totalSizeBytes': totalSize,
@@ -381,19 +391,20 @@ class CacheManager {
       'maxSizeBytes': _config.maxCacheSize,
       'maxSizeMB': (_config.maxCacheSize / (1024 * 1024)).toStringAsFixed(2),
       'maxEntries': _config.maxCacheEntries,
-      'utilizationPercent': ((totalSize / _config.maxCacheSize) * 100).toStringAsFixed(1),
+      'utilizationPercent': ((totalSize / _config.maxCacheSize) * 100)
+          .toStringAsFixed(1),
     };
   }
-  
+
   /// 检查缓存健康状态
   Map<String, dynamic> getHealthCheck() {
     final stats = getStats();
     final totalSize = stats['totalSizeBytes'] as int;
     final totalEntries = stats['totalEntries'] as int;
-    
+
     final sizeOk = totalSize <= _config.maxCacheSize;
     final entriesOk = totalEntries <= _config.maxCacheEntries;
-    
+
     return {
       'healthy': sizeOk && entriesOk,
       'sizeOk': sizeOk,
@@ -401,78 +412,88 @@ class CacheManager {
       'recommendations': _getHealthRecommendations(totalSize, totalEntries),
     };
   }
-  
+
   List<String> _getHealthRecommendations(int totalSize, int totalEntries) {
     final recommendations = <String>[];
-    
+
     if (totalSize > _config.maxCacheSize * 0.9) {
-      recommendations.add('Cache size is approaching limit, consider clearing old entries');
+      recommendations.add(
+        'Cache size is approaching limit, consider clearing old entries',
+      );
     }
-    
+
     if (totalEntries > _config.maxCacheEntries * 0.9) {
       recommendations.add('Cache entry count is approaching limit');
     }
-    
+
     if (_audioCache.length > 100) {
-      recommendations.add('Large number of audio cache entries, consider reducing audio cache expiry');
+      recommendations.add(
+        'Large number of audio cache entries, consider reducing audio cache expiry',
+      );
     }
-    
+
     return recommendations;
   }
-  
+
   /// 强制执行缓存大小限制
   void _enforceSize() {
     clearExpired();
-    
+
     final totalSize = _calculateTotalSize();
-    final totalEntries = _voiceCache.length + _audioCache.length + _configCache.length;
-    
+    final totalEntries =
+        _voiceCache.length + _audioCache.length + _configCache.length;
+
     // 如果超出大小限制，清除最旧的音频缓存条目
-    if (totalSize > _config.maxCacheSize || totalEntries > _config.maxCacheEntries) {
+    if (totalSize > _config.maxCacheSize ||
+        totalEntries > _config.maxCacheEntries) {
       _evictOldestEntries();
     }
   }
-  
+
   /// 清除最旧的缓存条目
   void _evictOldestEntries() {
     // 优先清除音频缓存（通常最大）
     final audioEntries = _audioCache.entries.toList();
     audioEntries.sort((a, b) => a.value.createdAt.compareTo(b.value.createdAt));
-    
+
     int removedCount = 0;
     for (final entry in audioEntries) {
       _audioCache.remove(entry.key);
       removedCount++;
-      
+
       final newSize = _calculateTotalSize();
-      final newEntries = _voiceCache.length + _audioCache.length + _configCache.length;
-      
-      if (newSize <= _config.maxCacheSize && newEntries <= _config.maxCacheEntries) {
+      final newEntries =
+          _voiceCache.length + _audioCache.length + _configCache.length;
+
+      if (newSize <= _config.maxCacheSize &&
+          newEntries <= _config.maxCacheEntries) {
         break;
       }
     }
-    
+
     if (removedCount > 0) {
-      TTSLogger.debug('Evicted $removedCount cache entries to enforce size limits');
+      TTSLogger.debug(
+        'Evicted $removedCount cache entries to enforce size limits',
+      );
     }
   }
-  
+
   /// 计算总缓存大小
   int _calculateTotalSize() {
     int totalSize = 0;
-    
+
     for (final entry in _voiceCache.values) {
       totalSize += entry.sizeInBytes;
     }
-    
+
     for (final entry in _audioCache.values) {
       totalSize += entry.sizeInBytes;
     }
-    
+
     for (final entry in _configCache.values) {
       totalSize += entry.sizeInBytes;
     }
-    
+
     return totalSize;
   }
 }

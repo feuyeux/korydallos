@@ -1,30 +1,24 @@
 import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'package:alouette_ui/alouette_ui.dart';
 
 /// Configuration for the TTS Application
+/// 
+/// Contains only TTS app-specific settings. UI constants should use
+/// design tokens from alouette_ui library.
 class TTSAppConfig {
-  /// Default TTS configuration
+  /// Default TTS configuration (uses UI library defaults)
   static const TTSConfig defaultTTSConfig = TTSConfig(
-    speechRate: 1.0,
-    pitch: 1.0,
-    volume: 1.0,
+    speechRate: TTSDefaults.speechRate,
+    pitch: TTSDefaults.pitch,
+    volume: TTSDefaults.volume,
   );
 
-  /// Preferred TTS engine for this application
+  /// TTS app-specific settings
   static const TTSEngineType? preferredEngine = null; // Auto-detect
-
-  /// Enable auto-fallback when preferred engine fails
   static const bool enableAutoFallback = true;
 
   /// Application-specific constants
   static const String appTitle = 'Alouette TTS';
   static const String defaultText =
       'Hello, I can read for you. This is a text-to-speech application.';
-
-  /// TTS parameter ranges
-  static const double minRate = 0.1;
-  static const double maxRate = 3.0;
-  static const double minPitch = 0.5;
-  static const double maxPitch = 2.0;
-  static const double minVolume = 0.0;
-  static const double maxVolume = 1.0;
 }

@@ -16,7 +16,7 @@ class FileUtils {
     'flac',
     'opus',
   };
-  
+
   /// 音频文件的 MIME 类型映射
   static const Map<String, String> audioMimeTypes = {
     'mp3': 'audio/mpeg',
@@ -27,7 +27,7 @@ class FileUtils {
     'flac': 'audio/flac',
     'opus': 'audio/opus',
   };
-  
+
   /// 创建临时文件
   /// [prefix] 文件名前缀，默认为 'tts_temp'
   /// [suffix] 文件扩展名，默认为 '.mp3'
@@ -42,18 +42,18 @@ class FileUtils {
         code: 'PLATFORM_NOT_SUPPORTED',
       );
     }
-    
+
     try {
       final tempDir = Directory.systemTemp;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = '${prefix}_${timestamp}${suffix}';
       final tempFile = File(path.join(tempDir.path, fileName));
-      
+
       // 确保临时目录存在
       if (!await tempDir.exists()) {
         await tempDir.create(recursive: true);
       }
-      
+
       return tempFile;
     } catch (e) {
       throw TTSError(
@@ -63,7 +63,7 @@ class FileUtils {
       );
     }
   }
-  
+
   /// 创建临时目录
   /// [prefix] 目录名前缀，默认为 'tts_temp_dir'
   /// 返回临时目录的 Directory 对象
@@ -76,13 +76,13 @@ class FileUtils {
         code: 'PLATFORM_NOT_SUPPORTED',
       );
     }
-    
+
     try {
       final tempDir = Directory.systemTemp;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final dirName = '${prefix}_${timestamp}';
       final tempDirectory = Directory(path.join(tempDir.path, dirName));
-      
+
       await tempDirectory.create(recursive: true);
       return tempDirectory;
     } catch (e) {
@@ -93,7 +93,7 @@ class FileUtils {
       );
     }
   }
-  
+
   /// 清理临时文件
   /// [file] 要删除的文件
   /// [ignoreErrors] 是否忽略删除错误，默认为 true
@@ -104,7 +104,7 @@ class FileUtils {
     if (kIsWeb) {
       return; // Web 平台无需清理
     }
-    
+
     try {
       if (await file.exists()) {
         await file.delete();
@@ -120,7 +120,7 @@ class FileUtils {
       // 忽略错误，静默失败
     }
   }
-  
+
   /// 清理临时目录
   /// [directory] 要删除的目录
   /// [ignoreErrors] 是否忽略删除错误，默认为 true
@@ -131,7 +131,7 @@ class FileUtils {
     if (kIsWeb) {
       return; // Web 平台无需清理
     }
-    
+
     try {
       if (await directory.exists()) {
         await directory.delete(recursive: true);
@@ -147,40 +147,40 @@ class FileUtils {
       // 忽略错误，静默失败
     }
   }
-  
+
   /// 验证音频文件格式
   /// [filePath] 文件路径
   /// 返回是否为支持的音频格式
   static bool isValidAudioFormat(String filePath) {
     final extension = path.extension(filePath).toLowerCase();
-    final formatWithoutDot = extension.startsWith('.') 
-        ? extension.substring(1) 
+    final formatWithoutDot = extension.startsWith('.')
+        ? extension.substring(1)
         : extension;
     return supportedAudioFormats.contains(formatWithoutDot);
   }
-  
+
   /// 根据文件扩展名获取音频格式
   /// [filePath] 文件路径
   /// 返回音频格式字符串，如果不支持则返回 null
   static String? getAudioFormat(String filePath) {
     final extension = path.extension(filePath).toLowerCase();
-    final formatWithoutDot = extension.startsWith('.') 
-        ? extension.substring(1) 
+    final formatWithoutDot = extension.startsWith('.')
+        ? extension.substring(1)
         : extension;
-    
+
     if (supportedAudioFormats.contains(formatWithoutDot)) {
       return formatWithoutDot;
     }
     return null;
   }
-  
+
   /// 获取音频格式的 MIME 类型
   /// [format] 音频格式 (如 'mp3', 'wav')
   /// 返回对应的 MIME 类型，如果不支持则返回 null
   static String? getAudioMimeType(String format) {
     return audioMimeTypes[format.toLowerCase()];
   }
-  
+
   /// 验证文件是否存在且可读
   /// [filePath] 文件路径
   /// 返回文件是否存在且可读
@@ -189,7 +189,7 @@ class FileUtils {
       // Web 平台的文件访问限制，这里简单返回 false
       return false;
     }
-    
+
     try {
       final file = File(filePath);
       return await file.exists();
@@ -197,7 +197,7 @@ class FileUtils {
       return false;
     }
   }
-  
+
   /// 获取文件大小
   /// [filePath] 文件路径
   /// 返回文件大小（字节），如果文件不存在则返回 -1
@@ -205,7 +205,7 @@ class FileUtils {
     if (kIsWeb) {
       return -1; // Web 平台不支持
     }
-    
+
     try {
       final file = File(filePath);
       if (await file.exists()) {
@@ -217,42 +217,42 @@ class FileUtils {
     }
     return -1;
   }
-  
+
   /// 规范化文件路径
   /// [filePath] 原始文件路径
   /// 返回规范化后的路径
   static String normalizePath(String filePath) {
     return path.normalize(filePath);
   }
-  
+
   /// 获取文件名（不包含路径）
   /// [filePath] 文件路径
   /// 返回文件名
   static String getFileName(String filePath) {
     return path.basename(filePath);
   }
-  
+
   /// 获取文件名（不包含扩展名）
   /// [filePath] 文件路径
   /// 返回不包含扩展名的文件名
   static String getFileNameWithoutExtension(String filePath) {
     return path.basenameWithoutExtension(filePath);
   }
-  
+
   /// 获取文件扩展名
   /// [filePath] 文件路径
   /// 返回文件扩展名（包含点号）
   static String getFileExtension(String filePath) {
     return path.extension(filePath);
   }
-  
+
   /// 连接路径
   /// [parts] 路径组件
   /// 返回连接后的路径
   static String joinPath(List<String> parts) {
     return path.joinAll(parts);
   }
-  
+
   /// 写入字节数据到文件
   /// [filePath] 文件路径
   /// [data] 要写入的字节数据
@@ -263,16 +263,16 @@ class FileUtils {
         code: 'PLATFORM_NOT_SUPPORTED',
       );
     }
-    
+
     try {
       final file = File(filePath);
-      
+
       // 确保父目录存在
       final parentDir = file.parent;
       if (!await parentDir.exists()) {
         await parentDir.create(recursive: true);
       }
-      
+
       await file.writeAsBytes(data);
     } catch (e) {
       throw TTSError(
@@ -282,7 +282,7 @@ class FileUtils {
       );
     }
   }
-  
+
   /// 读取文件字节数据
   /// [filePath] 文件路径
   /// 返回文件的字节数据
@@ -293,7 +293,7 @@ class FileUtils {
         code: 'PLATFORM_NOT_SUPPORTED',
       );
     }
-    
+
     try {
       final file = File(filePath);
       if (!await file.exists()) {
@@ -302,7 +302,7 @@ class FileUtils {
           code: 'FILE_NOT_FOUND',
         );
       }
-      
+
       final bytes = await file.readAsBytes();
       return Uint8List.fromList(bytes);
     } catch (e) {
@@ -316,7 +316,7 @@ class FileUtils {
       );
     }
   }
-  
+
   /// 检查目录是否存在
   /// [dirPath] 目录路径
   /// 返回目录是否存在
@@ -324,7 +324,7 @@ class FileUtils {
     if (kIsWeb) {
       return false; // Web 平台不支持目录操作
     }
-    
+
     try {
       final directory = Directory(dirPath);
       return await directory.exists();
@@ -332,7 +332,7 @@ class FileUtils {
       return false;
     }
   }
-  
+
   /// 创建目录
   /// [dirPath] 目录路径
   /// [recursive] 是否递归创建父目录，默认为 true
@@ -346,7 +346,7 @@ class FileUtils {
         code: 'PLATFORM_NOT_SUPPORTED',
       );
     }
-    
+
     try {
       final directory = Directory(dirPath);
       if (!await directory.exists()) {

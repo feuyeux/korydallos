@@ -3,7 +3,7 @@ import 'package:alouette_ui/alouette_ui.dart';
 import 'app_router.dart';
 
 /// TTS Application - Specialized text-to-speech functionality
-/// 
+///
 /// Now uses the enhanced design token system with theme management
 class TTSApp extends StatelessWidget {
   const TTSApp({super.key});

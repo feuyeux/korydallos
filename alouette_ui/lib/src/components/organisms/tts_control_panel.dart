@@ -99,10 +99,7 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const AtomicIcon(
-          Icons.record_voice_over,
-          size: AtomicIconSize.medium,
-        ),
+        const AtomicIcon(Icons.record_voice_over, size: AtomicIconSize.medium),
         const AtomicSpacer(
           AtomicSpacing.small,
           direction: AtomicSpacerDirection.horizontal,
@@ -161,7 +158,8 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
   }
 
   Widget _buildPlaybackControls() {
-    final canPlay = widget.currentText != null &&
+    final canPlay =
+        widget.currentText != null &&
         widget.selectedVoice != null &&
         !widget.isLoading;
 
@@ -179,12 +177,14 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
             ElevatedButton(
               onPressed: canPlay
                   ? (widget.isPlaying && !widget.isPaused
-                      ? widget.onPause
-                      : widget.onPlay)
+                        ? widget.onPause
+                        : widget.onPlay)
                   : null,
-              child: Icon(widget.isPlaying && !widget.isPaused
-                  ? Icons.pause
-                  : Icons.play_arrow),
+              child: Icon(
+                widget.isPlaying && !widget.isPaused
+                    ? Icons.pause
+                    : Icons.play_arrow,
+              ),
             ),
             const AtomicSpacer(
               AtomicSpacing.medium,
@@ -208,10 +208,7 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
           children: [
             Icon(Icons.volume_down),
             const SizedBox(width: 8),
-            const AtomicText(
-              'Volume',
-              variant: AtomicTextVariant.labelLarge,
-            ),
+            const AtomicText('Volume', variant: AtomicTextVariant.labelLarge),
             const Spacer(),
             AtomicText(
               '${(widget.volume * 100).round()}%',
@@ -320,10 +317,9 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
         const AtomicSpacer(AtomicSpacing.small),
         AtomicCard(
           padding: const EdgeInsets.all(SpacingTokens.m),
-          backgroundColor: Theme.of(context)
-              .colorScheme
-              .surfaceContainerHighest
-              .withValues(alpha: 0.3),
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           child: SizedBox(
             width: double.infinity,
             child: AtomicText(

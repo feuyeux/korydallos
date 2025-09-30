@@ -3,14 +3,18 @@ import 'package:flutter/foundation.dart';
 import '../../models/app_configuration.dart';
 
 /// Configuration migration utilities
-/// 
+///
 /// Handles migration of configuration data between different versions
 /// of the Alouette applications.
 class ConfigurationMigration {
   static const String currentVersion = '1.0.0';
-  
+
   /// Migration registry mapping version ranges to migration functions
-  static final Map<String, Future<Map<String, dynamic>> Function(Map<String, dynamic>)> _migrations = {
+  static final Map<
+    String,
+    Future<Map<String, dynamic>> Function(Map<String, dynamic>)
+  >
+  _migrations = {
     '0.1.0->1.0.0': _migrateFrom0_1_0To1_0_0,
     '0.2.0->1.0.0': _migrateFrom0_2_0To1_0_0,
     // Add more migrations as needed
@@ -21,34 +25,45 @@ class ConfigurationMigration {
     Map<String, dynamic> oldConfig,
     String fromVersion,
   ) async {
-    debugPrint('Starting configuration migration from $fromVersion to $currentVersion');
-    
+    debugPrint(
+      'Starting configuration migration from $fromVersion to $currentVersion',
+    );
+
     try {
       Map<String, dynamic> migratedConfig = Map.from(oldConfig);
-      
+
       // Apply version-specific migrations
       final migrationKey = '$fromVersion->$currentVersion';
       if (_migrations.containsKey(migrationKey)) {
         migratedConfig = await _migrations[migrationKey]!(migratedConfig);
       } else {
         // Try to find a migration path through intermediate versions
-        migratedConfig = await _findMigrationPath(migratedConfig, fromVersion, currentVersion);
+        migratedConfig = await _findMigrationPath(
+          migratedConfig,
+          fromVersion,
+          currentVersion,
+        );
       }
-      
+
       // Ensure final version is set
       migratedConfig['version'] = currentVersion;
       migratedConfig['last_updated'] = DateTime.now().toIso8601String();
-      
+
       // Validate migrated configuration
       final config = AppConfiguration.fromJson(migratedConfig);
       final validation = config.validate();
-      
+
       if (!(validation['isValid'] as bool)) {
-        debugPrint('Migration resulted in invalid configuration: ${validation['errors']}');
+        debugPrint(
+          'Migration resulted in invalid configuration: ${validation['errors']}',
+        );
         // Apply fixes for common migration issues
-        migratedConfig = _applyMigrationFixes(migratedConfig, validation['errors'] as List<String>);
+        migratedConfig = _applyMigrationFixes(
+          migratedConfig,
+          validation['errors'] as List<String>,
+        );
       }
-      
+
       debugPrint('Configuration migration completed successfully');
       return AppConfiguration.fromJson(migratedConfig);
     } catch (e) {
@@ -71,9 +86,11 @@ class ConfigurationMigration {
 
   // Private migration methods
 
-  static Future<Map<String, dynamic>> _migrateFrom0_1_0To1_0_0(Map<String, dynamic> config) async {
+  static Future<Map<String, dynamic>> _migrateFrom0_1_0To1_0_0(
+    Map<String, dynamic> config,
+  ) async {
     final migrated = Map<String, dynamic>.from(config);
-    
+
     // Migrate old theme settings
     if (migrated.containsKey('theme')) {
       final oldTheme = migrated['theme'];
@@ -87,7 +104,7 @@ class ConfigurationMigration {
       migrated.remove('theme');
       migrated.remove('language');
     }
-    
+
     // Migrate old TTS settings
     if (migrated.containsKey('tts_settings')) {
       final oldTTS = migrated['tts_settings'] as Map<String, dynamic>;
@@ -99,10 +116,11 @@ class ConfigurationMigration {
       };
       migrated.remove('tts_settings');
     }
-    
+
     // Migrate old translation settings
     if (migrated.containsKey('translation_settings')) {
-      final oldTranslation = migrated['translation_settings'] as Map<String, dynamic>;
+      final oldTranslation =
+          migrated['translation_settings'] as Map<String, dynamic>;
       migrated['translation_config'] = {
         'provider': oldTranslation['provider'] ?? 'ollama',
         'model': oldTranslation['model'] ?? 'llama2',
@@ -111,7 +129,7 @@ class ConfigurationMigration {
       };
       migrated.remove('translation_settings');
     }
-    
+
     // Set default app settings
     migrated['app_settings'] = {
       'first_launch': false, // Not first launch if migrating
@@ -119,31 +137,33 @@ class ConfigurationMigration {
       'auto_save': migrated['auto_save'] ?? true,
       'backup_enabled': true,
     };
-    
+
     // Clean up old keys
     migrated.remove('analytics');
     migrated.remove('auto_save');
-    
+
     return migrated;
   }
 
-  static Future<Map<String, dynamic>> _migrateFrom0_2_0To1_0_0(Map<String, dynamic> config) async {
+  static Future<Map<String, dynamic>> _migrateFrom0_2_0To1_0_0(
+    Map<String, dynamic> config,
+  ) async {
     final migrated = Map<String, dynamic>.from(config);
-    
+
     // 0.2.0 had partial UI preferences, ensure all fields exist
     if (migrated.containsKey('ui_preferences')) {
       final uiPrefs = migrated['ui_preferences'] as Map<String, dynamic>;
-      
+
       // Ensure all required fields exist
       uiPrefs['theme_mode'] ??= 'system';
       uiPrefs['primary_language'] ??= 'en';
       uiPrefs['font_scale'] ??= 1.0;
       uiPrefs['show_advanced_options'] ??= false;
       uiPrefs['enable_animations'] ??= true;
-      
+
       migrated['ui_preferences'] = uiPrefs;
     }
-    
+
     // Ensure app_settings exists with all required fields
     final appSettings = migrated['app_settings'] as Map<String, dynamic>? ?? {};
     appSettings['first_launch'] ??= false;
@@ -151,7 +171,7 @@ class ConfigurationMigration {
     appSettings['auto_save'] ??= true;
     appSettings['backup_enabled'] ??= true;
     migrated['app_settings'] = appSettings;
-    
+
     return migrated;
   }
 
@@ -164,9 +184,11 @@ class ConfigurationMigration {
     return _applyGenericMigration(config);
   }
 
-  static Map<String, dynamic> _applyGenericMigration(Map<String, dynamic> config) {
+  static Map<String, dynamic> _applyGenericMigration(
+    Map<String, dynamic> config,
+  ) {
     final migrated = Map<String, dynamic>.from(config);
-    
+
     // Ensure UI preferences exist
     if (!migrated.containsKey('ui_preferences')) {
       migrated['ui_preferences'] = {
@@ -177,7 +199,7 @@ class ConfigurationMigration {
         'enable_animations': true,
       };
     }
-    
+
     // Ensure app settings exist
     if (!migrated.containsKey('app_settings')) {
       migrated['app_settings'] = {
@@ -187,7 +209,7 @@ class ConfigurationMigration {
         'backup_enabled': true,
       };
     }
-    
+
     return migrated;
   }
 
@@ -196,7 +218,7 @@ class ConfigurationMigration {
     List<String> errors,
   ) {
     final fixed = Map<String, dynamic>.from(config);
-    
+
     for (final error in errors) {
       if (error.contains('Theme mode')) {
         // Fix invalid theme mode
@@ -204,14 +226,14 @@ class ConfigurationMigration {
         uiPrefs['theme_mode'] = 'system';
         fixed['ui_preferences'] = uiPrefs;
       }
-      
+
       if (error.contains('Font scale')) {
         // Fix invalid font scale
         final uiPrefs = fixed['ui_preferences'] as Map<String, dynamic>? ?? {};
         uiPrefs['font_scale'] = 1.0;
         fixed['ui_preferences'] = uiPrefs;
       }
-      
+
       if (error.contains('Window')) {
         // Fix invalid window preferences
         final uiPrefs = fixed['ui_preferences'] as Map<String, dynamic>? ?? {};
@@ -219,25 +241,51 @@ class ConfigurationMigration {
         fixed['ui_preferences'] = uiPrefs;
       }
     }
-    
+
     return fixed;
   }
 
-  static AppConfiguration _createSafeMigratedConfiguration(Map<String, dynamic> oldConfig) {
+  static AppConfiguration _createSafeMigratedConfiguration(
+    Map<String, dynamic> oldConfig,
+  ) {
     // Create a safe configuration preserving what we can from the old config
     return AppConfiguration(
       uiPreferences: UIPreferences(
-        themeMode: _extractSafeValue(oldConfig, ['ui_preferences', 'theme_mode'], 'system'),
-        primaryLanguage: _extractSafeValue(oldConfig, ['ui_preferences', 'primary_language'], 'en'),
-        fontScale: _extractSafeValue(oldConfig, ['ui_preferences', 'font_scale'], 1.0),
-        showAdvancedOptions: _extractSafeValue(oldConfig, ['ui_preferences', 'show_advanced_options'], false),
-        enableAnimations: _extractSafeValue(oldConfig, ['ui_preferences', 'enable_animations'], true),
+        themeMode: _extractSafeValue(oldConfig, [
+          'ui_preferences',
+          'theme_mode',
+        ], 'system'),
+        primaryLanguage: _extractSafeValue(oldConfig, [
+          'ui_preferences',
+          'primary_language',
+        ], 'en'),
+        fontScale: _extractSafeValue(oldConfig, [
+          'ui_preferences',
+          'font_scale',
+        ], 1.0),
+        showAdvancedOptions: _extractSafeValue(oldConfig, [
+          'ui_preferences',
+          'show_advanced_options',
+        ], false),
+        enableAnimations: _extractSafeValue(oldConfig, [
+          'ui_preferences',
+          'enable_animations',
+        ], true),
       ),
       appSettings: {
         'first_launch': false,
-        'analytics_enabled': _extractSafeValue(oldConfig, ['app_settings', 'analytics_enabled'], false),
-        'auto_save': _extractSafeValue(oldConfig, ['app_settings', 'auto_save'], true),
-        'backup_enabled': _extractSafeValue(oldConfig, ['app_settings', 'backup_enabled'], true),
+        'analytics_enabled': _extractSafeValue(oldConfig, [
+          'app_settings',
+          'analytics_enabled',
+        ], false),
+        'auto_save': _extractSafeValue(oldConfig, [
+          'app_settings',
+          'auto_save',
+        ], true),
+        'backup_enabled': _extractSafeValue(oldConfig, [
+          'app_settings',
+          'backup_enabled',
+        ], true),
         // Preserve any other app settings that might exist
         ..._extractSafeMap(oldConfig, ['app_settings']),
       },
@@ -245,7 +293,11 @@ class ConfigurationMigration {
     );
   }
 
-  static T _extractSafeValue<T>(Map<String, dynamic> config, List<String> path, T defaultValue) {
+  static T _extractSafeValue<T>(
+    Map<String, dynamic> config,
+    List<String> path,
+    T defaultValue,
+  ) {
     try {
       dynamic current = config;
       for (final key in path) {
@@ -261,7 +313,10 @@ class ConfigurationMigration {
     }
   }
 
-  static Map<String, dynamic> _extractSafeMap(Map<String, dynamic> config, List<String> path) {
+  static Map<String, dynamic> _extractSafeMap(
+    Map<String, dynamic> config,
+    List<String> path,
+  ) {
     try {
       dynamic current = config;
       for (final key in path) {

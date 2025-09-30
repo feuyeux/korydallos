@@ -37,9 +37,12 @@ class ModernDropdown<T> extends StatelessWidget {
 
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(DimensionTokens.radiusM);
-    final effectiveContentPadding = contentPadding ??
+    final effectiveContentPadding =
+        contentPadding ??
         const EdgeInsets.symmetric(
-            horizontal: SpacingTokens.l, vertical: SpacingTokens.s);
+          horizontal: SpacingTokens.l,
+          vertical: SpacingTokens.s,
+        );
 
     return DropdownButtonFormField<T>(
       initialValue: value,
@@ -49,13 +52,15 @@ class ModernDropdown<T> extends StatelessWidget {
       isExpanded: isExpanded,
       isDense: isDense,
       hint: hint != null ? Text(hint!) : null,
-      decoration: decoration ??
+      decoration:
+          decoration ??
           InputDecoration(
             contentPadding: effectiveContentPadding,
             filled: true,
             fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-            hintStyle:
-                TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[500]),
+            hintStyle: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[500],
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,
               borderSide: BorderSide(
@@ -65,10 +70,7 @@ class ModernDropdown<T> extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,
-              borderSide: BorderSide(
-                color: primaryColor,
-                width: 2.0,
-              ),
+              borderSide: BorderSide(color: primaryColor, width: 2.0),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: effectiveBorderRadius,

@@ -53,7 +53,8 @@ class _ModernCardState extends State<ModernCard> {
         ? defaultHoverElevation
         : defaultElevation;
 
-    final effectiveBorderColor = widget.borderColor ??
+    final effectiveBorderColor =
+        widget.borderColor ??
         (isDark ? Colors.grey.shade700 : Colors.grey.shade300);
 
     return MouseRegion(

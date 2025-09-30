@@ -256,7 +256,8 @@ class AtomicCard extends AtomicWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = getColorScheme(context);
-    final cardBorderRadius = borderRadius ?? BorderRadius.circular(DimensionTokens.radiusL);
+    final cardBorderRadius =
+        borderRadius ?? BorderRadius.circular(DimensionTokens.radiusL);
 
     Widget card = Card(
       color: backgroundColor ?? colorScheme.surface,
@@ -265,17 +266,11 @@ class AtomicCard extends AtomicWidget {
         borderRadius: cardBorderRadius,
         side: border?.top ?? BorderSide.none,
       ),
-      child: padding != null
-          ? Padding(padding: padding!, child: child)
-          : child,
+      child: padding != null ? Padding(padding: padding!, child: child) : child,
     );
 
     if (onTap != null) {
-      card = InkWell(
-        onTap: onTap,
-        borderRadius: cardBorderRadius,
-        child: card,
-      );
+      card = InkWell(onTap: onTap, borderRadius: cardBorderRadius, child: card);
     }
 
     return card;
@@ -299,7 +294,10 @@ class AtomicBadge extends AtomicWidget {
     this.backgroundColor,
     this.textColor,
     this.size = AtomicBadgeSize.medium,
-  }) : assert(text != null || child != null, 'Either text or child must be provided');
+  }) : assert(
+         text != null || child != null,
+         'Either text or child must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -313,11 +311,8 @@ class AtomicBadge extends AtomicWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(size.borderRadius),
       ),
-      child: child ?? AtomicText(
-        text!,
-        variant: size.textVariant,
-        color: fgColor,
-      ),
+      child:
+          child ?? AtomicText(text!, variant: size.textVariant, color: fgColor),
     );
   }
 }
@@ -376,7 +371,9 @@ class AtomicChip extends AtomicWidget {
 
     if (onDeleted != null) {
       return Chip(
-        avatar: icon != null ? AtomicIcon(icon!, size: AtomicIconSize.small) : null,
+        avatar: icon != null
+            ? AtomicIcon(icon!, size: AtomicIconSize.small)
+            : null,
         label: AtomicText(label, variant: AtomicTextVariant.labelMedium),
         onDeleted: onDeleted,
         backgroundColor: backgroundColor ?? colorScheme.surfaceContainerHighest,
@@ -385,7 +382,9 @@ class AtomicChip extends AtomicWidget {
     }
 
     return FilterChip(
-      avatar: icon != null ? AtomicIcon(icon!, size: AtomicIconSize.small) : null,
+      avatar: icon != null
+          ? AtomicIcon(icon!, size: AtomicIconSize.small)
+          : null,
       label: AtomicText(label, variant: AtomicTextVariant.labelMedium),
       selected: isSelected,
       onSelected: onSelected,
@@ -455,7 +454,11 @@ enum AtomicProgressSize {
   medium(24.0, 3.0, 4.0),
   large(32.0, 4.0, 6.0);
 
-  const AtomicProgressSize(this.circularSize, this.strokeWidth, this.linearHeight);
+  const AtomicProgressSize(
+    this.circularSize,
+    this.strokeWidth,
+    this.linearHeight,
+  );
 
   final double circularSize;
   final double strokeWidth;

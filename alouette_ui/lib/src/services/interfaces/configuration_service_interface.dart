@@ -1,7 +1,7 @@
 import '../../../alouette_ui.dart';
 
 /// Interface for configuration management services
-/// 
+///
 /// Defines the contract for managing application configuration,
 /// user preferences, and persistent storage across all Alouette applications.
 abstract class ConfigurationServiceInterface {

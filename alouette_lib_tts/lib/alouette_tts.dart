@@ -43,7 +43,6 @@ library alouette_lib_tts;
 // Core Services (Main API)
 export 'src/core/tts_service_interface.dart';
 export 'src/core/tts_service.dart';
-export 'src/core/unified_tts_service.dart';
 export 'src/core/tts_engine_factory.dart';
 export 'src/core/platform_detector.dart';
 export 'src/core/voice_service.dart';

@@ -53,16 +53,20 @@ class TTSErrorRecoveryService {
   }
 
   /// Calculate delay with exponential backoff and jitter
-  static Duration _calculateDelay(int attempt, Duration baseDelay, Duration maxDelay) {
+  static Duration _calculateDelay(
+    int attempt,
+    Duration baseDelay,
+    Duration maxDelay,
+  ) {
     // Exponential backoff: baseDelay * 2^(attempt-1)
     final exponentialDelay = baseDelay * pow(2, attempt - 1);
-    
+
     // Add jitter (random factor between 0.5 and 1.5)
     final jitter = 0.5 + Random().nextDouble();
     final delayWithJitter = Duration(
       milliseconds: (exponentialDelay.inMilliseconds * jitter).round(),
     );
-    
+
     // Cap at maximum delay
     return delayWithJitter > maxDelay ? maxDelay : delayWithJitter;
   }
@@ -75,9 +79,9 @@ class TTSErrorRecoveryService {
 
     // For non-Alouette errors, check common patterns
     if (error is TimeoutException) return true;
-    
+
     final errorString = error.toString().toLowerCase();
-    
+
     // TTS-specific errors that might be temporary
     if (errorString.contains('synthesis') ||
         errorString.contains('audio') ||
@@ -86,19 +90,21 @@ class TTSErrorRecoveryService {
         errorString.contains('voice')) {
       return true;
     }
-    
+
     // Network-related errors for cloud TTS
     if (errorString.contains('connection') ||
         errorString.contains('timeout') ||
         errorString.contains('network')) {
       return true;
     }
-    
+
     return false;
   }
 
   /// Engine fallback chain for different platforms
-  static List<TTSEngineType> getEngineFallbackChain(TTSEngineType primaryEngine) {
+  static List<TTSEngineType> getEngineFallbackChain(
+    TTSEngineType primaryEngine,
+  ) {
     switch (primaryEngine) {
       case TTSEngineType.edge:
         return [TTSEngineType.edge, TTSEngineType.flutter];
@@ -120,7 +126,7 @@ class TTSErrorRecoveryService {
         case TTSErrorCodes.audioPlaybackError:
           // Try fallback engines
           final fallbackChain = getEngineFallbackChain(currentEngine);
-          
+
           for (int i = 1; i < fallbackChain.length; i++) {
             final fallbackEngine = fallbackChain[i];
             try {
@@ -130,23 +136,21 @@ class TTSErrorRecoveryService {
               continue;
             }
           }
-          
+
           // If all fallbacks failed, throw original error
           throw error;
-          
+
         case TTSErrorCodes.voiceNotFound:
           // For voice errors, try with default voice
           return await operationWithEngine(currentEngine);
-          
+
         case TTSErrorCodes.networkError:
           // For network errors, wait and retry with same engine
           await Future.delayed(const Duration(seconds: 2));
           return await operationWithEngine(currentEngine);
-          
-
       }
     }
-    
+
     throw error;
   }
 
@@ -169,7 +173,7 @@ class TTSCircuitBreaker {
   final int failureThreshold;
   final Duration timeout;
   final Duration resetTimeout;
-  
+
   int _failureCount = 0;
   DateTime? _lastFailureTime;
   TTSCircuitBreakerState _state = TTSCircuitBreakerState.closed;
@@ -222,7 +226,7 @@ class TTSCircuitBreaker {
     _failureCount++;
     _lastFailureTime = DateTime.now();
     _lastFailedEngine = engine;
-    
+
     if (_failureCount >= failureThreshold) {
       _state = TTSCircuitBreakerState.open;
     }
@@ -230,13 +234,13 @@ class TTSCircuitBreaker {
 
   /// Get current circuit breaker state
   TTSCircuitBreakerState get state => _state;
-  
+
   /// Get current failure count
   int get failureCount => _failureCount;
-  
+
   /// Get last failed engine
   TTSEngineType? get lastFailedEngine => _lastFailedEngine;
-  
+
   /// Reset the circuit breaker
   void reset() {
     _failureCount = 0;
@@ -248,8 +252,8 @@ class TTSCircuitBreaker {
 
 /// TTS circuit breaker states
 enum TTSCircuitBreakerState {
-  closed,   // Normal operation
-  open,     // Failing fast
+  closed, // Normal operation
+  open, // Failing fast
   halfOpen, // Testing if service is back
 }
 
@@ -257,44 +261,58 @@ enum TTSCircuitBreakerState {
 class TTSCircuitBreakerOpenException extends AlouetteTTSError {
   final TTSEngineType engine;
 
-  TTSCircuitBreakerOpenException(String message, this.engine) : super(
-    message,
-    TTSErrorCodes.engineNotAvailable,
-    details: {'engine': engine.toString()},
-  );
+  TTSCircuitBreakerOpenException(String message, this.engine)
+    : super(
+        message,
+        TTSErrorCodes.engineNotAvailable,
+        details: {'engine': engine.toString()},
+      );
 }
 
 /// Voice fallback strategy for when preferred voice is not available
 class VoiceFallbackStrategy {
   /// Get fallback voices for a given language
-  static List<String> getFallbackVoices(String languageCode, List<String> availableVoices) {
+  static List<String> getFallbackVoices(
+    String languageCode,
+    List<String> availableVoices,
+  ) {
     final fallbacks = <String>[];
-    
+
     // First, try to find voices that match the exact language code
-    final exactMatches = availableVoices.where((voice) => 
-      voice.toLowerCase().contains(languageCode.toLowerCase())
-    ).toList();
+    final exactMatches = availableVoices
+        .where(
+          (voice) => voice.toLowerCase().contains(languageCode.toLowerCase()),
+        )
+        .toList();
     fallbacks.addAll(exactMatches);
-    
+
     // Then, try to find voices that match the language family (e.g., 'en' for 'en-US')
     if (languageCode.contains('-')) {
       final languageFamily = languageCode.split('-')[0];
-      final familyMatches = availableVoices.where((voice) => 
-        voice.toLowerCase().contains(languageFamily.toLowerCase()) &&
-        !fallbacks.contains(voice)
-      ).toList();
+      final familyMatches = availableVoices
+          .where(
+            (voice) =>
+                voice.toLowerCase().contains(languageFamily.toLowerCase()) &&
+                !fallbacks.contains(voice),
+          )
+          .toList();
       fallbacks.addAll(familyMatches);
     }
-    
+
     // Finally, add any remaining voices as last resort
-    final remaining = availableVoices.where((voice) => !fallbacks.contains(voice)).toList();
+    final remaining = availableVoices
+        .where((voice) => !fallbacks.contains(voice))
+        .toList();
     fallbacks.addAll(remaining);
-    
+
     return fallbacks;
   }
-  
+
   /// Get default voice for a language if no specific voice is requested
-  static String? getDefaultVoice(String languageCode, List<String> availableVoices) {
+  static String? getDefaultVoice(
+    String languageCode,
+    List<String> availableVoices,
+  ) {
     final fallbacks = getFallbackVoices(languageCode, availableVoices);
     return fallbacks.isNotEmpty ? fallbacks.first : null;
   }
@@ -304,7 +322,7 @@ class VoiceFallbackStrategy {
 class TTSTimeoutHandler {
   static const Duration _defaultSynthesisTimeout = Duration(seconds: 30);
   static const Duration _defaultPlaybackTimeout = Duration(seconds: 60);
-  
+
   /// Execute synthesis with timeout and fallback
   static Future<T> executeSynthesisWithTimeout<T>(
     Future<T> Function() operation, {
@@ -312,7 +330,7 @@ class TTSTimeoutHandler {
     Future<T> Function()? fallbackOperation,
   }) async {
     final actualTimeout = timeout ?? _defaultSynthesisTimeout;
-    
+
     try {
       return await operation().timeout(actualTimeout);
     } on TimeoutException catch (e) {
@@ -340,14 +358,14 @@ class TTSTimeoutHandler {
       }
     }
   }
-  
+
   /// Execute playback with timeout
   static Future<T> executePlaybackWithTimeout<T>(
     Future<T> Function() operation, {
     Duration? timeout,
   }) async {
     final actualTimeout = timeout ?? _defaultPlaybackTimeout;
-    
+
     try {
       return await operation().timeout(actualTimeout);
     } on TimeoutException catch (e) {

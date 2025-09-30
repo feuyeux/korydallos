@@ -13,15 +13,18 @@ class ServiceLocator {
   /// Initialize the service locator with core services
   static void initialize() {
     if (_initialized) return;
-    
+
     // Register core services
     registerSingleton<LoggingService>(() => LoggingService.instance);
-    
+
     _initialized = true;
-    
+
     // Log initialization
     final logger = get<LoggingService>();
-    logger.info('ServiceLocator initialized with core services', tag: 'ServiceLocator');
+    logger.info(
+      'ServiceLocator initialized with core services',
+      tag: 'ServiceLocator',
+    );
   }
 
   /// Register a service instance
@@ -30,12 +33,15 @@ class ServiceLocator {
   /// Type T will be used as the key for retrieval
   static void register<T>(T service) {
     _services[T] = service;
-    
+
     // Log service registration
     if (_initialized) {
       try {
         final logger = get<LoggingService>();
-        logger.debug('Service registered: ${T.toString()}', tag: 'ServiceLocator');
+        logger.debug(
+          'Service registered: ${T.toString()}',
+          tag: 'ServiceLocator',
+        );
       } catch (e) {
         // Ignore logging errors during registration
       }
@@ -48,12 +54,15 @@ class ServiceLocator {
   /// The service will be created when first accessed
   static void registerFactory<T>(T Function() factory) {
     _factories[T] = factory;
-    
+
     // Log factory registration
     if (_initialized) {
       try {
         final logger = get<LoggingService>();
-        logger.debug('Factory registered: ${T.toString()}', tag: 'ServiceLocator');
+        logger.debug(
+          'Factory registered: ${T.toString()}',
+          tag: 'ServiceLocator',
+        );
       } catch (e) {
         // Ignore logging errors during registration
       }
@@ -70,12 +79,15 @@ class ServiceLocator {
       instance ??= factory();
       return instance!;
     };
-    
+
     // Log singleton registration
     if (_initialized) {
       try {
         final logger = get<LoggingService>();
-        logger.debug('Singleton registered: ${T.toString()}', tag: 'ServiceLocator');
+        logger.debug(
+          'Singleton registered: ${T.toString()}',
+          tag: 'ServiceLocator',
+        );
       } catch (e) {
         // Ignore logging errors during registration
       }
@@ -136,7 +148,7 @@ class ServiceLocator {
         // Ignore logging errors during clear
       }
     }
-    
+
     _services.clear();
     _factories.clear();
     _initialized = false;

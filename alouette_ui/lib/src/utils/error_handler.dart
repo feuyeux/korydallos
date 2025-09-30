@@ -6,18 +6,18 @@ import '../services/core/service_locator.dart';
 /// Centralized error handler for all Alouette applications
 class AlouetteErrorHandler {
   static AlouetteErrorHandler? _instance;
-  
+
   /// Get the singleton instance
   static AlouetteErrorHandler get instance {
     _instance ??= AlouetteErrorHandler._internal();
     return _instance!;
   }
-  
+
   AlouetteErrorHandler._internal();
-  
+
   /// List of error listeners
   final List<ErrorHandlerListener> _listeners = [];
-  
+
   /// Error recovery strategies
   final Map<String, ErrorRecoveryStrategy> _recoveryStrategies = {};
 
@@ -27,16 +27,16 @@ class AlouetteErrorHandler {
     FlutterError.onError = (FlutterErrorDetails details) {
       handleFlutterError(details);
     };
-    
+
     // Handle errors outside of Flutter framework
     PlatformDispatcher.instance.onError = (error, stack) {
       handlePlatformError(error, stack);
       return true;
     };
-    
+
     // Register default recovery strategies
     _registerDefaultRecoveryStrategies();
-    
+
     final logger = ServiceLocator.logger;
     logger.info('AlouetteErrorHandler initialized', tag: 'ErrorHandler');
   }
@@ -44,7 +44,7 @@ class AlouetteErrorHandler {
   /// Handle Flutter framework errors
   void handleFlutterError(FlutterErrorDetails details) {
     final logger = ServiceLocator.logger;
-    
+
     logger.error(
       'Flutter Error: ${details.exception}',
       tag: 'FlutterError',
@@ -56,15 +56,17 @@ class AlouetteErrorHandler {
       error: details.exception,
       stackTrace: details.stack,
     );
-    
+
     // Notify listeners
-    _notifyListeners(AlouetteErrorEvent(
-      error: details.exception,
-      stackTrace: details.stack,
-      context: 'Flutter Framework',
-      isRecoverable: false,
-    ));
-    
+    _notifyListeners(
+      AlouetteErrorEvent(
+        error: details.exception,
+        stackTrace: details.stack,
+        context: 'Flutter Framework',
+        isRecoverable: false,
+      ),
+    );
+
     // Call original error handler for debugging
     FlutterError.presentError(details);
   }
@@ -72,21 +74,23 @@ class AlouetteErrorHandler {
   /// Handle platform errors (outside Flutter framework)
   void handlePlatformError(Object error, StackTrace stackTrace) {
     final logger = ServiceLocator.logger;
-    
+
     logger.error(
       'Platform Error: $error',
       tag: 'PlatformError',
       error: error,
       stackTrace: stackTrace,
     );
-    
+
     // Notify listeners
-    _notifyListeners(AlouetteErrorEvent(
-      error: error,
-      stackTrace: stackTrace,
-      context: 'Platform',
-      isRecoverable: _isPlatformErrorRecoverable(error),
-    ));
+    _notifyListeners(
+      AlouetteErrorEvent(
+        error: error,
+        stackTrace: stackTrace,
+        context: 'Platform',
+        isRecoverable: _isPlatformErrorRecoverable(error),
+      ),
+    );
   }
 
   /// Handle application errors with automatic recovery
@@ -100,10 +104,14 @@ class AlouetteErrorHandler {
   }) async {
     if (logError) {
       final logger = ServiceLocator.logger;
-      
+
       // Use Alouette error logging if available
       if (error.runtimeType.toString().contains('Alouette')) {
-        logger.logAlouetteError(error, tag: context, additionalDetails: additionalDetails);
+        logger.logAlouetteError(
+          error,
+          tag: context,
+          additionalDetails: additionalDetails,
+        );
       } else {
         logger.error(
           'Application Error: $error',
@@ -114,11 +122,11 @@ class AlouetteErrorHandler {
         );
       }
     }
-    
+
     // Determine if error is recoverable
     bool isRecoverable = false;
     String? errorCode;
-    
+
     try {
       if (error.runtimeType.toString().contains('Alouette')) {
         final dynamic dynError = error;
@@ -131,7 +139,7 @@ class AlouetteErrorHandler {
       // Fallback
       isRecoverable = false;
     }
-    
+
     // Create error event
     final errorEvent = AlouetteErrorEvent(
       error: error,
@@ -141,10 +149,10 @@ class AlouetteErrorHandler {
       errorCode: errorCode,
       additionalDetails: additionalDetails,
     );
-    
+
     // Notify listeners
     _notifyListeners(errorEvent);
-    
+
     // Attempt recovery
     if (isRecoverable) {
       try {
@@ -152,13 +160,13 @@ class AlouetteErrorHandler {
         if (recoveryOperation != null) {
           return await recoveryOperation();
         }
-        
+
         // Try registered recovery strategy
         if (errorCode != null && _recoveryStrategies.containsKey(errorCode)) {
           final strategy = _recoveryStrategies[errorCode]!;
           return await strategy.recover<T>(error, context);
         }
-        
+
         // Try generic recovery
         return await _attemptGenericRecovery<T>(error, context);
       } catch (recoveryError) {
@@ -170,16 +178,22 @@ class AlouetteErrorHandler {
         );
       }
     }
-    
+
     return null;
   }
 
   /// Register an error recovery strategy
-  void registerRecoveryStrategy(String errorCode, ErrorRecoveryStrategy strategy) {
+  void registerRecoveryStrategy(
+    String errorCode,
+    ErrorRecoveryStrategy strategy,
+  ) {
     _recoveryStrategies[errorCode] = strategy;
-    
+
     final logger = ServiceLocator.logger;
-    logger.debug('Recovery strategy registered for error code: $errorCode', tag: 'ErrorHandler');
+    logger.debug(
+      'Recovery strategy registered for error code: $errorCode',
+      tag: 'ErrorHandler',
+    );
   }
 
   /// Add an error listener
@@ -195,20 +209,23 @@ class AlouetteErrorHandler {
   /// Get error statistics
   ErrorStatistics getStatistics() {
     final logger = ServiceLocator.logger;
-    final recentLogs = logger.getRecentLogs(minLevel: LogLevel.error, limit: 100);
-    
+    final recentLogs = logger.getRecentLogs(
+      minLevel: LogLevel.error,
+      limit: 100,
+    );
+
     final errorCounts = <String, int>{};
-    final recoverableCount = recentLogs.where((log) => 
-      log.details?['isRecoverable'] == true
-    ).length;
-    
+    final recoverableCount = recentLogs
+        .where((log) => log.details?['isRecoverable'] == true)
+        .length;
+
     for (final log in recentLogs) {
       final errorCode = log.details?['errorCode'] as String?;
       if (errorCode != null) {
         errorCounts[errorCode] = (errorCounts[errorCode] ?? 0) + 1;
       }
     }
-    
+
     return ErrorStatistics(
       totalErrors: recentLogs.length,
       recoverableErrors: recoverableCount,
@@ -219,13 +236,28 @@ class AlouetteErrorHandler {
 
   void _registerDefaultRecoveryStrategies() {
     // Translation error recovery strategies
-    registerRecoveryStrategy('TRANS_CONNECTION_FAILED', RetryRecoveryStrategy(maxAttempts: 3));
-    registerRecoveryStrategy('TRANS_REQUEST_TIMEOUT', RetryRecoveryStrategy(maxAttempts: 2));
-    registerRecoveryStrategy('TRANS_RATE_LIMIT', DelayedRetryRecoveryStrategy(delay: Duration(seconds: 10)));
-    
+    registerRecoveryStrategy(
+      'TRANS_CONNECTION_FAILED',
+      RetryRecoveryStrategy(maxAttempts: 3),
+    );
+    registerRecoveryStrategy(
+      'TRANS_REQUEST_TIMEOUT',
+      RetryRecoveryStrategy(maxAttempts: 2),
+    );
+    registerRecoveryStrategy(
+      'TRANS_RATE_LIMIT',
+      DelayedRetryRecoveryStrategy(delay: Duration(seconds: 10)),
+    );
+
     // TTS error recovery strategies
-    registerRecoveryStrategy('TTS_ENGINE_NOT_AVAILABLE', FallbackRecoveryStrategy());
-    registerRecoveryStrategy('TTS_SYNTHESIS_FAILURE', RetryRecoveryStrategy(maxAttempts: 2));
+    registerRecoveryStrategy(
+      'TTS_ENGINE_NOT_AVAILABLE',
+      FallbackRecoveryStrategy(),
+    );
+    registerRecoveryStrategy(
+      'TTS_SYNTHESIS_FAILURE',
+      RetryRecoveryStrategy(maxAttempts: 2),
+    );
     registerRecoveryStrategy('TTS_VOICE_NOT_FOUND', FallbackRecoveryStrategy());
   }
 
@@ -244,18 +276,18 @@ class AlouetteErrorHandler {
   bool _isPlatformErrorRecoverable(Object error) {
     final errorString = error.toString().toLowerCase();
     return errorString.contains('network') ||
-           errorString.contains('connection') ||
-           errorString.contains('timeout');
+        errorString.contains('connection') ||
+        errorString.contains('timeout');
   }
 
   bool _isGenericErrorRecoverable(dynamic error) {
     if (error == null) return false;
-    
+
     final errorString = error.toString().toLowerCase();
     return errorString.contains('network') ||
-           errorString.contains('connection') ||
-           errorString.contains('timeout') ||
-           errorString.contains('temporary');
+        errorString.contains('connection') ||
+        errorString.contains('timeout') ||
+        errorString.contains('temporary');
   }
 
   Future<T?> _attemptGenericRecovery<T>(dynamic error, String? context) async {
@@ -366,4 +398,3 @@ class UIErrorListener implements ErrorHandlerListener {
     onErrorCallback(event);
   }
 }
-

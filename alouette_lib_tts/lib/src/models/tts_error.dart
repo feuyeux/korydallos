@@ -1,7 +1,7 @@
 import '../exceptions/tts_exceptions.dart';
 
 /// Legacy TTS Error class for backward compatibility
-/// 
+///
 /// This class provides a simpler interface for TTS errors while using
 /// the standardized error codes from the exceptions module.
 class TTSError extends Error {
@@ -22,24 +22,19 @@ class TTSError extends Error {
   }
 
   /// 检查是否为初始化相关错误
-  bool get isInitializationError => 
-      code == TTSErrorCodes.initializationFailed;
+  bool get isInitializationError => code == TTSErrorCodes.initializationFailed;
 
   /// 检查是否为语音相关错误
-  bool get isVoiceError => 
-      code == TTSErrorCodes.voiceNotFound;
+  bool get isVoiceError => code == TTSErrorCodes.voiceNotFound;
 
   /// 检查是否为合成相关错误
-  bool get isSynthesisError => 
-      code == TTSErrorCodes.synthesisFailure;
+  bool get isSynthesisError => code == TTSErrorCodes.synthesisFailure;
 
   /// 检查是否为播放相关错误
-  bool get isPlaybackError => 
-      code == TTSErrorCodes.audioPlaybackError;
+  bool get isPlaybackError => code == TTSErrorCodes.audioPlaybackError;
 
   /// 检查是否为资源相关错误
-  bool get isResourceError => 
-      code == TTSErrorCodes.resourceNotFound;
+  bool get isResourceError => code == TTSErrorCodes.resourceNotFound;
 
   @override
   String toString() {

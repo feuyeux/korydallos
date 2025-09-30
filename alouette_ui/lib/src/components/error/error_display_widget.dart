@@ -4,31 +4,31 @@ import 'package:flutter/material.dart';
 class ErrorDisplayWidget extends StatelessWidget {
   /// The error to display
   final dynamic error;
-  
+
   /// Custom title for the error (optional)
   final String? title;
-  
+
   /// Custom message for the error (optional)
   final String? message;
-  
+
   /// Callback for retry action
   final VoidCallback? onRetry;
-  
+
   /// Callback for dismiss action
   final VoidCallback? onDismiss;
-  
+
   /// Additional custom actions
   final List<ErrorAction>? customActions;
-  
+
   /// Whether to show technical details
   final bool showTechnicalDetails;
-  
+
   /// Whether to show recovery suggestions
   final bool showRecoveryActions;
-  
+
   /// Icon to display with the error
   final IconData? icon;
-  
+
   /// Color scheme for the error display
   final ErrorDisplayType type;
 
@@ -50,7 +50,7 @@ class ErrorDisplayWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final errorInfo = _extractErrorInfo();
-    
+
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -85,17 +85,18 @@ class ErrorDisplayWidget extends StatelessWidget {
                   ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // User-friendly message
             Text(
               message ?? errorInfo.userMessage,
               style: theme.textTheme.bodyMedium,
             ),
-            
+
             // Recovery actions
-            if (showRecoveryActions && errorInfo.recoveryActions.isNotEmpty) ...[
+            if (showRecoveryActions &&
+                errorInfo.recoveryActions.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
                 'Suggested actions:',
@@ -104,18 +105,20 @@ class ErrorDisplayWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              ...errorInfo.recoveryActions.map((action) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('• '),
-                    Expanded(child: Text(action)),
-                  ],
+              ...errorInfo.recoveryActions.map(
+                (action) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• '),
+                      Expanded(child: Text(action)),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
-            
+
             // Action buttons
             if (_hasActions()) ...[
               const SizedBox(height: 16),
@@ -128,23 +131,27 @@ class ErrorDisplayWidget extends StatelessWidget {
                       icon: const Icon(Icons.refresh),
                       label: const Text('Retry'),
                     ),
-                  ...?customActions?.map((action) => 
-                    action.isElevated
-                      ? ElevatedButton.icon(
-                          onPressed: action.onPressed,
-                          icon: action.icon != null ? Icon(action.icon) : null,
-                          label: Text(action.label),
-                        )
-                      : TextButton.icon(
-                          onPressed: action.onPressed,
-                          icon: action.icon != null ? Icon(action.icon) : null,
-                          label: Text(action.label),
-                        ),
+                  ...?customActions?.map(
+                    (action) => action.isElevated
+                        ? ElevatedButton.icon(
+                            onPressed: action.onPressed,
+                            icon: action.icon != null
+                                ? Icon(action.icon)
+                                : null,
+                            label: Text(action.label),
+                          )
+                        : TextButton.icon(
+                            onPressed: action.onPressed,
+                            icon: action.icon != null
+                                ? Icon(action.icon)
+                                : null,
+                            label: Text(action.label),
+                          ),
                   ),
                 ],
               ),
             ],
-            
+
             // Technical details (expandable)
             if (showTechnicalDetails) ...[
               const SizedBox(height: 16),
@@ -155,7 +162,8 @@ class ErrorDisplayWidget extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -198,7 +206,8 @@ class ErrorDisplayWidget extends StatelessWidget {
   }
 
   bool _hasActions() {
-    return (onRetry != null) || (customActions != null && customActions!.isNotEmpty);
+    return (onRetry != null) ||
+        (customActions != null && customActions!.isNotEmpty);
   }
 
   IconData _getDefaultIcon() {
@@ -228,7 +237,7 @@ class ErrorDisplayWidget extends StatelessWidget {
     if (error != null) {
       try {
         final dynamic dynError = error;
-        
+
         // Check if it has Alouette error properties
         if (error.runtimeType.toString().contains('Alouette')) {
           return ErrorInfo(
@@ -245,7 +254,7 @@ class ErrorDisplayWidget extends StatelessWidget {
         // Fallback to basic error handling
       }
     }
-    
+
     // Fallback for non-Alouette errors
     return ErrorInfo(
       title: _getErrorTitle(),
@@ -260,14 +269,15 @@ class ErrorDisplayWidget extends StatelessWidget {
 
   String _getErrorTitle() {
     if (error == null) return 'Unknown Error';
-    
+
     final errorType = error.runtimeType.toString();
-    
+
     if (errorType.contains('Translation')) {
       return 'Translation Error';
     } else if (errorType.contains('TTS')) {
       return 'Text-to-Speech Error';
-    } else if (errorType.contains('Network') || errorType.contains('Connection')) {
+    } else if (errorType.contains('Network') ||
+        errorType.contains('Connection')) {
       return 'Connection Error';
     } else if (errorType.contains('Timeout')) {
       return 'Timeout Error';
@@ -278,9 +288,9 @@ class ErrorDisplayWidget extends StatelessWidget {
 
   String _getGenericUserMessage() {
     if (error == null) return 'An unknown error occurred.';
-    
+
     final errorString = error.toString().toLowerCase();
-    
+
     if (errorString.contains('connection') || errorString.contains('network')) {
       return 'Unable to connect to the service. Please check your internet connection.';
     } else if (errorString.contains('timeout')) {
@@ -296,20 +306,20 @@ class ErrorDisplayWidget extends StatelessWidget {
 
   bool _isGenericErrorRecoverable() {
     if (error == null) return false;
-    
+
     final errorString = error.toString().toLowerCase();
-    
+
     return errorString.contains('connection') ||
-           errorString.contains('timeout') ||
-           errorString.contains('network') ||
-           errorString.contains('temporary');
+        errorString.contains('timeout') ||
+        errorString.contains('network') ||
+        errorString.contains('temporary');
   }
 
   List<String> _getGenericRecoveryActions() {
     if (error == null) return ['Contact support'];
-    
+
     final errorString = error.toString().toLowerCase();
-    
+
     if (errorString.contains('connection') || errorString.contains('network')) {
       return ['Check internet connection', 'Try again'];
     } else if (errorString.contains('timeout')) {
@@ -359,11 +369,7 @@ class ErrorAction {
 }
 
 /// Type of error display
-enum ErrorDisplayType {
-  error,
-  warning,
-  info,
-}
+enum ErrorDisplayType { error, warning, info }
 
 /// Compact error banner widget
 class ErrorBannerWidget extends StatelessWidget {
@@ -386,26 +392,19 @@ class ErrorBannerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final errorInfo = _extractErrorInfo();
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _getBackgroundColor(theme),
         border: Border(
-          left: BorderSide(
-            color: _getAccentColor(theme),
-            width: 4,
-          ),
+          left: BorderSide(color: _getAccentColor(theme), width: 4),
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            _getIcon(),
-            color: _getAccentColor(theme),
-            size: 20,
-          ),
+          Icon(_getIcon(), color: _getAccentColor(theme), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -415,10 +414,7 @@ class ErrorBannerWidget extends StatelessWidget {
           ),
           if (onRetry != null && errorInfo.isRecoverable) ...[
             const SizedBox(width: 8),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
           ],
           if (onDismiss != null) ...[
             const SizedBox(width: 4),
@@ -458,11 +454,11 @@ class ErrorBannerWidget extends StatelessWidget {
   Color _getBackgroundColor(ThemeData theme) {
     switch (type) {
       case ErrorDisplayType.error:
-        return theme.colorScheme.errorContainer.withValues(alpha:0.1);
+        return theme.colorScheme.errorContainer.withValues(alpha: 0.1);
       case ErrorDisplayType.warning:
-        return Colors.orange.withValues(alpha:0.1);
+        return Colors.orange.withValues(alpha: 0.1);
       case ErrorDisplayType.info:
-        return theme.colorScheme.primaryContainer.withValues(alpha:0.1);
+        return theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
     }
   }
 
@@ -486,7 +482,7 @@ class ErrorBannerWidget extends StatelessWidget {
         // Fallback
       }
     }
-    
+
     return ErrorInfo(
       title: 'Error',
       userMessage: error?.toString() ?? 'An error occurred',

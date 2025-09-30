@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../controllers/tts_controller.dart' as local;
+import 'package:alouette_ui/alouette_ui.dart';
 import '../widgets/tts_input_section.dart';
 import '../widgets/tts_control_section.dart';
 
 class TTSPage extends StatefulWidget {
-  final local.TTSController controller;
+  final ITTSController controller;
   final TextEditingController textController;
-  
+
   const TTSPage({
     super.key,
     required this.controller,
@@ -27,28 +27,18 @@ class _TTSPageState extends State<TTSPage> {
           // Text input and voice selection - Takes most space
           Expanded(
             flex: 3,
-            child: ListenableBuilder(
-              listenable: widget.controller,
-              builder: (context, child) {
-                return TTSInputSection(
-                  controller: widget.controller,
-                  textController: widget.textController,
-                );
-              },
+            child: TTSInputSection(
+              controller: widget.controller,
+              textController: widget.textController,
             ),
           ),
-          
+
           const SizedBox(height: 2),
-          
+
           // TTS controls and parameters - Compact at bottom
-          ListenableBuilder(
-            listenable: widget.controller,
-            builder: (context, child) {
-              return TTSControlSection(
-                controller: widget.controller,
-                textController: widget.textController,
-              );
-            },
+          TTSControlSection(
+            controller: widget.controller,
+            textController: widget.textController,
           ),
         ],
       ),

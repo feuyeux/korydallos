@@ -51,8 +51,9 @@ class PlatformUtils {
     if (Platform.isMacOS) {
       // Still try a quick check but don't fail if it doesn't work
       try {
-        final result = await Process.run('which', ['edge-tts'])
-            .timeout(Duration(seconds: 2));
+        final result = await Process.run('which', [
+          'edge-tts',
+        ]).timeout(Duration(seconds: 2));
         if (result.exitCode == 0) {
           return true;
         }
@@ -64,22 +65,22 @@ class PlatformUtils {
       return true;
     }
 
-
-
     // 策略1: 使用 which/where 命令查找 - 最可靠的方法
     try {
       final whichCmd = Platform.isWindows ? 'where' : 'which';
-      final whichResult = await Process.run(whichCmd, ['edge-tts'])
-          .timeout(Duration(seconds: 3));
+      final whichResult = await Process.run(whichCmd, [
+        'edge-tts',
+      ]).timeout(Duration(seconds: 3));
 
       if (whichResult.exitCode == 0) {
         final edgePath = whichResult.stdout.toString().trim().split('\n').first;
-        
+
         if (edgePath.isNotEmpty) {
           // 验证 edge-tts 是否真的可用
           try {
-            final testResult = await Process.run(edgePath, ['--list-voices'])
-                .timeout(Duration(seconds: 5));
+            final testResult = await Process.run(edgePath, [
+              '--list-voices',
+            ]).timeout(Duration(seconds: 5));
             if (testResult.exitCode == 0) {
               return true;
             }
@@ -94,15 +95,15 @@ class PlatformUtils {
 
     // 策略2: 直接尝试执行 edge-tts (可能在 PATH 中但 which/where 失败)
     try {
-      final result = await Process.run('edge-tts', ['--list-voices'])
-          .timeout(Duration(seconds: 5));
+      final result = await Process.run('edge-tts', [
+        '--list-voices',
+      ]).timeout(Duration(seconds: 5));
       if (result.exitCode == 0) {
         return true;
       }
     } catch (e) {
       // Direct execution failed
     }
-
 
     return false;
   }
@@ -119,12 +120,11 @@ class PlatformUtils {
     try {
       return await isEdgeTTSAvailable().timeout(timeout);
     } catch (e) {
-
-
       // If the full check times out, try a simpler check
       try {
-        final result = await Process.run('which', ['edge-tts'])
-            .timeout(Duration(seconds: 3));
+        final result = await Process.run('which', [
+          'edge-tts',
+        ]).timeout(Duration(seconds: 3));
         final isAvailable = result.exitCode == 0;
         return isAvailable;
       } catch (e2) {
@@ -143,8 +143,9 @@ class PlatformUtils {
     // 使用 which/where 命令查找 - 这是最简单可靠的方法
     try {
       final whichCmd = Platform.isWindows ? 'where' : 'which';
-      final result = await Process.run(whichCmd, ['edge-tts'])
-          .timeout(Duration(seconds: 3));
+      final result = await Process.run(whichCmd, [
+        'edge-tts',
+      ]).timeout(Duration(seconds: 3));
       if (result.exitCode == 0) {
         final path = result.stdout.toString().trim().split('\n').first;
         if (path.isNotEmpty) {
@@ -157,8 +158,9 @@ class PlatformUtils {
 
     // 如果 which/where 失败，但 edge-tts 可能仍在 PATH 中
     try {
-      final result = await Process.run('edge-tts', ['--version'])
-          .timeout(Duration(seconds: 3));
+      final result = await Process.run('edge-tts', [
+        '--version',
+      ]).timeout(Duration(seconds: 3));
       if (result.exitCode == 0) {
         return 'edge-tts'; // 返回命令名，让系统通过 PATH 查找
       }

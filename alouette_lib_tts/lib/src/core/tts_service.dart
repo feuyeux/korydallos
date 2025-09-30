@@ -9,16 +9,25 @@ import '../utils/error_handler.dart';
 import 'tts_engine_factory.dart';
 import 'platform_detector.dart';
 import 'tts_service_interface.dart';
+import 'audio_player.dart';
+import 'voice_service.dart';
 
 /// Unified TTS Service - Main service interface for text-to-speech functionality
 /// Provides consistent API across all TTS engines with automatic platform detection
 class TTSService implements TTSServiceInterface {
   TTSProcessor? _processor;
   TTSEngineType? _currentEngine;
+  AudioPlayer? _audioPlayer;
   bool _initialized = false;
 
   final TTSEngineFactory _engineFactory = TTSEngineFactory.instance;
   final PlatformDetector _platformDetector = PlatformDetector();
+
+  /// Get audio player instance
+  AudioPlayer get audioPlayer {
+    _audioPlayer ??= AudioPlayer();
+    return _audioPlayer!;
+  }
 
   /// Get current engine type
   TTSEngineType? get currentEngine => _currentEngine;
@@ -45,17 +54,19 @@ class TTSService implements TTSServiceInterface {
       if (preferredEngine != null) {
         // Check if preferred engine is supported on current platform
         final strategy = _platformDetector.getTTSStrategy();
-        
+
         if (!strategy.isEngineSupported(preferredEngine)) {
-          TTSLogger.warning('Preferred engine ${preferredEngine.name} is not supported on ${_platformDetector.platformName}');
-          
+          TTSLogger.warning(
+            'Preferred engine ${preferredEngine.name} is not supported on ${_platformDetector.platformName}',
+          );
+
           if (!autoFallback) {
             throw TTSError(
               'Engine ${preferredEngine.name} is not supported on ${_platformDetector.platformName}',
               code: TTSErrorCodes.platformNotSupported,
             );
           }
-          
+
           // Use platform-specific fallback
           _processor = await _engineFactory.createForPlatform();
           _currentEngine = _getActualEngineFromProcessor();
@@ -64,16 +75,24 @@ class TTSService implements TTSServiceInterface {
           try {
             _processor = await _engineFactory.createForEngine(preferredEngine);
             _currentEngine = preferredEngine;
-            TTSLogger.engine('Initialized', preferredEngine.name, 'Using preferred engine');
+            TTSLogger.engine(
+              'Initialized',
+              preferredEngine.name,
+              'Using preferred engine',
+            );
           } catch (e) {
-            TTSLogger.warning('Preferred engine ${preferredEngine.name} failed: $e');
+            TTSLogger.warning(
+              'Preferred engine ${preferredEngine.name} failed: $e',
+            );
 
             if (!autoFallback) {
               rethrow; // Don't fallback if not allowed
             }
 
             // Fallback using platform strategy
-            TTSLogger.warning('Preferred engine ${preferredEngine.name} failed, using platform fallback strategy');
+            TTSLogger.warning(
+              'Preferred engine ${preferredEngine.name} failed, using platform fallback strategy',
+            );
             _processor = await _engineFactory.createForPlatform();
             _currentEngine = _getActualEngineFromProcessor();
           }
@@ -85,7 +104,11 @@ class TTSService implements TTSServiceInterface {
       }
 
       _initialized = true;
-      TTSLogger.initialization('TTS service', 'completed', 'Using ${_currentEngine?.name} engine on ${_platformDetector.platformName}');
+      TTSLogger.initialization(
+        'TTS service',
+        'completed',
+        'Using ${_currentEngine?.name} engine on ${_platformDetector.platformName}',
+      );
     } catch (e) {
       throw ErrorHandler.handleInitializationError(e, 'TTS service');
     }
@@ -110,17 +133,24 @@ class TTSService implements TTSServiceInterface {
           code: TTSErrorCodes.platformNotSupported,
         );
       }
-      
+
       // Use platform fallback strategy
-      TTSLogger.warning('Engine ${engineType.name} not supported on ${_platformDetector.platformName}, using platform fallback');
+      TTSLogger.warning(
+        'Engine ${engineType.name} not supported on ${_platformDetector.platformName}, using platform fallback',
+      );
       final fallbackEngines = strategy.getFallbackEngines();
-      
+
       for (final fallbackEngine in fallbackEngines) {
-        if (fallbackEngine != engineType && await isEngineAvailable(fallbackEngine)) {
-          return await switchEngine(fallbackEngine, disposeOld: disposeOld, autoFallback: false);
+        if (fallbackEngine != engineType &&
+            await isEngineAvailable(fallbackEngine)) {
+          return await switchEngine(
+            fallbackEngine,
+            disposeOld: disposeOld,
+            autoFallback: false,
+          );
         }
       }
-      
+
       throw TTSError(
         'No suitable fallback engine available for ${engineType.name} on ${_platformDetector.platformName}',
         code: TTSErrorCodes.noFallbackAvailable,
@@ -133,7 +163,11 @@ class TTSService implements TTSServiceInterface {
       // Create new processor
       _processor = await _engineFactory.createForEngine(engineType);
       _currentEngine = engineType;
-      TTSLogger.engine('Switched', engineType.name, 'Engine switch completed successfully on ${_platformDetector.platformName}');
+      TTSLogger.engine(
+        'Switched',
+        engineType.name,
+        'Engine switch completed successfully on ${_platformDetector.platformName}',
+      );
 
       // Dispose old processor
       if (disposeOld && oldProcessor != null) {
@@ -147,7 +181,10 @@ class TTSService implements TTSServiceInterface {
     } catch (e) {
       // Restore old processor on failure
       _processor = oldProcessor;
-      throw ErrorHandler.handleInitializationError(e, '${engineType.name} engine');
+      throw ErrorHandler.handleInitializationError(
+        e,
+        '${engineType.name} engine',
+      );
     }
   }
 
@@ -158,7 +195,10 @@ class TTSService implements TTSServiceInterface {
     try {
       return await _processor!.getAvailableVoices();
     } catch (e) {
-      throw ErrorHandler.handleVoiceError(e, 'retrieval from ${_currentEngine?.name} engine');
+      throw ErrorHandler.handleVoiceError(
+        e,
+        'retrieval from ${_currentEngine?.name} engine',
+      );
     }
   }
 
@@ -229,7 +269,10 @@ class TTSService implements TTSServiceInterface {
       'currentEngineName': currentEngineName,
       'isInitialized': isInitialized,
       'strategy': strategy.runtimeType.toString(),
-      'fallbackEngines': strategy.getFallbackEngines().map((e) => e.name).toList(),
+      'fallbackEngines': strategy
+          .getFallbackEngines()
+          .map((e) => e.name)
+          .toList(),
       'supportedEngines': TTSEngineType.values
           .where((e) => strategy.isEngineSupported(e))
           .map((e) => e.name)
@@ -245,6 +288,72 @@ class TTSService implements TTSServiceInterface {
   /// Get all available engines
   Future<List<TTSEngineType>> getAvailableEngines() async {
     return await _engineFactory.getAvailableEngines();
+  }
+
+  /// Speak text directly with audio playback
+  Future<void> speakText(
+    String text, {
+    String? voiceName,
+    String? languageName,
+    String format = 'mp3',
+  }) async {
+    _ensureInitialized();
+
+    try {
+      // Use provided voice or find best voice for language
+      String selectedVoice = voiceName ?? '';
+      if (selectedVoice.isEmpty) {
+        VoiceModel? bestVoice;
+
+        // Try to find voice by language name first
+        if (languageName != null && languageName.isNotEmpty) {
+          final voiceService = VoiceService(this);
+          bestVoice = await voiceService.getBestVoiceForLanguageName(
+            languageName,
+          );
+        }
+
+        // Fallback to first available voice
+        if (bestVoice == null) {
+          final voices = await getVoices();
+          if (voices.isNotEmpty) {
+            bestVoice = voices.first;
+          } else {
+            throw TTSError(
+              'No voices available for TTS',
+              code: TTSErrorCodes.noVoicesAvailable,
+            );
+          }
+        }
+
+        selectedVoice = bestVoice.id;
+      }
+
+      TTSLogger.debug('Speaking text with voice: $selectedVoice');
+
+      final audioData = await synthesizeText(
+        text,
+        selectedVoice,
+        format: format,
+      );
+
+      // Check if this is minimal audio data (direct playback mode)
+      if (audioData.length <= 10) {
+        TTSLogger.debug(
+          'Using direct playback mode - audio should have played already',
+        );
+        return; // Direct playback has already occurred
+      }
+
+      await audioPlayer.playBytes(audioData);
+      TTSLogger.debug('Audio playback completed');
+    } catch (e) {
+      throw TTSError(
+        'Failed to speak text using ${_currentEngine?.name} engine: $e',
+        code: TTSErrorCodes.speakError,
+        originalError: e,
+      );
+    }
   }
 
   /// Get platform-specific configuration for an engine
@@ -280,10 +389,12 @@ class TTSService implements TTSServiceInterface {
     TTSLogger.debug('Disposing TTS service');
     try {
       _processor?.dispose();
+      _audioPlayer?.dispose();
     } catch (e) {
-      TTSLogger.warning('Error during processor disposal: $e');
+      TTSLogger.warning('Error during disposal: $e');
     } finally {
       _processor = null;
+      _audioPlayer = null;
       _currentEngine = null;
       _initialized = false;
       TTSLogger.debug('TTS service disposed successfully');
@@ -303,7 +414,7 @@ class TTSService implements TTSServiceInterface {
   /// Get the actual engine type from the processor
   TTSEngineType? _getActualEngineFromProcessor() {
     if (_processor == null) return null;
-    
+
     switch (_processor!.engineName) {
       case 'edge':
         return TTSEngineType.edge;

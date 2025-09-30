@@ -26,18 +26,23 @@ class TTSEngineFactory {
     try {
       final strategy = _platformDetector.getTTSStrategy();
       final fallbackEngines = strategy.getFallbackEngines();
-      
+
       TTSLogger.debug('Platform strategy: ${strategy.runtimeType}');
-      TTSLogger.debug('Fallback engines: ${fallbackEngines.map((e) => e.name).join(', ')}');
-      
+      TTSLogger.debug(
+        'Fallback engines: ${fallbackEngines.map((e) => e.name).join(', ')}',
+      );
+
       // Try engines in order of preference
       for (final engine in fallbackEngines) {
         try {
-          if (strategy.isEngineSupported(engine) && await isEngineAvailable(engine)) {
+          if (strategy.isEngineSupported(engine) &&
+              await isEngineAvailable(engine)) {
             TTSLogger.debug('Using engine: ${engine.name}');
             return await createForEngine(engine);
           } else {
-            TTSLogger.debug('Engine ${engine.name} not available, trying next...');
+            TTSLogger.debug(
+              'Engine ${engine.name} not available, trying next...',
+            );
           }
         } catch (e) {
           TTSLogger.warning('Failed to create ${engine.name} engine: $e');
@@ -48,7 +53,9 @@ class TTSEngineFactory {
       // If no engines from strategy work, try any available engine
       final availableEngines = await getAvailableEngines();
       if (availableEngines.isNotEmpty) {
-        TTSLogger.warning('Using fallback engine: ${availableEngines.first.name}');
+        TTSLogger.warning(
+          'Using fallback engine: ${availableEngines.first.name}',
+        );
         return await createForEngine(availableEngines.first);
       }
 
@@ -71,17 +78,16 @@ class TTSEngineFactory {
     // Check availability first
     final available = await isEngineAvailable(engineType);
     if (!available) {
-      String errorMessage = '${engineType.name} TTS is not available on this system.';
-      
+      String errorMessage =
+          '${engineType.name} TTS is not available on this system.';
+
       // Provide installation suggestions
       if (engineType == TTSEngineType.edge) {
-        errorMessage += '\nTo install: pip install edge-tts\nEnsure Python and pip are in your PATH.';
+        errorMessage +=
+            '\nTo install: pip install edge-tts\nEnsure Python and pip are in your PATH.';
       }
 
-      throw TTSError(
-        errorMessage,
-        code: TTSErrorCodes.initializationFailed,
-      );
+      throw TTSError(errorMessage, code: TTSErrorCodes.initializationFailed);
     }
 
     // Create processor based on engine type
@@ -114,7 +120,9 @@ class TTSEngineFactory {
           availableEngines.add(engineType);
         }
       } catch (e) {
-        TTSLogger.warning('Failed to check availability for ${engineType.name}: $e');
+        TTSLogger.warning(
+          'Failed to check availability for ${engineType.name}: $e',
+        );
       }
     }
 
@@ -136,7 +144,9 @@ class TTSEngineFactory {
   /// Check Edge TTS availability
   Future<bool> _isEdgeTTSAvailable() async {
     if (!_platformDetector.supportsProcessExecution) {
-      TTSLogger.debug('Edge TTS not supported: platform does not support process execution');
+      TTSLogger.debug(
+        'Edge TTS not supported: platform does not support process execution',
+      );
       return false;
     }
 
@@ -154,8 +164,9 @@ class TTSEngineFactory {
 
         // Try version command for more info
         try {
-          final result = await Process.run('edge-tts', ['--version'])
-              .timeout(const Duration(seconds: 5));
+          final result = await Process.run('edge-tts', [
+            '--version',
+          ]).timeout(const Duration(seconds: 5));
           TTSLogger.debug('edge-tts --version exit code: ${result.exitCode}');
           TTSLogger.debug('edge-tts --version stdout: ${result.stdout}');
           TTSLogger.debug('edge-tts --version stderr: ${result.stderr}');

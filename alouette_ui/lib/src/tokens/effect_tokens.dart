@@ -17,91 +17,63 @@ class EffectTokens {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.blue400,
-      ColorTokens.blue600,
-    ],
+    colors: [ColorTokens.blue400, ColorTokens.blue600],
   );
 
   /// Secondary gradient (light to dark secondary)
   static const LinearGradient secondaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.green400,
-      ColorTokens.green600,
-    ],
+    colors: [ColorTokens.green400, ColorTokens.green600],
   );
 
   /// Accent gradient (warm colors)
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.amber400,
-      ColorTokens.amber600,
-    ],
+    colors: [ColorTokens.amber400, ColorTokens.amber600],
   );
 
   /// Success gradient
   static const LinearGradient successGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.green400,
-      ColorTokens.green600,
-    ],
+    colors: [ColorTokens.green400, ColorTokens.green600],
   );
 
   /// Warning gradient
   static const LinearGradient warningGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.yellow400,
-      ColorTokens.yellow600,
-    ],
+    colors: [ColorTokens.yellow400, ColorTokens.yellow600],
   );
 
   /// Error gradient
   static const LinearGradient errorGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      ColorTokens.red400,
-      ColorTokens.red600,
-    ],
+    colors: [ColorTokens.red400, ColorTokens.red600],
   );
 
   /// Neutral gradient (for backgrounds)
   static const LinearGradient neutralGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      ColorTokens.gray50,
-      ColorTokens.gray100,
-    ],
+    colors: [ColorTokens.gray50, ColorTokens.gray100],
   );
 
   /// Dark gradient (for dark theme backgrounds)
   static const LinearGradient darkGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      ColorTokens.gray900,
-      ColorTokens.gray800,
-    ],
+    colors: [ColorTokens.gray900, ColorTokens.gray800],
   );
 
   /// Shimmer gradient (for loading states)
   static const LinearGradient shimmerGradient = LinearGradient(
     begin: Alignment(-1.0, -0.3),
     end: Alignment(1.0, 0.3),
-    colors: [
-      Color(0xFFE0E0E0),
-      Color(0xFFF5F5F5),
-      Color(0xFFE0E0E0),
-    ],
+    colors: [Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
     stops: [0.0, 0.5, 1.0],
   );
 
@@ -232,67 +204,67 @@ class EffectTokens {
 
   /// Card decoration with shadow
   static BoxDecoration get cardDecoration => BoxDecoration(
-        color: ColorTokens.surface,
-        borderRadius: radiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: ColorTokens.shadow,
-            offset: const Offset(0, 2),
-            blurRadius: 8,
-            spreadRadius: 0,
-          ),
-        ],
-      );
+    color: ColorTokens.surface,
+    borderRadius: radiusLarge,
+    boxShadow: [
+      BoxShadow(
+        color: ColorTokens.shadow,
+        offset: const Offset(0, 2),
+        blurRadius: 8,
+        spreadRadius: 0,
+      ),
+    ],
+  );
 
   /// Elevated card decoration
   static BoxDecoration get elevatedCardDecoration => BoxDecoration(
-        color: ColorTokens.surface,
-        borderRadius: radiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: ColorTokens.shadow,
-            offset: const Offset(0, 4),
-            blurRadius: 16,
-            spreadRadius: 0,
-          ),
-        ],
-      );
+    color: ColorTokens.surface,
+    borderRadius: radiusLarge,
+    boxShadow: [
+      BoxShadow(
+        color: ColorTokens.shadow,
+        offset: const Offset(0, 4),
+        blurRadius: 16,
+        spreadRadius: 0,
+      ),
+    ],
+  );
 
   /// Button decoration
   static BoxDecoration get buttonDecoration => BoxDecoration(
-        gradient: primaryGradient,
-        borderRadius: radiusMedium,
-        boxShadow: [
-          BoxShadow(
-            color: ColorTokens.primary.withValues(alpha: 0.3),
-            offset: const Offset(0, 2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      );
+    gradient: primaryGradient,
+    borderRadius: radiusMedium,
+    boxShadow: [
+      BoxShadow(
+        color: ColorTokens.primary.withValues(alpha: 0.3),
+        offset: const Offset(0, 2),
+        blurRadius: 4,
+        spreadRadius: 0,
+      ),
+    ],
+  );
 
   /// Input field decoration
   static BoxDecoration get inputDecoration => BoxDecoration(
-        color: ColorTokens.surfaceVariant,
-        borderRadius: radiusMedium,
-        border: Border.all(color: ColorTokens.outline),
-      );
+    color: ColorTokens.surfaceVariant,
+    borderRadius: radiusMedium,
+    border: Border.all(color: ColorTokens.outline),
+  );
 
   /// Focus decoration (for input fields)
   static BoxDecoration get focusDecoration => BoxDecoration(
-        color: ColorTokens.surfaceVariant,
-        borderRadius: radiusMedium,
-        border: Border.all(color: ColorTokens.primary, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: ColorTokens.primary.withValues(alpha: 0.2),
-            offset: const Offset(0, 0),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      );
+    color: ColorTokens.surfaceVariant,
+    borderRadius: radiusMedium,
+    border: Border.all(color: ColorTokens.primary, width: 2),
+    boxShadow: [
+      BoxShadow(
+        color: ColorTokens.primary.withValues(alpha: 0.2),
+        offset: const Offset(0, 0),
+        blurRadius: 8,
+        spreadRadius: 2,
+      ),
+    ],
+  );
 
   // ============================================================================
   // HELPER METHODS
@@ -305,12 +277,7 @@ class EffectTokens {
     Alignment end = Alignment.bottomRight,
     List<double>? stops,
   }) {
-    return LinearGradient(
-      begin: begin,
-      end: end,
-      colors: colors,
-      stops: stops,
-    );
+    return LinearGradient(begin: begin, end: end, colors: colors, stops: stops);
   }
 
   /// Create custom border
@@ -319,11 +286,7 @@ class EffectTokens {
     double width = 1.0,
     BorderStyle style = BorderStyle.solid,
   }) {
-    return BorderSide(
-      color: color,
-      width: width,
-      style: style,
-    );
+    return BorderSide(color: color, width: width, style: style);
   }
 
   /// Create custom border radius
