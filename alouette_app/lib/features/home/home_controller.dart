@@ -1,15 +1,13 @@
-import 'package:flutter/foundation.dart';
-
 class HomeController {
   HomeController() {
     _initialize();
   }
 
   void _initialize() {
-    debugPrint('HomeController: Initialized');
+    // Controller initialized
   }
 
   void dispose() {
-    debugPrint('HomeController: Disposed');
+    // Controller disposed
   }
 }

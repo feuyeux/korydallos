@@ -38,7 +38,7 @@ class ConfigurationManager {
       _isInitialized = true;
       _initializationCompleter.complete();
 
-      debugPrint('ConfigurationManager initialized successfully');
+
     } catch (e) {
       debugPrint('Failed to initialize ConfigurationManager: $e');
       _initializationCompleter.completeError(e);

@@ -3,11 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 
-// Debug logging helper
-void _debugLog(String message) {
-  print('[TranslationPanel] ${DateTime.now().millisecondsSinceEpoch % 100000}: $message');
-}
-
 /// Translation Panel Organism
 ///
 /// Complex component for translation input, language selection, and results display
@@ -40,24 +35,22 @@ class TranslationPanel extends StatefulWidget {
 }
 
 class _TranslationPanelState extends State<TranslationPanel> {
-  late TextEditingController _textController;
+  String _currentText = '';
 
   @override
   void initState() {
     super.initState();
-    _textController = widget.textController;
-    _debugLog('TranslationPanel initialized');
-    _debugLog('Initial selected languages: ${widget.selectedLanguages.map((l) => l.name).toList()}');
-    _debugLog('Initial text: "${_textController.text}"');
+    _currentText = widget.textController.text;
+  }
+
+  void _onTextChanged(String text) {
+    setState(() {
+      _currentText = text;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    _debugLog('=== BUILD called ===');
-    _debugLog('Selected languages: ${widget.selectedLanguages.map((l) => '${l.name}(${l.code})').toList()}');
-    _debugLog('Text controller text: "${_textController.text}"');
-    _debugLog('Is translating: ${widget.isTranslating}');
-    
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       decoration: BoxDecoration(
@@ -107,37 +100,29 @@ class _TranslationPanelState extends State<TranslationPanel> {
 
   Widget _buildTextInput() {
     return SizedBox(
-      height: 90, // Increased height
+      height: 90,
       child: TextField(
-        controller: _textController,
+        controller: widget.textController,
         maxLines: null,
         expands: true,
         decoration: const InputDecoration(
           labelText: 'Text to translate',
           hintText: 'Enter text to translate...',
           border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.all(8), // Further reduced padding
-          labelStyle: TextStyle(fontSize: 16), // Larger label
+          contentPadding: EdgeInsets.all(8),
+          labelStyle: TextStyle(fontSize: 16),
         ),
-        style: const TextStyle(fontSize: 14), // Smaller text
+        style: const TextStyle(fontSize: 14),
         enabled: !widget.isTranslating,
+        onChanged: _onTextChanged,
       ),
     );
   }
 
   Widget _buildActionBar() {
-    final hasText = _textController.text.isNotEmpty;
+    final hasText = _currentText.isNotEmpty;
     final hasLanguages = widget.selectedLanguages.isNotEmpty;
     final canTranslate = hasText && hasLanguages && !widget.isTranslating;
-    
-    _debugLog('=== ActionBar Build ===');
-    _debugLog('Text controller text: "${_textController.text}"');
-    _debugLog('Text controller text length: ${_textController.text.length}');
-    _debugLog('hasText: $hasText');
-    _debugLog('Selected languages: ${widget.selectedLanguages.map((l) => l.name).toList()}');
-    _debugLog('hasLanguages: $hasLanguages');
-    _debugLog('isTranslating: ${widget.isTranslating}');
-    _debugLog('canTranslate: $canTranslate');
 
     return Row(
       children: [
@@ -145,7 +130,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
           flex: 1,
           child: ElevatedButton(
             onPressed: () {
-              _debugLog('Clear button pressed');
               _clearLanguages();
             },
             style: ElevatedButton.styleFrom(
@@ -160,7 +144,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
           flex: 1,
           child: ElevatedButton(
             onPressed: () {
-              _debugLog('Select All button pressed');
               _selectAllLanguages();
             },
             style: ElevatedButton.styleFrom(
@@ -175,8 +158,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
           flex: 2,
           child: ElevatedButton.icon(
             onPressed: canTranslate ? () {
-              _debugLog('Translate button pressed');
-              _debugLog('Calling widget.onTranslate callback');
               widget.onTranslate?.call();
             } : null,
             style: ElevatedButton.styleFrom(
@@ -273,7 +254,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
               IconButton(
                 icon: const Icon(Icons.copy, size: 18),
                 onPressed: () {
-                  _debugLog('Copy button pressed for ${language.name}');
                   _copyToClipboard(entry.value);
                 },
                 tooltip: 'Copy translation',
@@ -290,75 +270,46 @@ class _TranslationPanelState extends State<TranslationPanel> {
   }
 
   void _handleLanguageTap(LanguageOption language) {
-    _debugLog('Language chip tapped: ${language.name} (${language.code})');
-    
     final currentSelection = List<LanguageOption>.from(widget.selectedLanguages);
     
     // 通过语言代码比较来确定是否已选中
     final wasSelected = currentSelection.any((selected) => selected.code == language.code);
-    _debugLog('Was selected: $wasSelected');
     
     if (wasSelected) {
       // 移除所有匹配的语言代码
       currentSelection.removeWhere((selected) => selected.code == language.code);
-      _debugLog('Removed ${language.name} from selection');
     } else {
       // 添加语言（确保不重复）
       if (!currentSelection.any((selected) => selected.code == language.code)) {
         currentSelection.add(language);
-        _debugLog('Added ${language.name} to selection');
       }
     }
 
-    _debugLog('New selection codes: ${currentSelection.map((l) => l.code).toList()}');
-    _debugLog('New selection names: ${currentSelection.map((l) => l.name).toList()}');
-    _debugLog('Calling onLanguagesChanged callback');
     widget.onLanguagesChanged?.call(currentSelection);
   }
 
   void _selectAllLanguages() {
-    _debugLog('_selectAllLanguages called');
-    _debugLog('Current selection count: ${widget.selectedLanguages.length}');
-    _debugLog('Total languages count: ${LanguageConstants.supportedLanguages.length}');
-    
     // 检查是否所有语言都已选中（通过比较语言代码）
     final selectedCodes = widget.selectedLanguages.map((l) => l.code).toSet();
     final allCodes = LanguageConstants.supportedLanguages.map((l) => l.code).toSet();
     final isAllSelected = selectedCodes.containsAll(allCodes) && allCodes.containsAll(selectedCodes);
     
-    _debugLog('Selected codes: $selectedCodes');
-    _debugLog('All codes: $allCodes');
-    _debugLog('Is all selected: $isAllSelected');
-    
     if (isAllSelected) {
-      _debugLog('All languages selected, clearing selection');
       widget.onLanguagesChanged?.call([]);
     } else {
       // 否则全选
-      _debugLog('Not all languages selected, selecting all');
       final allLanguages = List<LanguageOption>.from(LanguageConstants.supportedLanguages);
-      _debugLog('Selecting languages: ${allLanguages.map((l) => l.name).toList()}');
       widget.onLanguagesChanged?.call(allLanguages);
     }
   }
 
   void _clearLanguages() {
-    _debugLog('_clearLanguages called');
-    _debugLog('Text before clear: "${_textController.text}"');
-    
-    _debugLog('Clearing language selection');
     widget.onLanguagesChanged?.call([]);
+    widget.textController.clear();
     
-    _debugLog('Clearing text input');
-    _textController.clear();
-    
-    _debugLog('Text after clear: "${_textController.text}"');
-    _debugLog('Triggering setState to update UI');
-    
-    // 强制触发 UI 更新
-    setState(() {});
-    
-    _debugLog('Clear operation completed');
+    setState(() {
+      _currentText = '';
+    });
   }
 
   Widget _buildLanguageGrid() {
@@ -382,7 +333,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
       children: languages.map((language) {
         // 通过语言代码比较来确定是否选中，而不是对象引用
         final isSelected = widget.selectedLanguages.any((selected) => selected.code == language.code);
-        _debugLog('Language ${language.name} (${language.code}) isSelected: $isSelected');
         
         return Expanded(
           child: Padding(
@@ -395,7 +345,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
               child: FilterChip(
                 selected: isSelected,
                 onSelected: (selected) {
-                  _debugLog('FilterChip onSelected called for ${language.name}, selected: $selected, current isSelected: $isSelected');
                   _handleLanguageTap(language);
                 },
                 avatar: Text(
@@ -441,18 +390,14 @@ class _TranslationPanelState extends State<TranslationPanel> {
   }
 
   void _copyToClipboard(String text) {
-    _debugLog('_copyToClipboard called with text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."');
-    
     try {
       Clipboard.setData(ClipboardData(text: text));
-      _debugLog('Text copied to clipboard successfully');
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Translation copied to clipboard')),
       );
-      _debugLog('Snackbar shown');
     } catch (e) {
-      _debugLog('Error copying to clipboard: $e');
+      // Handle error silently
     }
   }
 }

@@ -51,16 +51,11 @@ class _TranslationPageState extends State<TranslationPage>
                       textController: _textController,
                       selectedLanguages: selectedLanguages,
                       onLanguagesChanged: (languages) {
-                        print('[TranslationPage] onLanguagesChanged called with: ${languages}');
-                        print('[TranslationPage] Current selection before change: ${_languageController.selectedItems}');
-                        
                         // 先清除所有选择，然后选择新的语言列表
                         _languageController.clearSelection();
                         if (languages.isNotEmpty) {
                           _languageController.selectMultiple(languages);
                         }
-                        
-                        print('[TranslationPage] New selection after change: ${_languageController.selectedItems}');
                       },
                       onLanguageToggle: (language, selected) {
                         if (selected) {
@@ -71,11 +66,7 @@ class _TranslationPageState extends State<TranslationPage>
                       },
                       onTranslate: _translateText,
                       onClearResults: () {
-                        print('[TranslationPage] onClearResults callback called');
-                        print('[TranslationPage] Current translations: ${_controller.translations}');
-                        print('[TranslationPage] Calling _controller.clearTranslations()');
                         _controller.clearTranslations();
-                        print('[TranslationPage] After clearTranslations: ${_controller.translations}');
                       },
                       isTranslating: isTranslating,
                       isConfigured:
@@ -311,7 +302,7 @@ class _TranslationPageState extends State<TranslationPage>
         );
       }
     } catch (e) {
-      debugPrint('TTS Error: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

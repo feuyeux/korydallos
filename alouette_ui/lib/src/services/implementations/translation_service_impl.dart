@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 import '../interfaces/translation_service_interface.dart';
 
@@ -34,18 +33,12 @@ class TranslationServiceImpl implements ITranslationService {
             true; // Service is initialized even if auto-config fails
 
         if (success) {
-          debugPrint(
-            'Translation Service initialized successfully with auto-configuration',
-          );
-        } else {
-          debugPrint(
-            'Translation Service initialized but no auto-configuration found',
-          );
+
         }
         return true; // Return true even if auto-config failed, service can still be used manually
       });
     } catch (e) {
-      debugPrint('Translation initialization error: $e');
+
       _cleanup();
       return false;
     }
@@ -132,7 +125,7 @@ class TranslationServiceImpl implements ITranslationService {
       // This could be enhanced with actual language detection logic
       return null;
     } catch (e) {
-      debugPrint('Error detecting language: $e');
+
       return null;
     }
   }

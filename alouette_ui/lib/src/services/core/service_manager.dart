@@ -88,9 +88,6 @@ class ServiceManager {
       );
 
       _log('All services initialized successfully in ${result.durationMs}ms');
-      if (config.verboseLogging) {
-        print('Service Manager: ${result.getSummary()}');
-      }
 
       return result;
     } catch (e) {
@@ -107,9 +104,6 @@ class ServiceManager {
         durationMs: stopwatch.elapsedMilliseconds,
       );
 
-      if (config.verboseLogging) {
-        print('Service Manager initialization error: ${result.getSummary()}');
-      }
 
       await dispose(); // Cleanup on failure
       return result;
@@ -255,10 +249,8 @@ class ServiceManager {
       _isInitialized = false;
 
       _log('All services disposed successfully');
-      print('Service Manager: ${_initializationLog.join(', ')}');
     } catch (e) {
       _log('Service disposal error: $e');
-      print('Service Manager disposal error: $e');
     }
   }
 

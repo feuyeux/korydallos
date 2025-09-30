@@ -31,11 +31,11 @@ class TTSServiceImpl implements ITTSService {
         
         _isInitialized = true;
 
-        debugPrint('TTS Service initialized with ${_ttsService!.currentEngine} engine');
+
         return true;
       });
     } catch (e) {
-      debugPrint('TTS initialization error: $e');
+
       _cleanup();
       return false;
     }
@@ -70,18 +70,14 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
 
     try {
-      print('[TTS] DEBUG: speakInLanguage called with language: $languageName, text: ${text.substring(0, text.length.clamp(0, 20))}...');
-      
       // Get available voices and find one matching the language
       final voices = await _ttsService!.getVoices();
-      print('[TTS] DEBUG: Available voices count: ${voices.length}');
       
       // Find a voice that matches the language code
       String? matchingVoice;
       for (final voice in voices) {
         if (voice.languageCode == languageName) {
           matchingVoice = voice.id;
-          print('[TTS] DEBUG: Found matching voice: ${voice.id} for language: $languageName');
           break;
         }
       }
@@ -95,7 +91,6 @@ class TTSServiceImpl implements ITTSService {
         );
       } else {
         // Fallback: use language name (may not work well)
-        print('[TTS] WARNING: No matching voice found for $languageName, using language name fallback');
         await _ttsService!.speakText(text, languageName: languageName);
       }
     } catch (e) {
@@ -109,7 +104,7 @@ class TTSServiceImpl implements ITTSService {
     try {
       await _ttsService!.stop();
     } catch (e) {
-      debugPrint('Error stopping TTS: $e');
+
     }
   }
 
@@ -119,7 +114,7 @@ class TTSServiceImpl implements ITTSService {
     // Note: Pause functionality may not be available in current library
     try {
       // Implementation depends on actual AudioPlayer API
-      debugPrint('Pause requested - implementation depends on library capabilities');
+
     } catch (e) {
       debugPrint('Error pausing audio: $e');
     }
