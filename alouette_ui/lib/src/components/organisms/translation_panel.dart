@@ -310,6 +310,9 @@ class _TranslationPanelState extends State<TranslationPanel> {
     setState(() {
       _currentText = '';
     });
+    
+    // 调用 onClear 回调来清理翻译结果
+    widget.onClear?.call();
   }
 
   Widget _buildLanguageGrid() {
