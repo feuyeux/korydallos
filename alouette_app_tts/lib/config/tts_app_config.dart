@@ -1,16 +1,12 @@
 import 'package:alouette_lib_tts/alouette_tts.dart';
-import 'package:alouette_ui/alouette_ui.dart';
 
 /// Configuration for the TTS Application
-/// 
-/// Contains only TTS app-specific settings. UI constants should use
-/// design tokens from alouette_ui library.
 class TTSAppConfig {
-  /// Default TTS configuration (uses UI library defaults)
+  /// Default TTS configuration
   static const TTSConfig defaultTTSConfig = TTSConfig(
-    speechRate: TTSDefaults.speechRate,
-    pitch: TTSDefaults.pitch,
-    volume: TTSDefaults.volume,
+    speechRate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
   );
 
   /// TTS app-specific settings
@@ -21,4 +17,12 @@ class TTSAppConfig {
   static const String appTitle = 'Alouette TTS';
   static const String defaultText =
       'Hello, I can read for you. This is a text-to-speech application.';
+
+  /// UI slider ranges
+  static const double minRate = 0.5;
+  static const double maxRate = 2.0;
+  static const double minPitch = 0.5;
+  static const double maxPitch = 2.0;
+  static const double minVolume = 0.0;
+  static const double maxVolume = 1.0;
 }

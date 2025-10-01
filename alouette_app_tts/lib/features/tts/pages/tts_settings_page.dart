@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart';
 import 'package:alouette_ui/alouette_ui.dart';
+import '../controllers/tts_controller.dart' as local;
 
 /// Settings page for TTS configuration
 class TTSSettingsPage extends StatefulWidget {
-  final ITTSController controller;
+  final local.TTSController controller;
 
-  const TTSSettingsPage({super.key, required this.controller});
+  const TTSSettingsPage({
+    super.key,
+    required this.controller,
+  });
 
   @override
   State<TTSSettingsPage> createState() => _TTSSettingsPageState();
 }
 
 class _TTSSettingsPageState extends State<TTSSettingsPage> {
+  Map<String, dynamic> _platformInfo = {};
+
   @override
   void initState() {
     super.initState();
+    _loadPlatformInfo();
+  }
+
+  Future<void> _loadPlatformInfo() async {
+    final info = await widget.controller.getPlatformInfo();
+    if (mounted) {
+      setState(() {
+        _platformInfo = info;
+      });
+    }
   }
 
   @override
@@ -27,84 +44,124 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Voice Information
-            ModernCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Voice Information',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: ListenableBuilder(
+        listenable: widget.controller,
+        builder: (context, child) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Engine Information
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Engine Information',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInfoRow('Current Engine', widget.controller.currentEngine?.name ?? 'None'),
+                      _buildInfoRow('Platform', _platformInfo['platformName'] ?? 'Unknown'),
+                      _buildInfoRow('Initialized', widget.controller.isInitialized ? 'Yes' : 'No'),
+                      _buildInfoRow('Available Voices', widget.controller.availableVoices.length.toString()),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildInfoRow(
-                    'Selected Voice',
-                    widget.controller.selectedVoice ?? 'None',
-                  ),
-                  _buildInfoRow(
-                    'Available Voices',
-                    widget.controller.availableVoices.length.toString(),
-                  ),
-                  _buildInfoRow(
-                    'Speaking',
-                    widget.controller.isSpeaking ? 'Yes' : 'No',
-                  ),
-                  _buildInfoRow(
-                    'Paused',
-                    widget.controller.isPaused ? 'Yes' : 'No',
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Voice Parameters
-            ModernCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Voice Parameters',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                // Engine Selection
+                if (_platformInfo['supportedEngines'] != null)
+                  ModernCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Engine Selection',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ..._buildEngineButtons(),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  _buildParameterSlider(
-                    'Speech Rate',
-                    widget.controller.speechRate,
-                    0.0,
-                    1.0,
-                    '${(widget.controller.speechRate * 2).toStringAsFixed(1)}x',
-                    widget.controller.setSpeechRate,
+
+                const SizedBox(height: 16),
+
+                // Voice Parameters
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Voice Parameters',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildParameterSlider(
+                        'Speech Rate',
+                        widget.controller.rate,
+                        0.1,
+                        3.0,
+                        '${widget.controller.rate.toStringAsFixed(1)}x',
+                        widget.controller.updateRate,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildParameterSlider(
+                        'Pitch',
+                        widget.controller.pitch,
+                        0.5,
+                        2.0,
+                        '${widget.controller.pitch.toStringAsFixed(1)}x',
+                        widget.controller.updatePitch,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildParameterSlider(
+                        'Volume',
+                        widget.controller.volume,
+                        0.0,
+                        1.0,
+                        '${(widget.controller.volume * 100).toInt()}%',
+                        widget.controller.updateVolume,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildParameterSlider(
-                    'Pitch',
-                    widget.controller.speechPitch,
-                    0.0,
-                    1.0,
-                    '${(widget.controller.speechPitch * 2).toStringAsFixed(1)}x',
-                    widget.controller.setSpeechPitch,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Platform Information
+                ModernCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Platform Information',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ..._buildPlatformInfo(),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildParameterSlider(
-                    'Volume',
-                    widget.controller.speechVolume,
-                    0.0,
-                    1.0,
-                    '${(widget.controller.speechVolume * 100).toInt()}%',
-                    widget.controller.setSpeechVolume,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -115,11 +172,38 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
           Text(value),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildEngineButtons() {
+    final supportedEngines = _platformInfo['supportedEngines'] as List<dynamic>?;
+    if (supportedEngines == null) return [];
+
+    return supportedEngines.map<Widget>((engineName) {
+      final engineType = TTSEngineType.values.firstWhere(
+        (e) => e.name == engineName,
+        orElse: () => TTSEngineType.flutter,
+      );
+      
+      final isSelected = widget.controller.currentEngine == engineType;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: ModernButton(
+          onPressed: () => widget.controller.switchEngine(engineType),
+          text: engineName.toString().toUpperCase(),
+          type: isSelected ? ModernButtonType.primary : ModernButtonType.secondary,
+          size: ModernButtonSize.medium,
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildParameterSlider(
@@ -136,7 +220,10 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
             Text(displayValue),
           ],
         ),
@@ -146,12 +233,27 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
           min: min,
           max: max,
           divisions: ((max - min) * 10).round(),
-          onChanged: (v) {
-            setState(() {});
-            onChanged(v);
-          },
+          onChanged: onChanged,
         ),
       ],
     );
+  }
+
+  List<Widget> _buildPlatformInfo() {
+    final widgets = <Widget>[];
+    
+    _platformInfo.forEach((key, value) {
+      if (key != 'supportedEngines' && key != 'config') {
+        widgets.add(_buildInfoRow(
+          key.replaceAllMapped(
+            RegExp(r'([A-Z])'),
+            (match) => ' ${match.group(1)}',
+          ).trim(),
+          value.toString(),
+        ));
+      }
+    });
+
+    return widgets;
   }
 }

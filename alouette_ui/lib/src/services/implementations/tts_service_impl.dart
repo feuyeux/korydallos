@@ -28,14 +28,12 @@ class TTSServiceImpl implements ITTSService {
 
         _ttsService = tts_lib.TTSService();
         await _ttsService!.initialize(autoFallback: autoFallback);
-        
-        _isInitialized = true;
 
+        _isInitialized = true;
 
         return true;
       });
     } catch (e) {
-
       _cleanup();
       return false;
     }
@@ -52,8 +50,24 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
 
     try {
-      // Use the library's speakText method directly
-      await _ttsService!.speakText(text, voiceName: voiceName);
+      // Apply parameters and speak
+      try {
+        await _ttsService!.setSpeechRate(rate);
+      } catch (_) {}
+      try {
+        await _ttsService!.setPitch(pitch);
+      } catch (_) {}
+      try {
+        await _ttsService!.setVolume(volume);
+      } catch (_) {}
+
+      await _ttsService!.speakText(
+        text,
+        voiceName: voiceName,
+        rate: rate,
+        pitch: pitch,
+        volume: volume,
+      );
     } catch (e) {
       throw TTSException('Error speaking text: $e');
     }
@@ -72,7 +86,7 @@ class TTSServiceImpl implements ITTSService {
     try {
       // Get available voices and find one matching the language
       final voices = await _ttsService!.getVoices();
-      
+
       // Find a voice that matches the language code
       String? matchingVoice;
       for (final voice in voices) {
@@ -81,17 +95,35 @@ class TTSServiceImpl implements ITTSService {
           break;
         }
       }
-      
+
+      // Apply parameters
+      try {
+        await _ttsService!.setSpeechRate(rate);
+      } catch (_) {}
+      try {
+        await _ttsService!.setPitch(pitch);
+      } catch (_) {}
+      try {
+        await _ttsService!.setVolume(volume);
+      } catch (_) {}
+
       if (matchingVoice != null) {
-        // Use the library's speakText method with matching voice
         await _ttsService!.speakText(
-          text, 
+          text,
           voiceName: matchingVoice,
+          rate: rate,
+          pitch: pitch,
+          volume: volume,
           format: 'audio-24khz-48kbitrate-mono-mp3',
         );
       } else {
-        // Fallback: use language name (may not work well)
-        await _ttsService!.speakText(text, languageName: languageName);
+        await _ttsService!.speakText(
+          text,
+          languageName: languageName,
+          rate: rate,
+          pitch: pitch,
+          volume: volume,
+        );
       }
     } catch (e) {
       throw TTSException('Error speaking text in $languageName: $e');
@@ -103,9 +135,7 @@ class TTSServiceImpl implements ITTSService {
     _ensureInitialized();
     try {
       await _ttsService!.stop();
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   @override
@@ -114,7 +144,6 @@ class TTSServiceImpl implements ITTSService {
     // Note: Pause functionality may not be available in current library
     try {
       // Implementation depends on actual AudioPlayer API
-
     } catch (e) {
       debugPrint('Error pausing audio: $e');
     }
@@ -216,8 +245,6 @@ class TTSServiceImpl implements ITTSService {
   Future<T> _synchronized<T>(Object lock, Future<T> Function() action) async {
     return await action();
   }
-
-
 }
 
 /// TTS specific exception

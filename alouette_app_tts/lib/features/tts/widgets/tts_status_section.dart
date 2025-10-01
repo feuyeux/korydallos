@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
+import '../controllers/tts_controller.dart' as local;
 
 /// Widget for displaying TTS status information
 class TTSStatusSection extends StatelessWidget {
-  final ITTSController controller;
+  final local.TTSController controller;
   final VoidCallback? onConfigurePressed;
 
   const TTSStatusSection({
@@ -17,56 +18,67 @@ class TTSStatusSection extends StatelessWidget {
     return ModernCard(
       child: Row(
         children: [
-          // Unified status indicator
-          Expanded(
-            child: StreamBuilder<bool>(
-              stream: controller.speakingStream,
-              initialData: controller.isSpeaking,
-              builder: (context, speakingSnapshot) {
-                return StreamBuilder<String?>(
-                  stream: controller.errorStream,
-                  initialData: controller.errorMessage,
-                  builder: (context, errorSnapshot) {
-                    final isSpeaking = speakingSnapshot.data ?? false;
-                    final error = errorSnapshot.data;
-
-                    StatusType status;
-                    String message;
-
-                    if (error != null) {
-                      status = StatusType.error;
-                      message = 'TTS Error';
-                    } else if (isSpeaking) {
-                      status = StatusType.info;
-                      message = 'Speaking...';
-                    } else {
-                      status = StatusType.success;
-                      message = 'TTS Ready';
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        StatusIndicator(status: status, message: message),
-                        if (controller.selectedVoice != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              'Voice: ${controller.selectedVoice}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                );
-              },
+          // Status indicator
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _getStatusColor(),
             ),
           ),
+          const SizedBox(width: 12),
+
+          // Status text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _getStatusText(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (controller.isInitialized && controller.currentEngine != null)
+                  Text(
+                    'Engine: ${controller.currentEngine!.name.toUpperCase()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Playing indicator
+          if (controller.isPlaying)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Speaking...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
 
           // Configure button
           if (onConfigurePressed != null)
@@ -80,5 +92,35 @@ class TTSStatusSection extends StatelessWidget {
     );
   }
 
-  // Removed duplicate status logic - now using unified StatusIndicator
+  Color _getStatusColor() {
+    if (!controller.isInitialized) {
+      return Colors.orange;
+    }
+    
+    if (controller.lastError != null) {
+      return Colors.red;
+    }
+    
+    if (controller.isPlaying) {
+      return Colors.blue;
+    }
+    
+    return Colors.green;
+  }
+
+  String _getStatusText() {
+    if (!controller.isInitialized) {
+      return 'Initializing TTS...';
+    }
+    
+    if (controller.lastError != null) {
+      return 'TTS Error';
+    }
+    
+    if (controller.isPlaying) {
+      return 'TTS Active';
+    }
+    
+    return 'TTS Ready';
+  }
 }

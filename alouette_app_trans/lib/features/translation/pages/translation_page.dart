@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import '../controllers/translation_controller.dart';
 
 class TranslationPage extends StatefulWidget {
-  final ITranslationController controller;
-  final ISelectionController<String> languageController;
-
+  final AppTranslationController controller;
+  
   const TranslationPage({
     super.key,
     required this.controller,
-    required this.languageController,
   });
 
   @override
@@ -17,13 +15,6 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
-  final TextEditingController _textController = TextEditingController();
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -34,33 +25,17 @@ class _TranslationPageState extends State<TranslationPage> {
           flex: 4,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
-            child: StreamBuilder<bool>(
-              stream: widget.controller.loadingStream,
-              builder: (context, loadingSnapshot) {
-                final isTranslating = loadingSnapshot.data ?? false;
-                return StreamBuilder<List<String>>(
-                  stream: widget.languageController.selectionStream,
-                  builder: (context, selectionSnapshot) {
-                    final selectedLanguages = selectionSnapshot.data ?? [];
-                    return TranslationInputWidget(
-                      textController: _textController,
-                      selectedLanguages: selectedLanguages,
-                      onLanguagesChanged: (languages) {
-                        widget.languageController.selectMultiple(languages);
-                      },
-                      onLanguageToggle: (language, selected) {
-                        if (selected) {
-                          widget.languageController.select(language);
-                        } else {
-                          widget.languageController.deselect(language);
-                        }
-                      },
-                      onTranslate: _translateText,
-                      isTranslating: isTranslating,
-                      isConfigured:
-                          true, // UI library controller handles configuration internally
-                    );
-                  },
+            child: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, child) {
+                return TranslationInputWidget(
+                  textController: widget.controller.textController,
+                  selectedLanguages: widget.controller.selectedLanguages,
+                  onLanguagesChanged: widget.controller.updateSelectedLanguages,
+                  onLanguageToggle: widget.controller.toggleLanguage,
+                  onTranslate: _translateText,
+                  isTranslating: widget.controller.isTranslating,
+                  isConfigured: widget.controller.isConfigured,
                 );
               },
             ),
@@ -72,15 +47,9 @@ class _TranslationPageState extends State<TranslationPage> {
             margin: const EdgeInsets.fromLTRB(8.0, 0.5, 8.0, 1.0),
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: StreamBuilder<Map<String, String>>(
-                stream: widget.controller.translationStream,
-                builder: (context, translationSnapshot) {
-                  return TranslationResultWidget(
-                    translationService:
-                        ServiceLocator.get<TranslationService>(),
-                    isCompactMode: true,
-                  );
-                },
+              child: TranslationResultWidget(
+                translationService: widget.controller.translationService,
+                isCompactMode: true,
               ),
             ),
           ),
@@ -90,71 +59,29 @@ class _TranslationPageState extends State<TranslationPage> {
   }
 
   void _translateText() async {
-    final inputText = _textController.text.trim();
-    final selectedLanguages = widget.languageController.selectedItems;
+    final error = await widget.controller.translateText();
 
-    if (inputText.isEmpty) {
-      context.showErrorMessage('Please enter text to translate');
-      return;
-    }
-
-    if (selectedLanguages.isEmpty) {
-      context.showErrorMessage('Please select target languages');
-      return;
-    }
-
-    try {
-      widget.controller.inputText = inputText;
-      widget.controller.setTargetLanguages(selectedLanguages);
-      await widget.controller.translate();
-
-      // Check for errors
-      if (widget.controller.errorMessage != null) {
-        await _handleTranslationError(widget.controller.errorMessage!);
-      }
-    } catch (error) {
-      if (mounted) {
-        await ErrorUtils.handleError(context, error, onRetry: _translateText);
-      }
-    }
-  }
-
-  Future<void> _handleTranslationError(String errorMessage) async {
-    if (!mounted) return;
-
-    // Check if it's a configuration error and show config dialog
-    if (errorMessage.contains('configure') ||
-        errorMessage.contains('configuration')) {
-      await _showConfigDialog();
-    } else {
-      await ErrorUtils.handleError(
-        context,
-        errorMessage,
-        customMessage: errorMessage,
-        onRetry: _translateText,
-      );
-    }
-  }
-
-  Future<void> _showConfigDialog() async {
-    if (!mounted) return;
-
-    final llmConfigService = ServiceLocator.get<LLMConfigService>();
-    final result = await showDialog<LLMConfig>(
-      context: context,
-      builder: (context) => LLMConfigDialog(
-        initialConfig: const LLMConfig(
-          provider: 'ollama',
-          serverUrl: 'http://localhost:11434',
-          selectedModel: '',
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red.shade600,
+          duration: const Duration(seconds: 4),
         ),
-        llmConfigService: llmConfigService,
-      ),
-    );
+      );
 
-    if (result != null && mounted) {
-      // Configuration is handled by the UI library controller internally
-      context.showSuccessMessage('Configuration updated successfully');
+      // Show config dialog if not configured
+      if (error.contains('configure LLM settings')) {
+        _showConfigDialog();
+      }
+    }
+  }
+
+  void _showConfigDialog() async {
+    final result = await widget.controller.showConfigDialog(context);
+
+    if (result != null) {
+      widget.controller.updateLLMConfig(result);
     }
   }
 }

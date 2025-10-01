@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
+// Uses TTSVoice via controller; no direct package import needed here
 import 'package:alouette_ui/alouette_ui.dart';
-import 'dart:async';
+import '../controllers/tts_controller.dart' as local;
 
 /// Widget for text input and voice selection
 class TTSInputSection extends StatefulWidget {
-  final ITTSController controller;
+  final local.TTSController controller;
   final TextEditingController textController;
-  // Page-known language code, e.g. 'zh-CN', 'en-US'
-  final String? language;
 
   const TTSInputSection({
     super.key,
     required this.controller,
     required this.textController,
-    this.language,
   });
 
   @override
@@ -21,308 +19,344 @@ class TTSInputSection extends StatefulWidget {
 }
 
 class _TTSInputSectionState extends State<TTSInputSection> {
-  StreamSubscription<bool>? _speakingSub;
-  StreamSubscription<String?>? _errorSub;
-  Timer? _voiceWatchTimer;
-  String _voicesSignature = '';
+  String? _selectedLanguage;
+  String? _selectedVoice;
 
-  String _calcVoicesSignature(List<String> voices) {
-    // 简单签名：长度 + 首尾元素，有变化即可触发重建
-    if (voices.isEmpty) return '0';
-    final first = voices.first;
-    final last = voices.last;
-    return '${voices.length}::$first::$last';
-  }
   @override
   void initState() {
     super.initState();
-    // Sync text controller with TTS controller
-    widget.textController.addListener(_onTextChanged);
-
-    // 初始记录 voices 签名
-    _voicesSignature = _calcVoicesSignature(widget.controller.availableVoices);
-
-    // 首帧后如未选中且有可用语音，自动选中第一个
+    // Initialize selected language and voice when controller is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final voices = widget.controller.availableVoices;
-      final selected = widget.controller.selectedVoice;
-      if (selected == null && voices.isNotEmpty) {
-        widget.controller.setVoice(voices.first);
-        if (mounted) setState(() {});
-      }
-      // Align selected voice with provided language if any
-      _ensureVoiceMatchesLanguage();
-    });
-
-    // 监听 speaking / error 流，驱动 UI 重建（也利于捕捉初始化后的变化）
-    _speakingSub = widget.controller.speakingStream.listen((_) {
-      if (mounted) setState(() {});
-    });
-    _errorSub = widget.controller.errorStream.listen((_) {
-      if (mounted) setState(() {});
-    });
-
-    // 初始化阶段短期轮询 voices 列表变化（语音异步加载完成后刷新 UI）
-    _voiceWatchTimer = Timer.periodic(const Duration(milliseconds: 400), (t) {
-      final sig = _calcVoicesSignature(widget.controller.availableVoices);
-      if (sig != _voicesSignature) {
-        _voicesSignature = sig;
-        if (mounted) setState(() {});
-      }
-      // Ensure voice matches provided language when voices are available
-      _ensureVoiceMatchesLanguage();
-      // 一旦加载到语音则停止轮询，避免常驻
-      if (widget.controller.availableVoices.isNotEmpty) {
-        t.cancel();
-      }
+      _initializeSelection();
     });
   }
 
-  @override
-  void didUpdateWidget(TTSInputSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Handle language change from parent
-    if (oldWidget.language != widget.language) {
-      _ensureVoiceMatchesLanguage();
+  void _initializeSelection() {
+    if (widget.controller.isInitialized &&
+        widget.controller.availableVoices.isNotEmpty) {
+      // Find current voice and set language accordingly
+      final currentVoice = widget.controller.availableVoices
+          .where((voice) => voice.name == widget.controller.currentVoice)
+          .firstOrNull;
+
+      if (currentVoice != null) {
+        setState(() {
+          _selectedLanguage = currentVoice.language;
+          _selectedVoice = currentVoice.name;
+        });
+      } else {
+        // Set default to first available language and voice
+        final firstVoice = widget.controller.availableVoices.first;
+        setState(() {
+          _selectedLanguage = firstVoice.language;
+          _selectedVoice = firstVoice.name;
+        });
+        widget.controller.changeVoice(firstVoice.name);
+      }
     }
   }
 
-  @override
-  void dispose() {
-    widget.textController.removeListener(_onTextChanged);
-    _speakingSub?.cancel();
-    _errorSub?.cancel();
-    _voiceWatchTimer?.cancel();
-    super.dispose();
+  /// Get unique languages from available voices
+  List<String> get _availableLanguages {
+    if (!widget.controller.isInitialized) return [];
+
+    final languages = widget.controller.availableVoices
+        .map((voice) => voice.language)
+        .toSet()
+        .toList();
+
+    languages.sort();
+    return languages;
   }
 
-  void _onTextChanged() {
-    widget.controller.text = widget.textController.text;
-  }
-
-  // Ensure selectedVoice matches page-provided language (if any)
-  void _ensureVoiceMatchesLanguage() {
-    final lang = widget.language;
-    if (lang == null || lang.isEmpty) return;
-    final voices = widget.controller.availableVoices;
-    if (voices.isEmpty) return;
-
-    final prefix = '$lang-';
-    final current = widget.controller.selectedVoice;
-    if (current != null && current.startsWith(prefix)) return;
-
-    final match = voices.firstWhere(
-      (v) => v.startsWith(prefix),
-      orElse: () => '',
-    );
-    if (match.isNotEmpty && match != current) {
-      widget.controller.setVoice(match);
-      if (mounted) setState(() {});
+  /// Get voices for selected language
+  List<TTSVoice> get _voicesForSelectedLanguage {
+    if (!widget.controller.isInitialized || _selectedLanguage == null) {
+      return [];
     }
+
+    return widget.controller.availableVoices
+        .where((voice) => voice.language == _selectedLanguage)
+        .toList();
+  }
+
+  /// Get language display name
+  String _getLanguageDisplayName(String languageCode) {
+    // Map common language codes to display names
+    const languageNames = {
+      'en-US': 'English (US)',
+      'en-GB': 'English (UK)',
+      'en-AU': 'English (Australia)',
+      'en-CA': 'English (Canada)',
+      'zh-CN': '中文 (简体)',
+      'zh-TW': '中文 (繁體)',
+      'zh-HK': '中文 (香港)',
+      'ja-JP': '日本語',
+      'ko-KR': '한국어',
+      'fr-FR': 'Français (France)',
+      'fr-CA': 'Français (Canada)',
+      'de-DE': 'Deutsch',
+      'es-ES': 'Español (España)',
+      'es-MX': 'Español (México)',
+      'it-IT': 'Italiano',
+      'pt-BR': 'Português (Brasil)',
+      'pt-PT': 'Português (Portugal)',
+      'ru-RU': 'Русский',
+      'ar-SA': 'العربية',
+      'hi-IN': 'हिन्दी',
+      'th-TH': 'ไทย',
+      'vi-VN': 'Tiếng Việt',
+    };
+
+    return languageNames[languageCode] ?? languageCode;
+  }
+
+  /// Get voice display name with gender info
+  String _getVoiceDisplayName(TTSVoice voice) {
+    final parts = <String>[];
+
+    parts.add(voice.name);
+
+    // Add gender info
+    // gender may be null
+    if (voice.gender != null && voice.gender!.isNotEmpty) {
+      parts.add('(${voice.gender})');
+    }
+
+    return parts.join(' ');
+  }
+
+  void _onLanguageChanged(String? languageCode) {
+    if (languageCode == null || languageCode == _selectedLanguage) return;
+
+    setState(() {
+      _selectedLanguage = languageCode;
+      _selectedVoice = null; // Reset voice selection
+    });
+
+    // Auto-select first voice for the new language
+    final voicesForLanguage = _voicesForSelectedLanguage;
+    if (voicesForLanguage.isNotEmpty) {
+      final firstVoice = voicesForLanguage.first;
+      setState(() {
+        _selectedVoice = firstVoice.name;
+      });
+      widget.controller.changeVoice(firstVoice.name);
+    }
+  }
+
+  void _onVoiceChanged(String? voiceId) {
+    if (voiceId == null || voiceId == _selectedVoice) return;
+
+    setState(() {
+      _selectedVoice = voiceId;
+    });
+
+    widget.controller.changeVoice(voiceId);
   }
 
   @override
   Widget build(BuildContext context) {
-    return ModernCard(
-      child: Padding(
-        padding: const EdgeInsets.all(6.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, child) {
+        // Update selection when controller state changes
+        if (widget.controller.isInitialized &&
+            widget.controller.availableVoices.isNotEmpty &&
+            (_selectedLanguage == null || _selectedVoice == null)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _initializeSelection();
+          });
+        }
+
+        return ModernCard(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0), // Reduced from 12 to 8
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.text_fields, color: AppTheme.primaryColor, size: 14),
-                const SizedBox(width: 3),
-                const Text(
-                  'Text Input',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
-            // Text input field
-            Expanded(
-              child: ModernTextField(
-                controller: widget.textController,
-                hintText: 'Enter text to speak...',
-                maxLines: null,
-                expands: true,
-                enabled: true,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Voice selection
-            widget.controller.availableVoices.isNotEmpty
-                ? _buildVoiceSelector()
-                : _buildVoiceLoading(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVoiceLoading() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.record_voice_over, color: AppTheme.primaryColor, size: 14),
-            const SizedBox(width: 3),
-            const Text(
-              'Voice Selection',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Container(
-          height: 36,
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: const [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 6),
-              Text('Loading voices...', style: TextStyle(fontSize: 11)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVoiceSelector() {
-    // Filter voices based on selected language
-    final allVoices = widget.controller.availableVoices;
-    final filteredVoices = _getFilteredVoices(allVoices);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header with language info
-        Row(
-          children: [
-            Icon(
-              Icons.record_voice_over,
-              color: AppTheme.primaryColor,
-              size: 14,
-            ),
-            const SizedBox(width: 3),
-            Text(
-              'Voice Selection${widget.language != null ? ' (${widget.language})' : ''}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            Text(
-              '${filteredVoices.length}/${allVoices.length}',
-              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-
-        // Voice dropdown
-        Container(
-          height: 36,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              // Guard against invalid value not in filtered items
-              value: widget.controller.selectedVoice != null &&
-                      filteredVoices.contains(widget.controller.selectedVoice)
-                  ? widget.controller.selectedVoice
-                  : null,
-              isExpanded: true,
-              isDense: true,
-              hint: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(
-                  filteredVoices.isEmpty 
-                    ? 'No voices for ${widget.language ?? 'language'}'
-                    : 'Select Voice',
-                  style: const TextStyle(fontSize: 11),
-                ),
-              ),
-              items: [
-                // Add "No Selection" option
-                const DropdownMenuItem<String>(
-                  value: null,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Text(
-                      'No Voice Selected',
-                      style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
+                // Header
+                Row(
+                  children: [
+                    Icon(
+                      Icons.text_fields,
+                      color: AppTheme.primaryColor,
+                      size: 16, // Reduced from 18 to 16
                     ),
+                    const SizedBox(width: 4), // Reduced from 6 to 4
+                    const Text(
+                      'Text Input',
+                      style: TextStyle(
+                        fontSize: 13, // Reduced from 14 to 13
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8), // Reduced from 12 to 8
+                // Text input field
+                Expanded(
+                  child: ModernTextField(
+                    controller: widget.textController,
+                    hintText: 'Enter text to speak...',
+                    maxLines: null,
+                    expands: true,
+                    enabled: widget.controller.isInitialized,
                   ),
                 ),
-                // Add filtered voices
-                ...filteredVoices.map(
-                  (voice) => DropdownMenuItem<String>(
-                    value: voice,
+
+                const SizedBox(height: 8), // Reduced from 12 to 8
+                // Voice selection
+                if (widget.controller.isInitialized &&
+                    widget.controller.availableVoices.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Voice Selection',
+                        style: TextStyle(
+                          fontSize: 11, // Reduced from 12 to 11
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4), // Reduced from 6 to 4
+                      // Language and Voice selection row
+                      Row(
+                        children: [
+                          // Language selection (left side)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Language',
+                                  style: TextStyle(
+                                    fontSize: 9, // Reduced from 10 to 9
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 1,
+                                ), // Reduced from 2 to 1
+                                ModernDropdown<String>(
+                                  value: _selectedLanguage,
+                                  items: _availableLanguages
+                                      .map(
+                                        (languageCode) =>
+                                            DropdownMenuItem<String>(
+                                              value: languageCode,
+                                              child: Text(
+                                                _getLanguageDisplayName(
+                                                  languageCode,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ),
+                                      )
+                                      .toList(),
+                                  onChanged: widget.controller.isInitialized
+                                      ? _onLanguageChanged
+                                      : null,
+                                  hint: 'Select Language',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical:
+                                        4.0, // Much smaller vertical padding
+                                  ),
+                                  isDense: true,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 6), // Reduced from 8 to 6
+                          // Voice selection (right side)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Voice',
+                                  style: TextStyle(
+                                    fontSize: 9, // Reduced from 10 to 9
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 1,
+                                ), // Reduced from 2 to 1
+                                ModernDropdown<String>(
+                                  value: _selectedVoice,
+                                  items: _voicesForSelectedLanguage
+                                      .map(
+                                        (voice) => DropdownMenuItem<String>(
+                                          value: voice.name,
+                                          child: Text(
+                                            _getVoiceDisplayName(voice),
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged:
+                                      widget.controller.isInitialized &&
+                                          _selectedLanguage != null
+                                      ? _onVoiceChanged
+                                      : null,
+                                  hint: 'Select Voice',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0,
+                                    vertical:
+                                        4.0, // Much smaller vertical padding
+                                  ),
+                                  isDense: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                // Loading indicator when not initialized
+                if (!widget.controller.isInitialized)
+                  const Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        _formatVoiceName(voice),
-                        style: const TextStyle(fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
+                      padding: EdgeInsets.all(8.0), // Reduced from 12 to 8
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: 16, // Smaller loading indicator
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(height: 4), // Reduced from 6 to 4
+                          Text(
+                            'Initializing TTS...',
+                            style: TextStyle(
+                              fontSize: 10,
+                            ), // Reduced from 12 to 10
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
               ],
-              onChanged: filteredVoices.isEmpty ? null : (String? voice) {
-                // Allow null selection (deselection)
-                if (voice != null) {
-                  widget.controller.setVoice(voice);
-                }
-                if (mounted) setState(() {});
-              },
-              icon: const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(Icons.arrow_drop_down, size: 16),
-              ),
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
-  }
-
-  /// Filter voices based on the selected language
-  List<String> _getFilteredVoices(List<String> allVoices) {
-    final lang = widget.language;
-    if (lang == null || lang.isEmpty) {
-      return allVoices; // Show all voices if no language specified
-    }
-    
-    // Filter voices that start with the language code
-    final prefix = '$lang-';
-    return allVoices.where((voice) => voice.startsWith(prefix)).toList();
-  }
-
-  /// Format voice name for display (remove language prefix for cleaner look)
-  String _formatVoiceName(String voice) {
-    final lang = widget.language;
-    if (lang != null && voice.startsWith('$lang-')) {
-      // Remove language prefix for cleaner display
-      return voice.substring(lang.length + 1);
-    }
-    return voice;
   }
 }

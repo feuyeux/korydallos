@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import '../controllers/translation_controller.dart';
+import '../../../config/translation_app_config.dart';
 import 'translation_page.dart';
+import '../../../widgets/translation_status_widget.dart';
 
 class TranslationHomePage extends StatefulWidget {
   const TranslationHomePage({super.key});
@@ -10,51 +12,37 @@ class TranslationHomePage extends StatefulWidget {
   State<TranslationHomePage> createState() => _TranslationHomePageState();
 }
 
-class _TranslationHomePageState extends State<TranslationHomePage>
-    with AutoControllerDisposal {
-  late ITranslationController _controller;
-  late ISelectionController<String> _languageController;
+class _TranslationHomePageState extends State<TranslationHomePage> {
+  late AppTranslationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = createTranslationController();
-    _languageController = createLanguageSelectionController();
+    _controller = AppTranslationController();
+    _controller.addListener(_onControllerChanged);
+    _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ModernAppBar(
-        title: 'Alouette Translator',
+        title: TranslationAppConfig.appName,
         showLogo: true,
-        statusWidget: StreamBuilder<bool>(
-          stream: _controller.loadingStream,
-          builder: (context, loadingSnapshot) {
-            final isTranslating = loadingSnapshot.data ?? false;
-            return StreamBuilder<String?>(
-              stream: _controller.errorStream,
-              builder: (context, errorSnapshot) {
-                final hasError = errorSnapshot.data != null;
-                final defaultConfig = const LLMConfig(
-                  provider: 'ollama',
-                  serverUrl: 'http://localhost:11434',
-                  selectedModel: '',
-                );
-
-                return ConfigStatusWidget(
-                  isAutoConfiguring: isTranslating,
-                  isConfigured: !hasError,
-                  autoConfigStatus: isTranslating
-                      ? 'Translating...'
-                      : (hasError ? 'Configuration needed' : ''),
-                  llmConfig: defaultConfig,
-                  onConfigurePressed: _showConfigDialog,
-                );
-              },
-            );
-          },
-        ),
+        statusWidget: const TranslationStatusWidget(),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -66,29 +54,15 @@ class _TranslationHomePageState extends State<TranslationHomePage>
           ),
         ],
       ),
-      body: TranslationPage(
-        controller: _controller,
-        languageController: _languageController,
-      ),
+      body: TranslationPage(controller: _controller),
     );
   }
 
   void _showConfigDialog() async {
-    final llmConfigService = ServiceLocator.get<LLMConfigService>();
-    final result = await showDialog<LLMConfig>(
-      context: context,
-      builder: (context) => LLMConfigDialog(
-        initialConfig: const LLMConfig(
-          provider: 'ollama',
-          serverUrl: 'http://localhost:11434',
-          selectedModel: '',
-        ),
-        llmConfigService: llmConfigService,
-      ),
-    );
+    final result = await _controller.showConfigDialog(context);
 
     if (result != null) {
-      // Configuration is handled by the UI library controller internally
+      _controller.updateLLMConfig(result);
     }
   }
 }

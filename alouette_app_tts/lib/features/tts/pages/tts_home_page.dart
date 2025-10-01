@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
+import '../controllers/tts_controller.dart' as local;
 import 'tts_page.dart';
+// Restore simple status inline to avoid missing widget dependency
 import '../../../config/tts_app_config.dart';
 
 /// Home page for the TTS application
@@ -11,65 +13,50 @@ class TTSHomePage extends StatefulWidget {
   State<TTSHomePage> createState() => _TTSHomePageState();
 }
 
-class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
-  late ITTSController _ttsController;
+class _TTSHomePageState extends State<TTSHomePage> {
+  late local.TTSController _ttsController;
   final TextEditingController _textController = TextEditingController(
     text: TTSAppConfig.defaultText,
   );
-  
-  // Explicit language selection - no guessing
-  String _selectedLanguage = 'zh-CN'; // Default language
-  
-  // Available languages for TTS
-  static const List<Map<String, String>> _availableLanguages = [
-    {'code': 'zh-CN', 'name': '中文 (简体)'},
-    {'code': 'en-US', 'name': 'English (US)'},
-    {'code': 'en-GB', 'name': 'English (UK)'},
-    {'code': 'ja-JP', 'name': '日本語'},
-    {'code': 'ko-KR', 'name': '한국어'},
-    {'code': 'fr-FR', 'name': 'Français'},
-    {'code': 'de-DE', 'name': 'Deutsch'},
-    {'code': 'es-ES', 'name': 'Español'},
-    {'code': 'ru-RU', 'name': 'Русский'},
-    {'code': 'ar-SA', 'name': 'العربية'},
-    {'code': 'hi-IN', 'name': 'हिन्दी'},
-  ];
 
   @override
   void initState() {
     super.initState();
-    _ttsController = createTTSController();
-    _ttsController.text = _textController.text;
-    // Set initial language
-    _ttsController.setLanguageCode(_selectedLanguage);
-    // Sync text controller with TTS controller
-    _textController.addListener(_onTextChanged);
+    _ttsController = local.TTSController();
+    _ttsController.addListener(_onControllerChanged);
+    _initializeTTS();
   }
 
-  void _onTextChanged() {
-    _ttsController.text = _textController.text;
-  }
-
-  void _onLanguageChanged(String? newLanguage) {
-    if (newLanguage != null && newLanguage != _selectedLanguage) {
-      setState(() {
-        _selectedLanguage = newLanguage;
-        // Set language code directly to TTS controller
-        _ttsController.setLanguageCode(newLanguage);
-      });
-    }
+  Future<void> _initializeTTS() async {
+    await _ttsController.initialize();
   }
 
   @override
   void dispose() {
-    _textController.removeListener(_onTextChanged);
     _textController.dispose();
+    _ttsController.removeListener(_onControllerChanged);
+    _ttsController.dispose();
     super.dispose();
   }
 
-  // Removed duplicate error handling - using UI library's unified error handling
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
 
   Future<void> _showTTSSettings() async {
+    // Show TTS configuration dialog
+    final platformInfo = await _ttsController.getPlatformInfo();
+
     if (mounted) {
       showDialog(
         context: context,
@@ -81,31 +68,46 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Available Voices: ${_ttsController.availableVoices.length}',
+                  'Current Engine: ${_ttsController.currentEngine?.name ?? 'None'}',
+                ),
+                const SizedBox(height: 8),
+                Text('Platform: ${platformInfo['platform'] ?? 'Unknown'}'),
+                const SizedBox(height: 8),
+                Text('Backend: ${platformInfo['currentBackend'] ?? 'Unknown'}'),
+                const SizedBox(height: 8),
+                Text(
+                  'Supported Engines: ${platformInfo['supportedEngines']?.join(', ') ?? 'None'}',
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Selected Voice: ${_ttsController.selectedVoice ?? 'None'}',
+                  'Available Engines: ${platformInfo['availableEngines']?.join(', ') ?? 'None'}',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Recommended Engine: ${platformInfo['recommendedEngine'] ?? 'None'}',
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Voice Parameters:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  'Rate: ${(_ttsController.speechRate * 2).toStringAsFixed(1)}x',
-                ),
-                Text(
-                  'Pitch: ${(_ttsController.speechPitch * 2).toStringAsFixed(1)}x',
-                ),
-                Text('Volume: ${(_ttsController.speechVolume * 100).toInt()}%'),
+                Text('Rate: ${_ttsController.rate.toStringAsFixed(1)}x'),
+                Text('Pitch: ${_ttsController.pitch.toStringAsFixed(1)}x'),
+                Text('Volume: ${(_ttsController.volume * 100).toInt()}%'),
                 const SizedBox(height: 16),
                 const Text(
-                  'Status:',
+                  'Platform Features:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Text('Speaking: ${_ttsController.isSpeaking ? 'Yes' : 'No'}'),
-                Text('Paused: ${_ttsController.isPaused ? 'Yes' : 'No'}'),
+                Text('Desktop: ${platformInfo['isDesktop'] ?? false}'),
+                Text('Mobile: ${platformInfo['isMobile'] ?? false}'),
+                Text('Web: ${platformInfo['isWeb'] ?? false}'),
+                Text(
+                  'Process Execution: ${platformInfo['supportsProcessExecution'] ?? false}',
+                ),
+                Text(
+                  'File System: ${platformInfo['supportsFileSystem'] ?? false}',
+                ),
               ],
             ),
           ),
@@ -122,88 +124,35 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
 
   @override
   Widget build(BuildContext context) {
-    // Error handling is now managed by the UI library's unified error system
+    // Show error if there's one
+    if (_ttsController.lastError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showError(_ttsController.lastError!);
+      });
+    }
 
     return Scaffold(
       appBar: ModernAppBar(
         title: TTSAppConfig.appTitle,
         showLogo: true,
-        statusWidget: StreamBuilder<bool>(
-          stream: _ttsController.speakingStream,
-          initialData: _ttsController.isSpeaking,
-          builder: (context, speakingSnapshot) {
-            return StreamBuilder<String?>(
-              stream: _ttsController.errorStream,
-              initialData: _ttsController.errorMessage,
-              builder: (context, errorSnapshot) {
-                final isPlaying = speakingSnapshot.data ?? false;
-                final error = errorSnapshot.data;
-
-                if (error != null) {
-                  return CompactStatusIndicator(
-                    status: StatusType.error,
-                    message: 'TTS Error',
-                  );
-                }
-
-                if (isPlaying) {
-                  return CompactStatusIndicator(
-                    status: StatusType.info,
-                    message: 'Speaking...',
-                  );
-                }
-
-                return CompactStatusIndicator(
-                  status: StatusType.success,
-                  message: 'Ready',
-                );
-              },
-            );
-          },
+        statusWidget: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _ttsController.isInitialized ? Icons.check_circle : Icons.error,
+              color: _ttsController.isInitialized ? Colors.green : Colors.red,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _ttsController.isInitialized
+                  ? (_ttsController.isPlaying ? 'Playing' : 'Ready')
+                  : 'Not ready',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
         ),
         actions: [
-          // Language selector
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedLanguage,
-                  isDense: true,
-                  // Adapt text and menu colors to current theme for readability
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? Colors.black87
-                        : Colors.white,
-                  ),
-                  dropdownColor: Theme.of(context).brightness == Brightness.light
-                      ? Theme.of(context).colorScheme.surface
-                      : Colors.grey[800],
-                  items: _availableLanguages.map((lang) {
-                    return DropdownMenuItem<String>(
-                      value: lang['code'],
-                      child: Text(
-                        lang['code']!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Colors.black87
-                              : Colors.white,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: _onLanguageChanged,
-                ),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
@@ -217,7 +166,6 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
       body: TTSPage(
         controller: _ttsController,
         textController: _textController,
-        language: _selectedLanguage, // Explicitly pass selected language
       ),
     );
   }

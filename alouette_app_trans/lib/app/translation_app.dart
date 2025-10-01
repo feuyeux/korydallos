@@ -8,7 +8,7 @@ class TranslationApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Alouette Translator',
+      title: 'Alouette Trans',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       home: const AppRouter(),

@@ -1,10 +1,10 @@
 /// Configuration for the Translation Application
-/// 
+///
 /// Contains only translation app-specific settings. UI constants should use
 /// design tokens from alouette_ui library. LLM defaults use UI library constants.
 class TranslationAppConfig {
   /// Application Information
-  static const String appName = 'Alouette Translator';
+  static const String appName = 'Alouette Trans';
   static const String appVersion = '1.0.0';
   static const String appBuild = '1';
 

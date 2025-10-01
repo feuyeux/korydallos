@@ -108,13 +108,22 @@ class LLMConfigService {
   /// Test connection to the provider
   /// This is a convenience method that delegates to TranslationService
   Future<ConnectionStatus> testConnection(LLMConfig config) async {
-    // For now, return mock success since we need TranslationService integration
-    // In a real implementation, this would use TranslationService
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    ); // Simulate network call
+    // Mock implementation that validates provider + URL only (model not required)
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    if (config.isValid) {
+    // Basic validation without requiring model selection
+    final providerOk = config.provider.isNotEmpty;
+    bool urlOk = false;
+    if (config.serverUrl.isNotEmpty) {
+      try {
+        final uri = Uri.parse(config.serverUrl);
+        urlOk = uri.hasScheme && uri.hasAuthority;
+      } catch (_) {
+        urlOk = false;
+      }
+    }
+
+    if (providerOk && urlOk) {
       final models = await getAvailableModels(config);
       return ConnectionStatus.success(
         message: 'Connected successfully to ${config.provider}',
@@ -126,12 +135,16 @@ class LLMConfigService {
           'serverUrl': config.serverUrl,
         },
       );
-    } else {
-      return ConnectionStatus.failure(
-        message:
-            'Invalid configuration: ${config.validate()['errors'].join(', ')}',
-        responseTimeMs: 500,
-      );
     }
+
+    // Build error message similar to validate() but ignore model requirement for connection test
+    final errors = <String>[];
+    if (!providerOk) errors.add('Provider is required');
+    if (!urlOk) errors.add('Invalid server URL format');
+
+    return ConnectionStatus.failure(
+      message: 'Invalid configuration: ${errors.join(', ')}',
+      responseTimeMs: 500,
+    );
   }
 }
