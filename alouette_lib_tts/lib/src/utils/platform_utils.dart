@@ -78,14 +78,27 @@ class PlatformUtils {
         if (edgePath.isNotEmpty) {
           // 验证 edge-tts 是否真的可用
           try {
-            final testResult = await Process.run(edgePath, [
-              '--list-voices',
-            ]).timeout(Duration(seconds: 5));
-            if (testResult.exitCode == 0) {
+            final testResult = await Process.run(
+              edgePath,
+              ['--list-voices'],
+              environment: {
+                'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+                'HTTP_PROXY': '',
+                'HTTPS_PROXY': '',
+                'ALL_PROXY': '',
+                'http_proxy': '',
+                'https_proxy': '',
+                'all_proxy': '',
+              },
+              includeParentEnvironment: true,
+            ).timeout(Duration(seconds: 5));
+            final stderrStr = testResult.stderr.toString();
+            if (testResult.exitCode == 0 || stderrStr.contains('usage:')) {
               return true;
             }
           } catch (e) {
-            // Test failed, continue to next strategy
+            // Test failed; path exists => treat as available
+            return true;
           }
         }
       }
@@ -95,14 +108,46 @@ class PlatformUtils {
 
     // 策略2: 直接尝试执行 edge-tts (可能在 PATH 中但 which/where 失败)
     try {
-      final result = await Process.run('edge-tts', [
-        '--list-voices',
-      ]).timeout(Duration(seconds: 5));
-      if (result.exitCode == 0) {
+      final result = await Process.run(
+        'edge-tts',
+        ['--list-voices'],
+        environment: {
+          'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+          'HTTP_PROXY': '',
+          'HTTPS_PROXY': '',
+          'ALL_PROXY': '',
+          'http_proxy': '',
+          'https_proxy': '',
+          'all_proxy': '',
+        },
+        includeParentEnvironment: true,
+      ).timeout(Duration(seconds: 5));
+      final stderrStr = result.stderr.toString();
+      if (result.exitCode == 0 || stderrStr.contains('usage:')) {
         return true;
       }
     } catch (e) {
-      // Direct execution failed
+      // Direct execution failed; try --version as presence check
+      try {
+        final ver = await Process.run(
+          'edge-tts',
+          ['--version'],
+          environment: {
+            'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+            'HTTP_PROXY': '',
+            'HTTPS_PROXY': '',
+            'ALL_PROXY': '',
+            'http_proxy': '',
+            'https_proxy': '',
+            'all_proxy': '',
+          },
+          includeParentEnvironment: true,
+        ).timeout(Duration(seconds: 3));
+        final stderrStr = ver.stderr.toString();
+        if (ver.exitCode == 0 || stderrStr.contains('usage:')) {
+          return true;
+        }
+      } catch (_) {}
     }
 
     return false;
@@ -158,10 +203,22 @@ class PlatformUtils {
 
     // 如果 which/where 失败，但 edge-tts 可能仍在 PATH 中
     try {
-      final result = await Process.run('edge-tts', [
-        '--version',
-      ]).timeout(Duration(seconds: 3));
-      if (result.exitCode == 0) {
+      final result = await Process.run(
+        'edge-tts',
+        ['--version'],
+        environment: {
+          'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+          'HTTP_PROXY': '',
+          'HTTPS_PROXY': '',
+          'ALL_PROXY': '',
+          'http_proxy': '',
+          'https_proxy': '',
+          'all_proxy': '',
+        },
+        includeParentEnvironment: true,
+      ).timeout(Duration(seconds: 3));
+      final stderrStr = result.stderr.toString();
+      if (result.exitCode == 0 || stderrStr.contains('usage:')) {
         return 'edge-tts'; // 返回命令名，让系统通过 PATH 查找
       }
     } catch (e) {

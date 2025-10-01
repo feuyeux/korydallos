@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Quick start script for Alouette TTS
 # Alouette TTS PowerShell Launch Script
 

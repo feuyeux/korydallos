@@ -143,6 +143,8 @@ class TTSController extends BaseStateController implements ITTSController {
       _libTTSService = lib_tts.TTSService();
       await _libTTSService.initialize();
       await _initializeVoices();
+      // Reset error state after successful initialization (handles hot reload residual errors)
+      try { clearError(); } catch (_) {}
     } catch (e) {
       setError('Failed to initialize TTS service: $e');
     }
@@ -203,23 +205,35 @@ class TTSController extends BaseStateController implements ITTSController {
   void setSpeechRate(double rate) {
     ensureNotDisposed();
     _speechRate = rate.clamp(0.0, 1.0);
+    // Forward to lib TTS service so processor uses latest parameter
+    try {
+      _libTTSService?.setSpeechRate(_speechRate);
+    } catch (_) {}
   }
 
   @override
   void setSpeechPitch(double pitch) {
     ensureNotDisposed();
     _speechPitch = pitch.clamp(0.0, 1.0);
+    try {
+      _libTTSService?.setPitch(_speechPitch);
+    } catch (_) {}
   }
 
   @override
   void setSpeechVolume(double volume) {
     ensureNotDisposed();
     _speechVolume = volume.clamp(0.0, 1.0);
+    try {
+      _libTTSService?.setVolume(_speechVolume);
+    } catch (_) {}
   }
 
   @override
   Future<void> speak() async {
     ensureNotDisposed();
+    // Reset residual TTS error state before starting a new speak action
+    clearError();
 
     if (_text.isEmpty) {
       setError('Text cannot be empty');
@@ -231,6 +245,7 @@ class TTSController extends BaseStateController implements ITTSController {
       _setPaused(false);
 
       // Use lib layer directly - match the actual API signature
+      // Parameters already forwarded via setSpeechRate/ setPitch/ setVolume
       await _libTTSService.speakText(
         _text,
         voiceName: _selectedVoice,
@@ -245,6 +260,8 @@ class TTSController extends BaseStateController implements ITTSController {
   @override
   Future<void> speakWithLanguage(String languageCode) async {
     ensureNotDisposed();
+    // Reset residual TTS error state before starting a new speak action
+    clearError();
 
     if (_text.isEmpty) {
       setError('Text cannot be empty');
@@ -296,6 +313,15 @@ class TTSController extends BaseStateController implements ITTSController {
     });
   }
 
+  // Switch TTS engine and reset error state after successful switch
+  Future<void> switchEngine(lib_tts.TTSEngineType engine) async {
+    ensureNotDisposed();
+    await executeAsync(() async {
+      await _libTTSService.switchEngine(engine);
+      try { clearError(); } catch (_) {}
+    });
+  }
+
   Future<void> _initializeVoices() async {
     try {
       final voices = await _libTTSService.getVoices();
@@ -319,7 +345,14 @@ class TTSController extends BaseStateController implements ITTSController {
       }
       
       if (_availableVoices.isNotEmpty && _selectedVoice == null) {
-        _selectedVoice = _availableVoices.first;
+        // Prefer an English voice by default
+        final enVoice = _availableVoices.firstWhere(
+          (v) => v.toString().startsWith('en-US'),
+          orElse: () => _availableVoices.first,
+        );
+        _selectedVoice = enVoice;
+        // Also set language to en-US if not already chosen
+        _languageCode ??= 'en-US';
       }
     } catch (e) {
       setError('Failed to load voices: $e');

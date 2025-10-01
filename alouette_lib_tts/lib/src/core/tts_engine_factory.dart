@@ -164,12 +164,28 @@ class TTSEngineFactory {
 
         // Try version command for more info
         try {
-          final result = await Process.run('edge-tts', [
-            '--version',
-          ]).timeout(const Duration(seconds: 5));
+          final result = await Process.run(
+            'edge-tts',
+            ['--version'],
+            environment: {
+              'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+              'HTTP_PROXY': '',
+              'HTTPS_PROXY': '',
+              'ALL_PROXY': '',
+              'http_proxy': '',
+              'https_proxy': '',
+              'all_proxy': '',
+            },
+            includeParentEnvironment: true,
+          ).timeout(const Duration(seconds: 5));
           TTSLogger.debug('edge-tts --version exit code: ${result.exitCode}');
           TTSLogger.debug('edge-tts --version stdout: ${result.stdout}');
           TTSLogger.debug('edge-tts --version stderr: ${result.stderr}');
+          final stderrStr = result.stderr.toString();
+          if (!available && stderrStr.contains('usage:')) {
+            TTSLogger.debug('edge-tts CLI present (usage output detected); treating as available');
+            return true;
+          }
         } catch (e) {
           TTSLogger.debug('edge-tts --version command failed: $e');
         }

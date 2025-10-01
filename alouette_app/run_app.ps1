@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Quick start script for Alouette Base App (PowerShell Version)
 # Alouette Base App PowerShell Launch Script
 

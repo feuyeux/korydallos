@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
 
 /// Widget for TTS controls and parameters
-class TTSControlSection extends StatelessWidget {
+class TTSControlSection extends StatefulWidget {
   final ITTSController controller;
   final TextEditingController textController;
 
@@ -11,6 +11,22 @@ class TTSControlSection extends StatelessWidget {
     required this.controller,
     required this.textController,
   });
+
+  @override
+  State<TTSControlSection> createState() => _TTSControlSectionState();
+}
+
+class _TTSControlSectionState extends State<TTSControlSection> {
+  @override
+  void reassemble() {
+    super.reassemble();
+    // Auto-clear TTS error after hot reload to re-enable Speak button
+    try {
+      controller.clearError();
+    } catch (_) {}
+  }
+  ITTSController get controller => widget.controller;
+  TextEditingController get textController => widget.textController;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +74,13 @@ class TTSControlSection extends StatelessWidget {
                                     textController.text.trim().isNotEmpty
                                 ? () {
                                     controller.text = textController.text;
+                                    // Log current UI parameters on click
+                                    debugPrint('[UI] Speak click params: '
+                                        'rate=${controller.speechRate.toStringAsFixed(2)}, '
+                                        'pitch=${controller.speechPitch.toStringAsFixed(2)}, '
+                                        'volume=${controller.speechVolume.toStringAsFixed(2)}, '
+                                        'voice=${controller.selectedVoice}, '
+                                        'language=${controller.languageCode}');
                                     controller.speak();
                                   }
                                 : null,
@@ -131,7 +154,11 @@ class TTSControlSection extends StatelessWidget {
                         divisions: 10,
                         valueDisplay:
                             '${(controller.speechRate * 2).toStringAsFixed(1)}x',
-                        onChanged: (value) => controller.setSpeechRate(value),
+                        onChanged: (value) {
+                          setState(() {
+                            controller.setSpeechRate(value);
+                          });
+                        },
                       ),
                     ),
 
@@ -149,7 +176,11 @@ class TTSControlSection extends StatelessWidget {
                         divisions: 10,
                         valueDisplay:
                             '${(controller.speechPitch * 2).toStringAsFixed(1)}x',
-                        onChanged: (value) => controller.setSpeechPitch(value),
+                        onChanged: (value) {
+                          setState(() {
+                            controller.setSpeechPitch(value);
+                          });
+                        },
                       ),
                     ),
 
@@ -167,7 +198,11 @@ class TTSControlSection extends StatelessWidget {
                         divisions: 10,
                         valueDisplay:
                             '${(controller.speechVolume * 100).toInt()}%',
-                        onChanged: (value) => controller.setSpeechVolume(value),
+                        onChanged: (value) {
+                          setState(() {
+                            controller.setSpeechVolume(value);
+                          });
+                        },
                       ),
                     ),
                   ],

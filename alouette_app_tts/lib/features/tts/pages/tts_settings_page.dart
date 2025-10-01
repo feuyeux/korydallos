@@ -146,7 +146,10 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
           min: min,
           max: max,
           divisions: ((max - min) * 10).round(),
-          onChanged: onChanged,
+          onChanged: (v) {
+            setState(() {});
+            onChanged(v);
+          },
         ),
       ],
     );

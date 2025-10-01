@@ -175,14 +175,27 @@ class _TTSHomePageState extends State<TTSHomePage> with AutoControllerDisposal {
                 child: DropdownButton<String>(
                   value: _selectedLanguage,
                   isDense: true,
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
-                  dropdownColor: Colors.grey[800],
+                  // Adapt text and menu colors to current theme for readability
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? Colors.black87
+                        : Colors.white,
+                  ),
+                  dropdownColor: Theme.of(context).brightness == Brightness.light
+                      ? Theme.of(context).colorScheme.surface
+                      : Colors.grey[800],
                   items: _availableLanguages.map((lang) {
                     return DropdownMenuItem<String>(
                       value: lang['code'],
                       child: Text(
                         lang['code']!,
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Colors.black87
+                              : Colors.white,
+                        ),
                       ),
                     );
                   }).toList(),

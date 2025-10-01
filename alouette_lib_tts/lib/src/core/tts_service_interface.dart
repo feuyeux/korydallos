@@ -26,6 +26,18 @@ abstract class TTSServiceInterface {
     String format = 'mp3',
   });
 
+  /// Speak text directly with audio playback
+  /// Supports optional parameters; when omitted, current engine defaults are used.
+  Future<void> speakText(
+    String text, {
+    String? voiceName,
+    String? languageName,
+    String format = 'mp3',
+    double? rate,
+    double? pitch,
+    double? volume,
+  });
+
   /// Stop current TTS operation
   Future<void> stop();
 

@@ -103,15 +103,19 @@ abstract class BaseTTSProcessor implements TTSProcessor {
     String text,
     String voiceName,
     String format,
-    Future<Uint8List> Function() synthesizer,
-  ) async {
+    Future<Uint8List> Function() synthesizer, {
+    String? cacheKeySuffix,
+  }) async {
     ensureNotDisposed();
 
     // Validate parameters
     _validateSynthesisParams(text, voiceName);
 
     // Check cache
-    final cachedAudio = _cacheManager.getCachedAudio(text, voiceName, format);
+    final String voiceKey = (cacheKeySuffix != null && cacheKeySuffix.isNotEmpty)
+        ? '$voiceName$cacheKeySuffix'
+        : voiceName;
+    final cachedAudio = _cacheManager.getCachedAudio(text, voiceKey, format);
     if (cachedAudio != null) {
       TTSLogger.debug('Using cached audio data for synthesis');
       return cachedAudio;
@@ -125,8 +129,8 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
         final audioData = await synthesizer();
 
-        // Cache results
-        _cacheManager.cacheAudio(text, voiceName, format, audioData);
+        // Cache results (include parameters in cache key if provided)
+        _cacheManager.cacheAudio(text, voiceKey, format, audioData);
 
         TTSLogger.debug(
           'Text synthesis completed successfully - ${audioData.length} bytes generated',

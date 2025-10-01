@@ -296,6 +296,9 @@ class TTSService implements TTSServiceInterface {
     String? voiceName,
     String? languageName,
     String format = 'mp3',
+    double? rate,
+    double? pitch,
+    double? volume,
   }) async {
     _ensureInitialized();
 
@@ -327,6 +330,17 @@ class TTSService implements TTSServiceInterface {
         }
 
         selectedVoice = bestVoice.id;
+      }
+
+      // Apply optional parameters if provided
+      if (rate != null) {
+        await setSpeechRate(rate);
+      }
+      if (pitch != null) {
+        await setPitch(pitch);
+      }
+      if (volume != null) {
+        await setVolume(volume);
       }
 
       TTSLogger.debug('Speaking text with voice: $selectedVoice');

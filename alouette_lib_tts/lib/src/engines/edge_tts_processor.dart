@@ -12,14 +12,32 @@ import '../utils/resource_manager.dart';
 /// Edge TTS processor implementation following Flutter naming conventions
 /// Provides Edge TTS functionality through command line interface
 class EdgeTTSProcessor extends BaseTTSProcessor {
+  // Internal parameters controlled by UI (0.0..1.0)
+  double _speechRate = 0.5;   // baseline at 1.0x represented by 0.5 midpoint
+  double _speechPitch = 0.5;
+  double _speechVolume = 1.0;
+
   @override
   String get engineName => 'edge';
 
   @override
   Future<List<VoiceModel>> getAvailableVoices() async {
     return getVoicesWithCache(() async {
-      // Simplified command line call
-      final result = await Process.run('edge-tts', ['--list-voices']);
+      // Call edge-tts with environment overrides to avoid proxy issues
+      final result = await Process.run(
+        'edge-tts',
+        ['--list-voices'],
+        environment: {
+          'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+          'HTTP_PROXY': '',
+          'HTTPS_PROXY': '',
+          'ALL_PROXY': '',
+          'http_proxy': '',
+          'https_proxy': '',
+          'all_proxy': '',
+        },
+        includeParentEnvironment: true,
+      );
 
       if (result.exitCode != 0) {
         final errorMessage = result.stderr.toString().trim();
@@ -40,19 +58,56 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
     String voiceName, {
     String format = 'mp3',
   }) async {
-    return synthesizeTextWithCache(text, voiceName, format, () async {
+    return synthesizeTextWithCache(
+      text,
+      voiceName,
+      format,
+      () async {
       // 使用资源管理器的 withTempFile 方法自动管理临时文件
       return await ResourceManager.instance.withTempFile(
         (tempFile) async {
-          // 简化的命令行调用
-          final result = await Process.run('edge-tts', [
+          // Call edge-tts with environment overrides to avoid proxy issues
+          // Map controller parameters to edge-tts CLI options
+          // Controller uses 0.0..1.0. Map rate/pitch to -50%..+50% around 0.5 midpoint; volume to 0%..100%.
+          int ratePercent = (((_speechRate) - 0.5) * 100).round();
+          // Pitch must be in Hz per edge-tts help (Default +0Hz)
+          int pitchHz = (((_speechPitch) - 0.5) * 100).round();
+          int volumePercent = ((_speechVolume) * 100).round();
+
+          String fmtSigned(int p) => p >= 0 ? '+${p}%' : '${p}%';
+          String fmtUnsigned(int p) => '${p}%';
+          String fmtHzSigned(int h) => h >= 0 ? '+${h}Hz' : '${h}Hz';
+
+          // Build args and log for diagnostics
+          final args = <String>[
             '--voice',
             voiceName,
             '--text',
             text,
+            // Use equals to avoid argparse treating negative values as options
+            '--rate=${fmtSigned(ratePercent)}',
+            '--pitch=${fmtHzSigned(pitchHz)}',
+            '--volume=${fmtSigned(volumePercent)}',
             '--write-media',
             tempFile.path,
-          ]);
+          ];
+          // Print assembled args to verify actual values passed to edge-tts
+          print('[EdgeTTS] Command args: ${args.join(' ')}');
+
+          final result = await Process.run(
+            'edge-tts',
+            args,
+            environment: {
+              'NO_PROXY': 'speech.platform.bing.com,.bing.com,*bing.com',
+              'HTTP_PROXY': '',
+              'HTTPS_PROXY': '',
+              'ALL_PROXY': '',
+              'http_proxy': '',
+              'https_proxy': '',
+              'all_proxy': '',
+            },
+            includeParentEnvironment: true,
+          );
 
           if (result.exitCode != 0) {
             final errorMessage = result.stderr.toString().trim();
@@ -78,7 +133,10 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
         prefix: 'edge_tts_',
         suffix: '.$format',
       );
-    });
+    },
+    cacheKeySuffix:
+        '|r=${_speechRate.toStringAsFixed(2)}|p=${_speechPitch.toStringAsFixed(2)}|v=${_speechVolume.toStringAsFixed(2)}',
+    );
   }
 
   @override
@@ -89,20 +147,17 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
 
   @override
   Future<void> setSpeechRate(double rate) async {
-    // Edge TTS 通过命令行参数控制语速，在synthesizeText时使用
-    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+    _speechRate = rate.clamp(0.0, 1.0);
   }
 
   @override
   Future<void> setPitch(double pitch) async {
-    // Edge TTS 通过命令行参数控制音调，在synthesizeText时使用
-    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+    _speechPitch = pitch.clamp(0.0, 1.0);
   }
 
   @override
   Future<void> setVolume(double volume) async {
-    // Edge TTS 通过命令行参数控制音量，在synthesizeText时使用
-    // 这里不需要存储状态，因为每次合成时都会传入新的参数
+    _speechVolume = volume.clamp(0.0, 1.0);
   }
 
   /// Parse edge-tts --list-voices output
