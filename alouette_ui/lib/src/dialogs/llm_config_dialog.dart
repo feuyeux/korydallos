@@ -6,13 +6,13 @@ import '../widgets/modern_button.dart';
 
 class LLMConfigDialog extends StatefulWidget {
   final LLMConfig initialConfig;
-  final LLMConfigService llmConfigService;
+  final TranslationService translationService;
   final bool useDialog;
 
   const LLMConfigDialog({
     super.key,
     required this.initialConfig,
-    required this.llmConfigService,
+    required this.translationService,
     this.useDialog = true,
   });
 
@@ -63,7 +63,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
         selectedModel: '',
       );
 
-      final models = await widget.llmConfigService.getAvailableModels(config);
+      final models = await widget.translationService.getAvailableModels(config);
       if (mounted && models.isNotEmpty) {
         setState(() {
           // Remove duplicates from the models list
@@ -102,7 +102,7 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
     );
 
     try {
-      final result = await widget.llmConfigService.testConnection(config);
+      final result = await widget.translationService.testConnection(config);
 
       setState(() {
         _connectionSuccess = result.success;

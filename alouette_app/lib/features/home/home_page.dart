@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> with AutoControllerDisposal {
   }
 
   void _showConfigDialog() async {
-    final llmConfigService = ServiceLocator.get<LLMConfigService>();
+    final translationService = ServiceLocator.get<TranslationService>();
     final result = await showDialog<LLMConfig>(
       context: context,
       builder: (context) => LLMConfigDialog(
@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> with AutoControllerDisposal {
           serverUrl: 'http://localhost:11434',
           selectedModel: '',
         ),
-        llmConfigService: llmConfigService,
+        translationService: translationService,
       ),
     );
 

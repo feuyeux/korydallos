@@ -7,6 +7,8 @@ import '../providers/base_translation_provider.dart';
 import '../providers/ollama_provider.dart';
 import '../providers/lm_studio_provider.dart';
 import '../exceptions/translation_exceptions.dart';
+import '../utils/text_processor.dart';
+import 'llm_config_service.dart';
 import 'dart:io';
 import 'dart:async';
 
@@ -191,7 +193,10 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Test connection to the LLM provider
-  Future<ConnectionStatus> testConnection(LLMConfig config) async {
+  Future<ConnectionStatus> testConnection(
+    LLMConfig config, {
+    Duration? timeout,
+  }) async {
     if (_isTestingConnection) {
       return ConnectionStatus.failure(
         message: 'Connection test is already in progress',
@@ -208,12 +213,27 @@ class TranslationService extends ChangeNotifier {
         throw TranslationException('Unsupported provider: ${config.provider}');
       }
 
-      _connectionStatus = await provider.testConnection(config);
+      // Apply timeout if specified
+      final connectionFuture = provider.testConnection(config);
+      _connectionStatus = timeout != null
+          ? await connectionFuture.timeout(
+              timeout,
+              onTimeout: () => ConnectionStatus.failure(
+                message: 'Connection test timed out',
+              ),
+            )
+          : await connectionFuture;
 
       if (_connectionStatus!.success) {
         // Fetch available models on successful connection
         try {
-          _availableModels = await provider.getAvailableModels(config);
+          final modelsFuture = provider.getAvailableModels(config);
+          _availableModels = timeout != null
+              ? await modelsFuture.timeout(
+                  timeout,
+                  onTimeout: () => <String>[],
+                )
+              : await modelsFuture;
         } catch (e) {
           // Don't fail the connection test if model fetching fails
           _availableModels = [];
@@ -379,7 +399,8 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Auto-detect LLM configuration by testing common endpoints
-  Future<LLMConfig?> autoDetectConfig() async {
+  /// [quickMode] uses shorter timeout for faster startup (default: false)
+  Future<LLMConfig?> autoDetectConfig({bool quickMode = false}) async {
     final commonConfigs = [
       // Ollama configurations with qwen2.5 as preferred model
       LLMConfig(
@@ -405,9 +426,12 @@ class TranslationService extends ChangeNotifier {
       ),
     ];
 
+    // Use 2 second timeout in quick mode, normal timeout otherwise
+    final timeout = quickMode ? const Duration(seconds: 2) : null;
+
     for (final config in commonConfigs) {
       try {
-        final status = await testConnection(config);
+        final status = await testConnection(config, timeout: timeout);
         if (status.success && _availableModels.isNotEmpty) {
           // Prefer qwen2.5 models if available
           String selectedModel = _availableModels.first;
@@ -442,11 +466,16 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Auto-detect configuration with platform-specific optimizations
+  /// [quickMode] uses shorter timeout for faster startup
   Future<LLMConfig?> autoDetectConfigWithPlatformSupport({
     bool isAndroid = false,
+    bool quickMode = false,
   }) async {
     // Use different base URL for Android to avoid localhost issues
     final baseUrl = isAndroid ? 'http://10.0.2.2' : 'http://localhost';
+    
+    // Use 2 second timeout in quick mode
+    final timeout = quickMode ? const Duration(seconds: 2) : null;
 
     final commonConfigs = [
       // Ollama configurations
@@ -465,7 +494,7 @@ class TranslationService extends ChangeNotifier {
 
     for (final config in commonConfigs) {
       try {
-        final status = await testConnection(config);
+        final status = await testConnection(config, timeout: timeout);
         if (status.success && _availableModels.isNotEmpty) {
           String selectedModel = _selectBestModel(_availableModels);
           return config.copyWith(selectedModel: selectedModel);
@@ -528,6 +557,9 @@ class TranslationService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Use quick mode (shorter timeout) when retries are disabled (startup scenario)
+      final quickMode = !enableRetry;
+      
       // Use enhanced auto-detection logic with platform support and retry mechanism
       for (
         int attempt = 1;
@@ -538,6 +570,7 @@ class TranslationService extends ChangeNotifier {
           // Try platform-specific auto-detection first
           final autoDetected = await autoDetectConfigWithPlatformSupport(
             isAndroid: isAndroid,
+            quickMode: quickMode,
           );
 
           if (autoDetected != null) {
@@ -547,7 +580,7 @@ class TranslationService extends ChangeNotifier {
           }
 
           // Fallback to basic auto-detection
-          final basicAutoDetected = await autoDetectConfig();
+          final basicAutoDetected = await autoDetectConfig(quickMode: quickMode);
           if (basicAutoDetected != null) {
             _autoDetectedConfig = basicAutoDetected;
             notifyListeners();
@@ -659,54 +692,15 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Get recommended settings for a provider
+  /// Delegates to LLMConfigService for consistent configuration across the library
   Map<String, dynamic> getRecommendedSettings(
     String provider, {
     bool isAndroid = false,
   }) {
-    // Use different base URL for Android to avoid localhost issues
-    final baseUrl = isAndroid ? 'http://10.0.2.2' : 'http://localhost';
-
-    switch (provider.toLowerCase()) {
-      case 'ollama':
-        return {
-          'serverUrl': '$baseUrl:11434',
-          'apiKey': '',
-          'description': 'Ollama typically runs on port 11434',
-          'setupInstructions': [
-            'Install Ollama from https://ollama.ai',
-            'Run "ollama serve" to start the server',
-            'Pull a model with "ollama pull llama3.2" or similar',
-          ],
-          'commonModels': ['llama3.2', 'llama3.1', 'mistral', 'codellama'],
-        };
-
-      case 'lmstudio':
-        return {
-          'serverUrl': '$baseUrl:1234',
-          'apiKey': '',
-          'description': 'LM Studio typically runs on port 1234',
-          'setupInstructions': [
-            'Install LM Studio from https://lmstudio.ai',
-            'Download and load a model in LM Studio',
-            'Start the local server from the server tab',
-            'Enable CORS if accessing from web applications',
-          ],
-          'commonModels': [
-            'microsoft/DialoGPT-medium',
-            'microsoft/DialoGPT-large',
-            'huggingface models',
-          ],
-        };
-
-      default:
-        return {
-          'serverUrl': '$baseUrl:11434',
-          'apiKey': '',
-          'description': 'Default configuration',
-          'setupInstructions': [],
-          'commonModels': [],
-        };
-    }
+    return LLMConfigService.getRecommendedSettings(
+      provider,
+      isAndroid: isAndroid,
+    );
   }
 
   /// Clear auto-detected configuration
@@ -768,9 +762,15 @@ class TranslationService extends ChangeNotifier {
   LLMConfig? get currentConfig => _autoDetectedConfig;
 
   /// Initialize the service with auto-configuration
+  /// Uses shorter timeout and fewer retries to avoid blocking app startup
   Future<bool> initialize({bool isAndroid = false}) async {
     try {
-      final config = await attemptAutoConfiguration(isAndroid: isAndroid);
+      // Use faster auto-configuration for startup (no retries, quick timeout)
+      final config = await autoConfigureLLM(
+        isAndroid: isAndroid,
+        enableRetry: false, // No retries during startup
+        maxRetries: 1,
+      );
       return config != null;
     } catch (e) {
       return false;
@@ -973,185 +973,8 @@ class TranslationService extends ChangeNotifier {
   }
 
   /// Clean translation result by removing unwanted prefixes, suffixes, and formatting
+  /// Delegates to TextProcessor for consistent cleaning logic across the library
   String cleanTranslationResult(String rawText, String targetLanguage) {
-    if (rawText.trim().isEmpty) {
-      return '';
-    }
-
-    String cleaned = rawText.trim();
-
-    // Remove think tags and their content
-    cleaned = _removeThinkTags(cleaned);
-
-    // Remove common translation prefixes
-    cleaned = _removePrefixes(cleaned);
-
-    // Remove trailing punctuation that might be artifacts
-    cleaned = _removeTrailingArtifacts(cleaned);
-
-    // Remove quotes if they wrap the entire text
-    cleaned = _removeWrappingQuotes(cleaned);
-
-    // Handle multi-line responses by taking the first meaningful line
-    cleaned = _extractMainTranslation(cleaned);
-
-    // Final cleanup
-    cleaned = cleaned.trim();
-
-    // If cleaning resulted in empty text, return the first non-empty line of original
-    if (cleaned.isEmpty) {
-      cleaned = _fallbackExtraction(rawText);
-    }
-
-    return cleaned;
-  }
-
-  /// Remove common translation prefixes
-  String _removePrefixes(String text) {
-    final prefixPatterns = [
-      // English prefixes
-      RegExp(r'^translation:\s*', caseSensitive: false),
-      RegExp(r'^translated text:\s*', caseSensitive: false),
-      RegExp(r'^here is the translation:\s*', caseSensitive: false),
-      RegExp(r'^the translation is:\s*', caseSensitive: false),
-      RegExp(r'^answer:\s*', caseSensitive: false),
-      RegExp(r'^response:\s*', caseSensitive: false),
-      RegExp(r'^result:\s*', caseSensitive: false),
-      RegExp(r'^output:\s*', caseSensitive: false),
-
-      // Numbered prefixes
-      RegExp(r'^\d+\.\s*'),
-      RegExp(r'^\d+\)\s*'),
-      RegExp(r'^[-*]\s*'),
-
-      // Generic patterns - more specific to avoid removing actual translation content
-      RegExp(r'^[a-zA-Z\s]*translation[a-zA-Z\s]*:\s*', caseSensitive: false),
-      RegExp(r'^[a-zA-Z\s]*answer[a-zA-Z\s]*:\s*', caseSensitive: false),
-      RegExp(r'^[a-zA-Z\s]*response[a-zA-Z\s]*:\s*', caseSensitive: false),
-      RegExp(r'^[a-zA-Z\s]*result[a-zA-Z\s]*:\s*', caseSensitive: false),
-      RegExp(r'^[a-zA-Z\s]*output[a-zA-Z\s]*:\s*', caseSensitive: false),
-    ];
-
-    String result = text;
-    for (final pattern in prefixPatterns) {
-      result = result.replaceFirst(pattern, '');
-    }
-
-    return result.trim();
-  }
-
-  /// Remove think tags and their content
-  String _removeThinkTags(String text) {
-    String result = text;
-
-    // Remove <think>...</think> blocks including multiline content
-    result = result.replaceAll(RegExp(r'<think>.*?</think>', dotAll: true), '');
-
-    // Remove <thinking>...</thinking> blocks including multiline content
-    result = result.replaceAll(
-      RegExp(r'<thinking>.*?</thinking>', dotAll: true),
-      '',
-    );
-
-    // Remove standalone opening/closing tags in case they got separated
-    result = result.replaceAll(RegExp(r'</?think>', caseSensitive: false), '');
-    result = result.replaceAll(
-      RegExp(r'</?thinking>', caseSensitive: false),
-      '',
-    );
-
-    return result.trim();
-  }
-
-  /// Remove quotes that wrap the entire text
-  String _removeWrappingQuotes(String text) {
-    String result = text.trim();
-
-    // Remove outer quotes if they wrap the entire text
-    if (result.length >= 2) {
-      if ((result.startsWith('"') && result.endsWith('"')) ||
-          (result.startsWith("'") && result.endsWith("'")) ||
-          (result.startsWith('`') && result.endsWith('`'))) {
-        result = result.substring(1, result.length - 1).trim();
-      }
-
-      // Handle smart quotes
-      if ((result.startsWith('"') && result.endsWith('"')) ||
-          (result.startsWith(''') && result.endsWith('''))) {
-        result = result.substring(1, result.length - 1).trim();
-      }
-    }
-
-    return result;
-  }
-
-  /// Remove trailing artifacts that might be added by the model
-  String _removeTrailingArtifacts(String text) {
-    String result = text.trim();
-
-    // Remove trailing explanatory text
-    final trailingPatterns = [
-      RegExp(r'\s*\(.*translation.*\)$', caseSensitive: false),
-      RegExp(r'\s*\[.*translation.*\]$', caseSensitive: false),
-      RegExp(r'\s*\(.*\)$'), // Remove any parenthetical at the end
-      RegExp(r'\s*--.*$'),
-      RegExp(r'\s*\.\.\.$'),
-    ];
-
-    for (final pattern in trailingPatterns) {
-      result = result.replaceFirst(pattern, '');
-    }
-
-    return result.trim();
-  }
-
-  /// Extract the main translation from multi-line responses
-  String _extractMainTranslation(String text) {
-    final lines = text.split('\n').map((line) => line.trim()).toList();
-
-    // If single line, return as is
-    if (lines.length == 1) {
-      return lines.first;
-    }
-
-    // Find the first substantial line (not empty, not just punctuation)
-    for (final line in lines) {
-      if (line.isNotEmpty && _isSubstantialText(line)) {
-        return line;
-      }
-    }
-
-    // Fallback to first non-empty line
-    for (final line in lines) {
-      if (line.isNotEmpty) {
-        return line;
-      }
-    }
-
-    return text; // Return original if no good line found
-  }
-
-  /// Check if text is substantial (not just punctuation or very short)
-  bool _isSubstantialText(String text) {
-    if (text.length < 1) return false;
-
-    // Check if it's mostly punctuation - be more lenient
-    final alphanumericCount = text.replaceAll(RegExp(r'[^\w\s]'), '').length;
-    return alphanumericCount >= text.length * 0.3; // Reduced from 0.5 to 0.3
-  }
-
-  /// Fallback extraction when main cleaning fails
-  String _fallbackExtraction(String rawText) {
-    final lines = rawText.split('\n');
-
-    // Find first non-empty line
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.isNotEmpty) {
-        return trimmed;
-      }
-    }
-
-    return rawText.trim();
+    return TextProcessor.cleanTranslationResult(rawText, targetLanguage);
   }
 }

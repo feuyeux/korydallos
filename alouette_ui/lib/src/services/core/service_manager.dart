@@ -58,8 +58,11 @@ class ServiceManager {
           () => translationImpl,
         );
         // Also register the underlying TranslationService for widgets that need it
+        // Use lazy access to avoid accessing before initialization
         ServiceLocator.registerSingleton<trans_lib.TranslationService>(
-          () => translationImpl.underlyingService,
+          () => ServiceLocator.get<ITranslationService>() is TranslationServiceImpl 
+              ? (ServiceLocator.get<ITranslationService>() as TranslationServiceImpl).underlyingServiceSafe
+              : trans_lib.TranslationService(),
         );
         _log('Translation service registered');
       }
@@ -149,6 +152,12 @@ class ServiceManager {
       }
 
       if (!success) {
+        // For TranslationService, allow app to continue even if auto-config fails
+        if (service is ITranslationService) {
+          _serviceStatus[T] = false;
+          _log('$serviceName service initialized but auto-configuration failed - service can still be configured manually');
+          return; // Don't throw, allow app to start
+        }
         throw Exception('Failed to initialize $serviceName service');
       }
 
@@ -157,6 +166,12 @@ class ServiceManager {
     } catch (e) {
       _serviceStatus[T] = false;
       _log('$serviceName service failed: $e');
+      
+      // For TranslationService, don't rethrow - allow app to start
+      if (serviceName == 'Translation') {
+        _log('Continuing without Translation service auto-configuration');
+        return;
+      }
       rethrow;
     }
   }

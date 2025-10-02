@@ -180,7 +180,7 @@ class _TranslationPageState extends State<TranslationPage>
   Future<void> _showConfigDialog() async {
     if (!mounted) return;
 
-    final llmConfigService = ServiceLocator.get<LLMConfigService>();
+    final translationService = ServiceLocator.get<TranslationService>();
     final result = await showDialog<LLMConfig>(
       context: context,
       builder: (context) => LLMConfigDialog(
@@ -189,7 +189,7 @@ class _TranslationPageState extends State<TranslationPage>
           serverUrl: 'http://localhost:11434',
           selectedModel: '',
         ),
-        llmConfigService: llmConfigService,
+        translationService: translationService,
       ),
     );
 

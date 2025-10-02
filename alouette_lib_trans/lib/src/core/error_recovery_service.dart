@@ -237,20 +237,6 @@ abstract class TranslationFallbackProvider {
   String get providerName;
 }
 
-/// Simple fallback provider that returns a placeholder
-class PlaceholderFallbackProvider implements TranslationFallbackProvider {
-  @override
-  Future<String> translateText(String text, String targetLanguage) async {
-    return '[Translation unavailable for: $targetLanguage]';
-  }
-
-  @override
-  bool get isAvailable => true;
-
-  @override
-  String get providerName => 'Placeholder';
-}
-
 /// Cached translation fallback provider
 class CachedTranslationFallbackProvider implements TranslationFallbackProvider {
   final Map<String, String> _cache = {};

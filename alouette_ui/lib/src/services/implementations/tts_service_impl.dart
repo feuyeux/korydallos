@@ -43,9 +43,9 @@ class TTSServiceImpl implements ITTSService {
   Future<void> speak(
     String text, {
     String? voiceName,
-    double rate = 1.0,
-    double volume = 1.0,
-    double pitch = 1.0,
+    double rate = 0.5,   // 0.5 = normal speed (0% adjustment for Edge TTS)
+    double volume = 1.0, // 1.0 = 100% volume
+    double pitch = 0.5,  // 0.5 = normal pitch (0Hz adjustment for Edge TTS)
   }) async {
     _ensureInitialized();
 
@@ -77,9 +77,9 @@ class TTSServiceImpl implements ITTSService {
   Future<void> speakInLanguage(
     String text,
     String languageName, {
-    double rate = 1.0,
-    double volume = 1.0,
-    double pitch = 1.0,
+    double rate = 0.5,   // 0.5 = normal speed (0% adjustment for Edge TTS)
+    double volume = 1.0, // 1.0 = 100% volume
+    double pitch = 0.5,  // 0.5 = normal pitch (0Hz adjustment for Edge TTS)
   }) async {
     _ensureInitialized();
 

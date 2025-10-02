@@ -137,20 +137,6 @@ class TranslationConstants {
     'rateLimitExceeded': 'Rate limit exceeded',
   };
 
-  /// HTTP status codes and their meanings
-  static const Map<int, String> httpStatusMessages = {
-    200: 'OK',
-    400: 'Bad Request',
-    401: 'Unauthorized',
-    403: 'Forbidden',
-    404: 'Not Found',
-    429: 'Too Many Requests',
-    500: 'Internal Server Error',
-    502: 'Bad Gateway',
-    503: 'Service Unavailable',
-    504: 'Gateway Timeout',
-  };
-
   /// Default request options for different providers
   static const Map<String, Map<String, dynamic>> defaultRequestOptions = {
     'ollama': {
@@ -171,34 +157,6 @@ class TranslationConstants {
     },
   };
 
-  /// Validation patterns
-  static const Map<String, String> validationPatterns = {
-    'url':
-        r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
-    'ipAddress':
-        r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
-    'port':
-        r'^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$',
-    'languageCode': r'^[a-z]{2}(-[A-Z]{2})?$',
-  };
-
-  /// Configuration keys for storage
-  static const Map<String, String> configKeys = {
-    'provider': 'llm_provider',
-    'serverUrl': 'llm_server_url',
-    'apiKey': 'llm_api_key',
-    'selectedModel': 'llm_selected_model',
-    'lastUsed': 'llm_last_used',
-    'autoSave': 'llm_auto_save',
-  };
-
-  /// Feature flags
-  static const Map<String, bool> features = {
-    'autoRetry': true,
-    'caching': false,
-    'analytics': false,
-    'offlineMode': false,
-    'batchTranslation': true,
-    'customProviders': true,
-  };
+  /// Validation pattern for language code
+  static const String languageCodePattern = r'^[a-z]{2}(-[A-Z]{2})?$';
 }

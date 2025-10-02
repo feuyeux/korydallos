@@ -127,9 +127,11 @@ class TTSController extends BaseStateController implements ITTSController {
   List<String> _availableVoices = [];
   bool _isSpeaking = false;
   bool _isPaused = false;
-  double _speechRate = 0.5;
-  double _speechPitch = 0.5;
-  double _speechVolume = 1.0;
+  // Controller uses 0.0-1.0 range where 0.5 = normal (0% adjustment)
+  // For Edge TTS: rate/pitch are mapped to -50% to +50% around 0.5 midpoint
+  double _speechRate = 0.5;   // 0.5 = normal speed (0%)
+  double _speechPitch = 0.5;  // 0.5 = normal pitch (0Hz)
+  double _speechVolume = 1.0; // 1.0 = 100% volume
 
   // Use lib layer directly
   late final dynamic _libTTSService;

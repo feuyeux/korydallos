@@ -4,11 +4,9 @@ import 'package:alouette_ui/alouette_ui.dart';
 
 class AppTranslationController extends ChangeNotifier {
   final TranslationService _translationService;
-  final LLMConfigService _llmConfigService;
 
   AppTranslationController()
-      : _translationService = ServiceLocator.get<TranslationService>(),
-        _llmConfigService = LLMConfigService();
+      : _translationService = ServiceLocator.get<TranslationService>();
 
   LLMConfig _llmConfig = const LLMConfig(
     provider: 'ollama',
@@ -103,7 +101,7 @@ class AppTranslationController extends ChangeNotifier {
       context: context,
       builder: (context) => LLMConfigDialog(
         initialConfig: _llmConfig,
-        llmConfigService: _llmConfigService,
+        translationService: _translationService,
       ),
     );
   }

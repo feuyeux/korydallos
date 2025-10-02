@@ -6,12 +6,17 @@ import '../interfaces/translation_service_interface.dart';
 /// Concrete implementation of ITranslationService that wraps the alouette_lib_trans library.
 /// Provides thread-safe initialization and proper resource management.
 class TranslationServiceImpl implements ITranslationService {
-  trans_lib.TranslationService? _service;
+  late final trans_lib.TranslationService _service;
   bool _isInitialized = false;
   bool _isDisposed = false;
 
   // Synchronization lock for thread-safe initialization
   static final Object _initLock = Object();
+
+  // Constructor creates the service object immediately
+  TranslationServiceImpl() {
+    _service = trans_lib.TranslationService();
+  }
 
   @override
   Future<bool> initialize() async {
@@ -25,20 +30,26 @@ class TranslationServiceImpl implements ITranslationService {
       return await _synchronized(_initLock, () async {
         if (_isInitialized) return true;
 
-        _service = trans_lib.TranslationService();
-
-        // Initialize with auto-configuration
-        final success = await _service!.initialize();
-        _isInitialized =
-            true; // Service is initialized even if auto-config fails
-
-        if (success) {
-
+        // Service object already created in constructor
+        // Try auto-configuration with short timeout to avoid blocking app startup
+        try {
+          await _service.initialize().timeout(
+            const Duration(seconds: 3),
+            onTimeout: () {
+              // Timeout is OK - user can configure manually
+              return false;
+            },
+          );
+        } catch (e) {
+          // Auto-configuration failed, but service object is created
+          // User can configure manually through UI
         }
-        return true; // Return true even if auto-config failed, service can still be used manually
+        
+        _isInitialized = true; // Service is initialized even if auto-config fails
+        return true; // Return true - service can still be used with manual configuration
       });
     } catch (e) {
-
+      // Critical error
       _cleanup();
       return false;
     }
@@ -185,10 +196,13 @@ class TranslationServiceImpl implements ITranslationService {
   @override
   bool get isInitialized => _isInitialized && !_isDisposed;
 
+  /// Get the underlying TranslationService instance safely (can be called before initialize)
+  trans_lib.TranslationService get underlyingServiceSafe => _service;
+
   /// Get the underlying TranslationService instance for widgets that need direct access
   trans_lib.TranslationService get underlyingService {
     _ensureInitialized();
-    return _service!;
+    return _service;
   }
 
   @override
@@ -201,7 +215,7 @@ class TranslationServiceImpl implements ITranslationService {
 
   void _cleanup() {
     // Note: TranslationService doesn't have a dispose method in the current API
-    _service = null;
+    // Service object remains but marked as not initialized
     _isInitialized = false;
   }
 
