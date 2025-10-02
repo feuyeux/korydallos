@@ -27,11 +27,12 @@ abstract class TTSServiceInterface {
   });
 
   /// Speak text directly with audio playback
-  /// Supports optional parameters; when omitted, current engine defaults are used.
+  /// Supports optional parameters; when omitted, defaults are used (0.5 for rate/pitch, 1.0 for volume)
   Future<void> speakText(
     String text, {
     String? voiceName,
     String? languageName,
+    String? languageCode,
     String format = 'mp3',
     double? rate,
     double? pitch,
@@ -40,15 +41,6 @@ abstract class TTSServiceInterface {
 
   /// Stop current TTS operation
   Future<void> stop();
-
-  /// Set speech rate
-  Future<void> setSpeechRate(double rate);
-
-  /// Set pitch
-  Future<void> setPitch(double pitch);
-
-  /// Set volume
-  Future<void> setVolume(double volume);
 
   /// Get platform and engine information
   Future<Map<String, dynamic>> getPlatformInfo();

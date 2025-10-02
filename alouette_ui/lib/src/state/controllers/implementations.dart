@@ -129,8 +129,8 @@ class TTSController extends BaseStateController implements ITTSController {
   bool _isPaused = false;
   // Controller uses 0.0-1.0 range where 0.5 = normal (0% adjustment)
   // For Edge TTS: rate/pitch are mapped to -50% to +50% around 0.5 midpoint
-  double _speechRate = 0.5;   // 0.5 = normal speed (0%)
-  double _speechPitch = 0.5;  // 0.5 = normal pitch (0Hz)
+  double _speechRate = 1.0;   // 1.0 = normal speed (1.0x)
+  double _speechPitch = 1.0;  // 1.0 = normal pitch (1.0x)
   double _speechVolume = 1.0; // 1.0 = 100% volume
 
   // Use lib layer directly
@@ -207,28 +207,21 @@ class TTSController extends BaseStateController implements ITTSController {
   void setSpeechRate(double rate) {
     ensureNotDisposed();
     _speechRate = rate.clamp(0.0, 1.0);
-    // Forward to lib TTS service so processor uses latest parameter
-    try {
-      _libTTSService?.setSpeechRate(_speechRate);
-    } catch (_) {}
+    // Parameter will be passed directly in speak() via TTSRequest
   }
 
   @override
   void setSpeechPitch(double pitch) {
     ensureNotDisposed();
     _speechPitch = pitch.clamp(0.0, 1.0);
-    try {
-      _libTTSService?.setPitch(_speechPitch);
-    } catch (_) {}
+    // Parameter will be passed directly in speak() via TTSRequest
   }
 
   @override
   void setSpeechVolume(double volume) {
     ensureNotDisposed();
     _speechVolume = volume.clamp(0.0, 1.0);
-    try {
-      _libTTSService?.setVolume(_speechVolume);
-    } catch (_) {}
+    // Parameter will be passed directly in speak() via TTSRequest
   }
 
   @override
@@ -246,13 +239,15 @@ class TTSController extends BaseStateController implements ITTSController {
       _setSpeaking(true);
       _setPaused(false);
 
-      // Use lib layer directly - match the actual API signature
-      // Parameters already forwarded via setSpeechRate/ setPitch/ setVolume
+      // Use lib layer directly - parameters passed via TTSRequest
       await _libTTSService.speakText(
         _text,
         voiceName: _selectedVoice,
         languageName: _languageCode,
         format: 'audio-24khz-48kbitrate-mono-mp3',
+        rate: _speechRate,
+        pitch: _speechPitch,
+        volume: _speechVolume,
       );
 
       _setSpeaking(false);

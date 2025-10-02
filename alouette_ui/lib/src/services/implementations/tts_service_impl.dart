@@ -43,24 +43,14 @@ class TTSServiceImpl implements ITTSService {
   Future<void> speak(
     String text, {
     String? voiceName,
-    double rate = 0.5,   // 0.5 = normal speed (0% adjustment for Edge TTS)
+    double rate = 1.0,   // 1.0 = normal speed (1.0x)
     double volume = 1.0, // 1.0 = 100% volume
-    double pitch = 0.5,  // 0.5 = normal pitch (0Hz adjustment for Edge TTS)
+    double pitch = 1.0,  // 1.0 = normal pitch (1.0x)
   }) async {
     _ensureInitialized();
 
     try {
-      // Apply parameters and speak
-      try {
-        await _ttsService!.setSpeechRate(rate);
-      } catch (_) {}
-      try {
-        await _ttsService!.setPitch(pitch);
-      } catch (_) {}
-      try {
-        await _ttsService!.setVolume(volume);
-      } catch (_) {}
-
+      // Parameters are now passed directly to speakText via TTSRequest
       await _ttsService!.speakText(
         text,
         voiceName: voiceName,
@@ -74,12 +64,13 @@ class TTSServiceImpl implements ITTSService {
   }
 
   @override
+  @override
   Future<void> speakInLanguage(
     String text,
     String languageName, {
-    double rate = 0.5,   // 0.5 = normal speed (0% adjustment for Edge TTS)
+    double rate = 1.0,   // 1.0 = normal speed (1.0x)
     double volume = 1.0, // 1.0 = 100% volume
-    double pitch = 0.5,  // 0.5 = normal pitch (0Hz adjustment for Edge TTS)
+    double pitch = 1.0,  // 1.0 = normal pitch (1.0x)
   }) async {
     _ensureInitialized();
 
@@ -96,17 +87,7 @@ class TTSServiceImpl implements ITTSService {
         }
       }
 
-      // Apply parameters
-      try {
-        await _ttsService!.setSpeechRate(rate);
-      } catch (_) {}
-      try {
-        await _ttsService!.setPitch(pitch);
-      } catch (_) {}
-      try {
-        await _ttsService!.setVolume(volume);
-      } catch (_) {}
-
+      // Parameters are now passed directly to speakText via TTSRequest
       if (matchingVoice != null) {
         await _ttsService!.speakText(
           text,

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'base_tts_processor.dart';
 import '../models/voice_model.dart';
+import '../models/tts_request.dart';
 import '../models/tts_error.dart';
 import '../enums/voice_gender.dart';
 import '../enums/voice_quality.dart';
@@ -11,12 +12,12 @@ import '../utils/resource_manager.dart';
 
 /// Edge TTS processor implementation following Flutter naming conventions
 /// Provides Edge TTS functionality through command line interface
+/// 
+/// Parameter Mapping:
+/// - rate: 0.5 = normal (0%), 0.0 = -50%, 1.0 = +50%
+/// - pitch: 0.5 = normal (0Hz), 0.0 = -50Hz, 1.0 = +50Hz
+/// - volume: 1.0 = 100%
 class EdgeTTSProcessor extends BaseTTSProcessor {
-  // Internal parameters controlled by UI (0.0..1.0)
-  double _speechRate = 0.5; // baseline at 1.0x represented by 0.5 midpoint
-  double _speechPitch = 0.5;
-  double _speechVolume = 1.0;
-
   @override
   String get engineName => 'edge';
 
@@ -53,26 +54,25 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
   }
 
   @override
-  Future<Uint8List> synthesizeToAudio(
-    String text,
-    String voiceName, {
-    String format = 'mp3',
-  }) async {
+  Future<Uint8List> synthesizeToAudio(TTSRequest request) async {
     return synthesizeTextWithCache(
-      text,
-      voiceName,
-      format,
+      request.text,
+      request.voiceName ?? '',
+      request.format,
       () async {
         // 使用资源管理器的 withTempFile 方法自动管理临时文件
         return await ResourceManager.instance.withTempFile(
           (tempFile) async {
-            // Call edge-tts with environment overrides to avoid proxy issues
-            // Map controller parameters to edge-tts CLI options
-            // Controller uses 0.0..1.0. Map rate/pitch to -50%..+50% around 0.5 midpoint; volume to 0%..100%.
-            int ratePercent = (((_speechRate) - 0.5) * 100).round();
-            // Pitch must be in Hz per edge-tts help (Default +0Hz)
-            int pitchHz = (((_speechPitch) - 0.5) * 100).round();
-            int volumePercent = ((_speechVolume) * 100).round();
+            // Map TTSRequest parameters (0.0-1.0) to edge-tts CLI options
+            // rate: 0.5=normal(0%), 0.0=-50%, 1.0=+50%
+            // pitch: 0.5=normal(0Hz), 0.0=-50Hz, 1.0=+50Hz
+            // volume: 1.0=100%
+            // Convert rate/pitch from normalized scale to percentage adjustment
+      // 1.0 = 0% (normal), <1.0 = negative%, >1.0 = positive%
+      // Formula: (value - 1.0) * 100
+      final ratePercent = ((request.rate - 1.0) * 100).round();
+      final pitchHz = ((request.pitch - 1.0) * 100).round();
+      final volumePercent = (request.volume * 100).round();
 
             String fmtSigned(int p) => p >= 0 ? '+${p}%' : '${p}%';
             String fmtHzSigned(int h) => h >= 0 ? '+${h}Hz' : '${h}Hz';
@@ -80,9 +80,9 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
             // Build args and log for diagnostics
             final args = <String>[
               '--voice',
-              voiceName,
+              request.voiceName ?? '',
               '--text',
-              text,
+              request.text,
               // Use equals to avoid argparse treating negative values as options
               '--rate=${fmtSigned(ratePercent)}',
               '--pitch=${fmtHzSigned(pitchHz)}',
@@ -130,11 +130,11 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
             return Uint8List.fromList(audioData);
           },
           prefix: 'edge_tts_',
-          suffix: '.$format',
+          suffix: '.${request.format}',
         );
       },
       cacheKeySuffix:
-          '|r=${_speechRate.toStringAsFixed(2)}|p=${_speechPitch.toStringAsFixed(2)}|v=${_speechVolume.toStringAsFixed(2)}',
+          '|r=${request.rate.toStringAsFixed(2)}|p=${request.pitch.toStringAsFixed(2)}|v=${request.volume.toStringAsFixed(2)}',
     );
   }
 
@@ -142,21 +142,6 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
   Future<void> stop() async {
     // Edge TTS 通过命令行运行，无法直接停止正在进行的合成
     // 这里只是一个占位符实现
-  }
-
-  @override
-  Future<void> setSpeechRate(double rate) async {
-    _speechRate = rate.clamp(0.0, 1.0);
-  }
-
-  @override
-  Future<void> setPitch(double pitch) async {
-    _speechPitch = pitch.clamp(0.0, 1.0);
-  }
-
-  @override
-  Future<void> setVolume(double volume) async {
-    _speechVolume = volume.clamp(0.0, 1.0);
   }
 
   /// Parse edge-tts --list-voices output

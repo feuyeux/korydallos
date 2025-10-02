@@ -231,24 +231,26 @@ class _TTSPageState extends State<TTSPage> with AutoControllerDisposal {
 
                   // Speech Rate
                   Text(
-                    'Rate: ${(_controller.speechRate * 2).toStringAsFixed(1)}x',
+                    'Rate: ${_controller.speechRate.toStringAsFixed(1)}x',
                   ),
                   Slider(
                     value: _controller.speechRate,
                     onChanged: (value) => _controller.setSpeechRate(value),
-                    min: 0.0,
-                    max: 1.0,
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 15,
                   ),
 
                   // Speech Pitch
                   Text(
-                    'Pitch: ${(_controller.speechPitch * 2).toStringAsFixed(1)}x',
+                    'Pitch: ${_controller.speechPitch.toStringAsFixed(1)}x',
                   ),
                   Slider(
                     value: _controller.speechPitch,
                     onChanged: (value) => _controller.setSpeechPitch(value),
-                    min: 0.0,
-                    max: 1.0,
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 15,
                   ),
 
                   // Speech Volume

@@ -144,13 +144,13 @@ abstract class ITTSController extends IStateController {
   /// Whether TTS is paused
   bool get isPaused;
 
-  /// Current speech rate (0.0 - 1.0)
+  /// Current speech rate (1.0 = normal speed)
   double get speechRate;
 
-  /// Current speech pitch (0.0 - 1.0)
+  /// Current speech pitch (1.0 = normal pitch)
   double get speechPitch;
 
-  /// Current speech volume (0.0 - 1.0)
+  /// Current speech volume (1.0 = 100%)
   double get speechVolume;
 
   /// Stream of speaking state changes

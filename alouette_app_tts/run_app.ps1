@@ -16,10 +16,6 @@ if (-not (Test-Path "pubspec.yaml")) {
 
 Write-Host "[INFO] Running from: $(Get-Location)" -ForegroundColor Green
 
-# Default to Windows platform, support named parameter -Platform
-param(
-    [string]$Platform = "windows"
-)
 Write-Host "[INFO] Platform: $Platform" -ForegroundColor Green
 
 # Platform-specific setup (if needed in the future)

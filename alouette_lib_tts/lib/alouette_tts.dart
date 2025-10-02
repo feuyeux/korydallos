@@ -55,6 +55,7 @@ export 'src/engines/flutter_tts_processor.dart';
 
 // Models
 export 'src/models/voice_model.dart';
+export 'src/models/tts_request.dart';
 export 'src/models/tts_config.dart';
 export 'src/models/tts_status.dart';
 export 'src/models/tts_error.dart';

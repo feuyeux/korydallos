@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import '../models/voice_model.dart';
+import '../models/tts_request.dart';
 import '../models/tts_error.dart';
 import '../exceptions/tts_exceptions.dart';
 import '../utils/cache_manager.dart';
@@ -8,6 +9,9 @@ import '../utils/tts_logger.dart';
 
 /// Base TTS processor interface following Flutter naming conventions
 /// Provides unified interface for all TTS engines
+/// 
+/// Key Principle: Processors only handle synthesis/playback and parameter mapping.
+/// They do NOT store parameters - all parameters come from TTSRequest.
 abstract class TTSProcessor {
   /// Get the engine name
   String get engineName;
@@ -15,33 +19,15 @@ abstract class TTSProcessor {
   /// Get all available voices
   Future<List<VoiceModel>> getAvailableVoices();
 
-  /// Synthesize text to audio bytes
+  /// Synthesize text to audio bytes with all parameters from request
   ///
-  /// [text] Text to synthesize
-  /// [voiceName] Voice name to use
-  /// [format] Audio format, defaults to 'mp3'
+  /// [request] Complete TTS request with all parameters
   ///
   /// Returns audio data as bytes
-  Future<Uint8List> synthesizeToAudio(
-    String text,
-    String voiceName, {
-    String format = 'mp3',
-  });
+  Future<Uint8List> synthesizeToAudio(TTSRequest request);
 
   /// Stop current TTS playback
   Future<void> stop();
-
-  /// Set speech rate
-  /// [rate] Speech rate value, typically between 0.1 and 3.0
-  Future<void> setSpeechRate(double rate);
-
-  /// Set pitch
-  /// [pitch] Pitch value, typically between 0.5 and 2.0
-  Future<void> setPitch(double pitch);
-
-  /// Set volume
-  /// [volume] Volume value, typically between 0.0 and 1.0
-  Future<void> setVolume(double volume);
 
   /// Dispose resources
   void dispose();

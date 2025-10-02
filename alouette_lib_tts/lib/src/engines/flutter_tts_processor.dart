@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'base_tts_processor.dart';
 import '../models/voice_model.dart';
+import '../models/tts_request.dart';
 import '../models/tts_error.dart';
 import '../enums/voice_gender.dart';
 import '../enums/voice_quality.dart';
@@ -13,6 +14,8 @@ import '../utils/tts_logger.dart';
 
 /// Flutter TTS processor implementation following Flutter naming conventions
 /// Provides Flutter TTS functionality using system TTS engines
+/// 
+/// Uses platform-specific TTS engines (AVFoundation on iOS/macOS, etc.)
 class FlutterTTSProcessor extends BaseTTSProcessor {
   final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
@@ -82,47 +85,46 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
   }
 
   @override
-  Future<Uint8List> synthesizeToAudio(
-    String text,
-    String voiceName, {
-    String format = 'mp3',
-  }) async {
+  Future<Uint8List> synthesizeToAudio(TTSRequest request) async {
     await _ensureInitialized();
 
-    return synthesizeTextWithCache(text, voiceName, format, () async {
+    return synthesizeTextWithCache(request.text, request.voiceName ?? '', request.format, () async {
+      // Apply parameters from request
+      await _applyParameters(request);
+      
       // For macOS and platforms where file synthesis has sandboxing issues,
       // use direct speech playback instead of generating audio files
       if (Platform.isMacOS || kIsWeb) {
-        return _synthesizeDirectPlay(text, voiceName);
+        return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
       }
 
       // Desktop and mobile platforms: try file synthesis first, fall back to direct speech
       return await ResourceManager.instance.withTempFile(
         (tempFile) async {
           // Set voice
-          await _setVoice(voiceName);
+          await _setVoice(request.voiceName ?? '');
 
           // Use synthesizeToFile method (if available)
           bool synthesisSuccess = false;
 
           try {
             // Try using synthesizeToFile method
-            final result = await _tts.synthesizeToFile(text, tempFile.path);
+            final result = await _tts.synthesizeToFile(request.text, tempFile.path);
             synthesisSuccess = result == 1; // Flutter TTS returns 1 for success
           } catch (e) {
             // If synthesizeToFile is not available, fall back to direct speech
-            return _synthesizeDirectPlay(text, voiceName);
+            return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
           }
 
           if (!synthesisSuccess) {
             // Fall back to direct speech
-            return _synthesizeDirectPlay(text, voiceName);
+            return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
           }
 
           // Check if output file exists
           if (!await tempFile.exists()) {
             // Fall back to direct speech
-            return _synthesizeDirectPlay(text, voiceName);
+            return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
           }
 
           // Read audio data
@@ -130,7 +132,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           return Uint8List.fromList(audioData);
         },
         prefix: 'flutter_tts_',
-        suffix: '.$format',
+        suffix: '.${request.format}',
       );
     });
   }
@@ -181,22 +183,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       await _setVoice(voiceName);
     }
 
-    // 设置语音参数
-    try {
-      if (kIsWeb) {
-        await _tts.setSpeechRate(0.8); // 稍慢的语速可能有助于阿拉伯语
-        await _tts.setVolume(1.0);
-        await _tts.setPitch(1.0);
-      } else if (Platform.isMacOS) {
-        // macOS 特定设置
-        await _tts.setSpeechRate(0.5); // macOS 默认语速
-        await _tts.setVolume(1.0);
-        await _tts.setPitch(1.0);
-      }
-    } catch (e) {
-      TTSLogger.debug('TTS: Warning - could not set speech parameters: $e');
-      // Continue anyway, these are optional settings
-    }
+    // Note: Parameters are already applied by _applyParameters() before this method is called
 
     try {
       // 直接播放
@@ -247,6 +234,36 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
 
     // 返回一个最小的有效音频数据，表示已经直接播放
     return _createMinimalAudioData();
+  }
+
+  /// Apply TTS parameters from request
+  Future<void> _applyParameters(TTSRequest request) async {
+    try {
+      // Convert rate/pitch from normalized scale (1.0 = normal) to platform-specific scale
+      final rate = request.rate;  // 1.0 = normal
+      final pitch = request.pitch;  // 1.0 = normal
+      final volume = request.volume;  // 1.0 = 100%
+
+      if (kIsWeb) {
+        // Web platform: 1.0 is normal for all parameters
+        await _tts.setSpeechRate(rate);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);
+      } else if (Platform.isMacOS) {
+        // macOS: 0.5 is their "normal" rate, so convert: 1.0 -> 0.5
+        await _tts.setSpeechRate(rate * 0.5);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);  // 1.0 is normal for pitch
+      } else {
+        // Other platforms: 1.0 is normal for all parameters
+        await _tts.setSpeechRate(rate);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);
+      }
+    } catch (e) {
+      TTSLogger.debug('TTS: Warning - could not set speech parameters: $e');
+      // Continue anyway, these are optional settings
+    }
   }
 
   /// 估算语音播放时长（毫秒）
@@ -423,24 +440,6 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
   Future<void> stop() async {
     await _ensureInitialized();
     await _tts.stop();
-  }
-
-  @override
-  Future<void> setSpeechRate(double rate) async {
-    await _ensureInitialized();
-    await _tts.setSpeechRate(rate);
-  }
-
-  @override
-  Future<void> setPitch(double pitch) async {
-    await _ensureInitialized();
-    await _tts.setPitch(pitch);
-  }
-
-  @override
-  Future<void> setVolume(double volume) async {
-    await _ensureInitialized();
-    await _tts.setVolume(volume);
   }
 
   @override

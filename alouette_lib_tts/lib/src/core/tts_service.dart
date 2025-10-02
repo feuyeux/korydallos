@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import '../engines/base_tts_processor.dart';
 import '../models/voice_model.dart';
+import '../models/tts_request.dart';
 import '../models/tts_error.dart';
 import '../enums/tts_engine_type.dart';
 import '../exceptions/tts_exceptions.dart';
@@ -203,6 +204,7 @@ class TTSService implements TTSServiceInterface {
   }
 
   /// Synthesize text to audio bytes
+  /// This is a simplified version that uses default parameters
   Future<Uint8List> synthesizeText(
     String text,
     String voiceName, {
@@ -211,11 +213,12 @@ class TTSService implements TTSServiceInterface {
     _ensureInitialized();
 
     try {
-      return await _processor!.synthesizeToAudio(
-        text,
-        voiceName,
+      final request = TTSRequest(
+        text: text,
+        voiceName: voiceName,
         format: format,
       );
+      return await _processor!.synthesizeToAudio(request);
     } catch (e) {
       throw TTSError(
         'Failed to synthesize text using ${_currentEngine?.name} engine: $e',
@@ -238,24 +241,6 @@ class TTSService implements TTSServiceInterface {
         originalError: e,
       );
     }
-  }
-
-  /// Set speech rate
-  Future<void> setSpeechRate(double rate) async {
-    _ensureInitialized();
-    await _processor!.setSpeechRate(rate);
-  }
-
-  /// Set pitch
-  Future<void> setPitch(double pitch) async {
-    _ensureInitialized();
-    await _processor!.setPitch(pitch);
-  }
-
-  /// Set volume
-  Future<void> setVolume(double volume) async {
-    _ensureInitialized();
-    await _processor!.setVolume(volume);
   }
 
   /// Get platform and engine information
@@ -291,10 +276,12 @@ class TTSService implements TTSServiceInterface {
   }
 
   /// Speak text directly with audio playback
+  /// All parameters are now encapsulated in TTSRequest for consistency
   Future<void> speakText(
     String text, {
     String? voiceName,
     String? languageName,
+    String? languageCode,
     String format = 'mp3',
     double? rate,
     double? pitch,
@@ -332,24 +319,22 @@ class TTSService implements TTSServiceInterface {
         selectedVoice = bestVoice.id;
       }
 
-      // Apply optional parameters if provided
-      if (rate != null) {
-        await setSpeechRate(rate);
-      }
-      if (pitch != null) {
-        await setPitch(pitch);
-      }
-      if (volume != null) {
-        await setVolume(volume);
-      }
-
       TTSLogger.debug('Speaking text with voice: $selectedVoice');
 
-      final audioData = await synthesizeText(
-        text,
-        selectedVoice,
+      // Create TTS request with all parameters
+      final request = TTSRequest(
+        text: text,
+        voiceName: selectedVoice,
+        languageCode: languageCode,
+        languageName: languageName,
         format: format,
+        rate: rate ?? 1.0, // Default to normal speed (1.0x)
+        pitch: pitch ?? 1.0, // Default to normal pitch (1.0x)
+        volume: volume ?? 1.0, // Default to full volume (100%)
       );
+
+      // Synthesize audio using the request
+      final audioData = await _processor!.synthesizeToAudio(request);
 
       // Check if this is minimal audio data (direct playback mode)
       if (audioData.length <= 10) {
