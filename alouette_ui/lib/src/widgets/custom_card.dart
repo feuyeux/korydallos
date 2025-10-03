@@ -3,7 +3,7 @@ import '../tokens/dimension_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
 /// 现代化的卡片组件，为所有Alouette应用提供一致的内容展示容器
-class ModernCard extends StatefulWidget {
+class CustomCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? backgroundColor;
@@ -17,7 +17,7 @@ class ModernCard extends StatefulWidget {
   final double? width;
   final double? height;
 
-  const ModernCard({
+  const CustomCard({
     super.key,
     required this.child,
     this.padding,
@@ -34,10 +34,10 @@ class ModernCard extends StatefulWidget {
   });
 
   @override
-  State<ModernCard> createState() => _ModernCardState();
+  State<CustomCard> createState() => _CustomCardState();
 }
 
-class _ModernCardState extends State<ModernCard> {
+class _CustomCardState extends State<CustomCard> {
   bool _isHovering = false;
 
   @override

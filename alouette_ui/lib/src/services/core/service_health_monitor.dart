@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'service_locator.dart';
-import '../interfaces/tts_service_interface.dart';
-import '../interfaces/translation_service_interface.dart';
+import '../interfaces/tts_service_contract.dart';
+import '../interfaces/translation_service_contract.dart';
 
 /// Service Health Monitor
 ///
@@ -56,17 +56,17 @@ class ServiceHealthMonitor {
     final report = ServiceHealthReport(timestamp: DateTime.now());
 
     // Check TTS service
-    if (ServiceLocator.isRegistered<ITTSService>()) {
+    if (ServiceLocator.isRegistered<TTSServiceContract>()) {
       final status = await _checkTTSHealth();
-      _healthStatus[ITTSService] = status;
-      report.serviceStatus[ITTSService] = status;
+      _healthStatus[TTSServiceContract] = status;
+      report.serviceStatus[TTSServiceContract] = status;
     }
 
     // Check Translation service
-    if (ServiceLocator.isRegistered<ITranslationService>()) {
+    if (ServiceLocator.isRegistered<TranslationServiceContract>()) {
       final status = await _checkTranslationHealth();
-      _healthStatus[ITranslationService] = status;
-      report.serviceStatus[ITranslationService] = status;
+      _healthStatus[TranslationServiceContract] = status;
+      report.serviceStatus[TranslationServiceContract] = status;
     }
 
     // Broadcast the health report
@@ -77,7 +77,7 @@ class ServiceHealthMonitor {
   /// Check TTS service health
   static Future<ServiceHealthStatus> _checkTTSHealth() async {
     try {
-      final service = ServiceLocator.get<ITTSService>();
+      final service = ServiceLocator.get<TTSServiceContract>();
 
       if (!service.isInitialized) {
         return ServiceHealthStatus(
@@ -103,7 +103,7 @@ class ServiceHealthMonitor {
   /// Check Translation service health
   static Future<ServiceHealthStatus> _checkTranslationHealth() async {
     try {
-      final service = ServiceLocator.get<ITranslationService>();
+      final service = ServiceLocator.get<TranslationServiceContract>();
 
       if (!service.isInitialized) {
         return ServiceHealthStatus(

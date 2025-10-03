@@ -3,7 +3,6 @@ import 'package:alouette_ui/alouette_ui.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'home_controller.dart';
 import '../translation/translation_page.dart';
-import '../../widgets/translation_status_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,7 +29,7 @@ class _HomePageState extends State<HomePage> with AutoControllerDisposal {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ModernAppBar(
+      appBar: CustomAppBar(
         title: 'Alouette Translator',
         showLogo: true,
         statusWidget: const TranslationStatusWidget(), // 新增状态组件

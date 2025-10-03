@@ -5,119 +5,145 @@ import 'app/alouette_app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    // Initialize ServiceLocator with core services
-    ServiceLocator.initialize();
+  // Initialize only core services (non-blocking)
+  ServiceLocator.initialize();
+
+  // Run app immediately - services will be initialized asynchronously
+  runApp(const AlouetteAppWrapper());
+}
+
+/// Wrapper that handles async service initialization
+class AlouetteAppWrapper extends StatelessWidget {
+  const AlouetteAppWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Alouette',
+      debugShowCheckedModeBanner: false,
+      home: FutureBuilder<bool>(
+        future: _initializeServices(),
+        builder: (context, snapshot) {
+          // Show splash screen while loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SplashScreen(message: 'Initializing services...');
+          }
+
+          // Show error screen if initialization failed
+          if (snapshot.hasError || snapshot.data == false) {
+            return InitializationErrorScreen(
+              error: snapshot.error,
+              onRetry: () {
+                // Force rebuild to retry initialization
+                (context as Element).markNeedsBuild();
+              },
+            );
+          }
+
+          // Services initialized successfully
+          return const AlouetteApp();
+        },
+      ),
+    );
+  }
+
+  Future<bool> _initializeServices() async {
     final logger = ServiceLocator.logger;
 
-    logger.info(
-      'Starting Alouette main application initialization',
-      tag: 'Main',
-    );
-
-    // Initialize UI library services with combined configuration
-    await _setupServices();
-
-    logger.info(
-      'Alouette main application initialization completed successfully',
-      tag: 'Main',
-    );
-
-    runApp(const AlouetteApp());
-  } catch (error, stackTrace) {
-    // Handle initialization errors gracefully
-    debugPrint('Critical error during app initialization: $error');
-    debugPrint('Stack trace: $stackTrace');
-
-    // Try to log the error if possible
     try {
-      ServiceLocator.logger.fatal(
-        'Critical initialization error',
+      logger.info('Starting service initialization', tag: 'Main');
+
+      // Initialize services in parallel for faster startup
+      await Future.wait([
+        _initializeTTSService(),
+        _initializeTranslationService(),
+        _initializeThemeService(),
+      ]);
+
+      logger.info('All services initialized successfully', tag: 'Main');
+      return true;
+    } catch (error, stackTrace) {
+      logger.fatal(
+        'Service initialization failed',
         tag: 'Main',
         error: error,
         stackTrace: stackTrace,
       );
-    } catch (e) {
-      // If logging fails, just print to console
-      debugPrint('Failed to log initialization error: $e');
+      return false;
     }
-
-    // Run app with error state
-    runApp(
-      MaterialApp(
-        title: 'Alouette - Initialization Error',
-        home: Scaffold(
-          appBar: AppBar(title: const Text('Initialization Error')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to initialize application',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // Restart the app
-                    main();
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
-}
 
-/// Setup and register all required services using UI library ServiceManager
-Future<void> _setupServices() async {
-  final logger = ServiceLocator.logger;
+  Future<void> _initializeTTSService() async {
+    final logger = ServiceLocator.logger;
+    try {
+      logger.debug('Initializing TTS service', tag: 'ServiceInit');
 
-  try {
-    logger.debug('Initializing UI library services', tag: 'ServiceSetup');
-    
-    // Initialize UI library services with combined configuration (TTS + Translation)
-    final result = await ServiceManager.initialize(ServiceConfiguration.combined);
-    
-    if (!result.isSuccessful) {
-      throw Exception('Failed to initialize UI services: ${result.errors.join(', ')}');
+      final result = await ServiceManager.initialize(
+        const ServiceConfiguration(
+          initializeTTS: true,
+          initializeTranslation: false,
+          initializationTimeoutMs: 15000, // 15 seconds timeout
+        ),
+      );
+
+      if (!result.isSuccessful) {
+        throw ServiceError.initializationFailed('TTS', result.errors.join(', '));
+      }
+
+      logger.info('TTS service initialized', tag: 'ServiceInit');
+    } catch (e, stackTrace) {
+      logger.error('TTS initialization failed', tag: 'ServiceInit', error: e, stackTrace: stackTrace);
+      rethrow;
     }
+  }
 
-    logger.info(
-      'UI library services initialized successfully',
-      tag: 'ServiceSetup',
-      details: {'duration': '${result.durationMs}ms', 'services': result.serviceResults},
-    );
+  Future<void> _initializeTranslationService() async {
+    final logger = ServiceLocator.logger;
+    try {
+      logger.debug('Initializing Translation service', tag: 'ServiceInit');
 
-    // Register additional app-specific services
-    logger.debug('Registering app-specific services', tag: 'ServiceSetup');
-    ServiceLocator.registerSingleton<ThemeService>(() => ThemeService());
+      // Use short timeout for translation - it can be configured manually later
+      final result = await ServiceManager.initialize(
+        const ServiceConfiguration(
+          initializeTTS: false,
+          initializeTranslation: true,
+          initializationTimeoutMs: 5000, // 5 seconds - allow manual config later
+        ),
+      ).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          // Timeout is OK - user can configure manually
+          logger.info('Translation auto-config timed out - manual configuration available', tag: 'ServiceInit');
+          return ServiceInitializationResult(
+            isSuccessful: true, // Continue anyway
+            serviceResults: {'Translation': false},
+            errors: ['Auto-configuration timed out'],
+            durationMs: 5000,
+          );
+        },
+      );
 
-    // Initialize theme service
-    final themeService = ServiceLocator.get<ThemeService>();
-    logger.debug('Initializing theme service', tag: 'ServiceSetup');
-    await themeService.initialize();
+      logger.info('Translation service initialized: ${result.isSuccessful}', tag: 'ServiceInit');
+    } catch (e) {
+      // Allow translation service to fail - can be configured manually
+      logger.warning('Translation auto-config failed - manual configuration available', tag: 'ServiceInit', error: e);
+      // Don't rethrow - app can still start
+    }
+  }
 
-    logger.info('All services initialized successfully', tag: 'ServiceSetup');
-  } catch (error, stackTrace) {
-    logger.error(
-      'Failed to setup services',
-      tag: 'ServiceSetup',
-      error: error,
-      stackTrace: stackTrace,
-    );
-    rethrow;
+  Future<void> _initializeThemeService() async {
+    final logger = ServiceLocator.logger;
+    try {
+      logger.debug('Initializing Theme service', tag: 'ServiceInit');
+
+      ServiceLocator.registerSingleton<ThemeService>(() => ThemeService());
+      final themeService = ServiceLocator.get<ThemeService>();
+      await themeService.initialize();
+
+      logger.info('Theme service initialized', tag: 'ServiceInit');
+    } catch (e, stackTrace) {
+      logger.error('Theme initialization failed', tag: 'ServiceInit', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 }

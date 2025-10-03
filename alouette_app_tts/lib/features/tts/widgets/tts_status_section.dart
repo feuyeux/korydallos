@@ -15,7 +15,7 @@ class TTSStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ModernCard(
+    return CustomCard(
       child: Row(
         children: [
           // Status indicator

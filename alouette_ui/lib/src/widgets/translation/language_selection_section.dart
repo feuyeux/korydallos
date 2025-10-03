@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 import '../../constants/ui_constants.dart';
-import '../modern_button.dart';
+import '../custom_button.dart';
 
 /// 语言选择区域组件
 /// 封装语言选择的头部、按钮和筛选逻辑
@@ -118,20 +118,20 @@ class LanguageSelectionSection extends StatelessWidget {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        ModernButton(
+        CustomButton(
           text: 'Reset',
           icon: Icons.refresh,
           onPressed: onClearAll,
-          type: ModernButtonType.text,
-          size: ModernButtonSize.small,
+          type: CustomButtonType.text,
+          size: CustomButtonSize.small,
         ),
         const SizedBox(width: 8),
-        ModernButton(
+        CustomButton(
           text: 'Select All',
           icon: Icons.select_all,
           onPressed: onSelectAll,
-          type: ModernButtonType.text,
-          size: ModernButtonSize.small,
+          type: CustomButtonType.text,
+          size: CustomButtonSize.small,
         ),
       ],
     );
@@ -140,11 +140,11 @@ class LanguageSelectionSection extends StatelessWidget {
   Widget _buildCompactButton(String text, VoidCallback? onPressed) {
     return Container(
       constraints: const BoxConstraints(minWidth: 60.0, maxWidth: 120.0),
-      child: ModernButton(
+      child: CustomButton(
         text: text,
         onPressed: onPressed,
-        type: ModernButtonType.text,
-        size: ModernButtonSize.small,
+        type: CustomButtonType.text,
+        size: CustomButtonSize.small,
       ),
     );
   }

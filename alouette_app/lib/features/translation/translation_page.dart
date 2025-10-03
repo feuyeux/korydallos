@@ -275,11 +275,11 @@ class _TranslationPageState extends State<TranslationPage>
   Future<void> _playTTS(String language, String text) async {
     try {
       // Check if TTS service is available
-      if (!ServiceLocator.isRegistered<ITTSService>()) {
+      if (!ServiceLocator.isRegistered<TTSServiceContract>()) {
         throw Exception('TTS service not available');
       }
 
-      final ttsService = ServiceLocator.get<ITTSService>();
+      final ttsService = ServiceLocator.get<TTSServiceContract>();
       
       // Check if TTS service is initialized
       if (!ttsService.isInitialized) {

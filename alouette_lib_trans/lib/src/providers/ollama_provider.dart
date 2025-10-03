@@ -28,26 +28,25 @@ class OllamaProvider extends TranslationProvider {
     }
 
     // Use a more specific system prompt for Qwen models
-    String systemPrompt;
+    final String systemPrompt;
+    
     if (config.selectedModel.contains('qwen')) {
-      systemPrompt =
-          '''You are a professional translator. Translate the given text directly to ${getExplicitLanguageSpec(targetLanguage)}.
+      // For Qwen models, use explicit examples to prevent emoji responses
+      final langSpec = getExplicitLanguageSpec(targetLanguage);
+      systemPrompt = '''You are a professional translator. Your task is to translate text to $langSpec.
 
-IMPORTANT: You are a Qwen model. Qwen models should follow these special instructions:
-- Provide ONLY the translation, no explanations, no thinking, no reasoning
-- Do not output any internal thought process
-- Do not explain your translation steps
-- Do not use <thinking> tags or any similar tags
-- Output ONLY the final translated text
-- Do not output any text other than the translation
+CRITICAL RULES:
+1. Output ONLY the translated text in the target language
+2. NO emojis, NO symbols, NO English explanations
+3. Use proper words in the target language
+4. If the input is a single word, translate it to a single word or short phrase
+5. Never respond with emojis like 😊 or 👍
 
-CRITICAL REQUIREMENTS:
-- Maintain the original meaning and tone
-- Use natural, fluent language
-- Do not include phrases like "Translation:" or any prefixes
-- NEVER output any thinking process or reasoning
-- Output ONLY the final translated text with no additional content
-- Respond with the translation directly''';
+Examples:
+Input: "great" → Output: "훌륭한" (Korean) or "素晴らしい" (Japanese) or "很好" (Chinese)
+Input: "hello" → Output: "안녕하세요" (Korean) or "こんにちは" (Japanese) or "你好" (Chinese)
+
+Now translate this text to $langSpec:''';
     } else {
       systemPrompt = getSystemPrompt(targetLanguage);
     }
@@ -60,11 +59,11 @@ CRITICAL REQUIREMENTS:
       'system': systemPrompt,
       'stream': false,
       'options': {
-        'temperature': 0.1, // Reduced for more deterministic output
-        'num_predict': 100, // Reduced for shorter output
-        'top_p': 0.1, // Reduced for more focused output
-        'repeat_penalty': 1.05,
-        'top_k': 10, // Reduced for more focused output
+        'temperature': 0.3, // Slightly higher for better translations
+        'num_predict': 200, // Allow longer outputs for proper translations
+        'top_p': 0.5, // More diversity for natural translations
+        'repeat_penalty': 1.1,
+        'top_k': 40, // More options for word selection
         'num_ctx': 2048,
         'repeat_last_n': 64,
         ...?additionalParams?['options'],

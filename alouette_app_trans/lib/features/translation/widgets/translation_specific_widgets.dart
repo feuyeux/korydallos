@@ -186,7 +186,7 @@ class TranslationStatsCard extends StatelessWidget {
         ? (successfulTranslations / totalTranslations * 100).toStringAsFixed(1)
         : '0.0';
 
-    return ModernCard(
+    return CustomCard(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

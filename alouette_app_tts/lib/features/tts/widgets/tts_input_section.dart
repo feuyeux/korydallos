@@ -169,7 +169,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
           });
         }
 
-        return ModernCard(
+        return CustomCard(
           child: Padding(
             padding: const EdgeInsets.all(8.0), // Reduced from 12 to 8
             child: Column(
@@ -196,7 +196,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                 const SizedBox(height: 8), // Reduced from 12 to 8
                 // Text input field
                 Expanded(
-                  child: ModernTextField(
+                  child: CustomTextField(
                     controller: widget.textController,
                     hintText: 'Enter text to speak...',
                     maxLines: null,
@@ -240,7 +240,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                                 const SizedBox(
                                   height: 1,
                                 ), // Reduced from 2 to 1
-                                ModernDropdown<String>(
+                                CustomDropdown<String>(
                                   value: _selectedLanguage,
                                   items: _availableLanguages
                                       .map(
@@ -292,7 +292,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                                 const SizedBox(
                                   height: 1,
                                 ), // Reduced from 2 to 1
-                                ModernDropdown<String>(
+                                CustomDropdown<String>(
                                   value: _selectedVoice,
                                   items: _voicesForSelectedLanguage
                                       .map(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../tokens/dimension_tokens.dart';
 
 /// 现代化的应用栏组件，为所有Alouette应用提供一致的顶部导航栏
-class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
   final Widget? leading;
@@ -15,7 +15,7 @@ class ModernAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
   final Widget? statusWidget; // 新增：状态组件
 
-  const ModernAppBar({
+  const CustomAppBar({
     super.key,
     required this.title,
     this.actions,

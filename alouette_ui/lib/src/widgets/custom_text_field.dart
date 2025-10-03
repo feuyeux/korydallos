@@ -3,7 +3,7 @@ import '../tokens/dimension_tokens.dart';
 import '../themes/app_theme.dart';
 
 /// 现代化的文本输入框组件，为所有Alouette应用提供一致的文本输入体验
-class ModernTextField extends StatelessWidget {
+class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String? hintText;
   final String? labelText;
@@ -23,7 +23,7 @@ class ModernTextField extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
   final BorderRadius? borderRadius;
 
-  const ModernTextField({
+  const CustomTextField({
     super.key,
     this.controller,
     this.hintText,

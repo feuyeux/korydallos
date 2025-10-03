@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../modern_button.dart';
+import '../custom_button.dart';
 
 /// 翻译操作按钮组件
 /// 提供翻译按钮及其状态管理
@@ -26,12 +26,12 @@ class TranslationActionButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      child: ModernButton(
+      child: CustomButton(
         text: _getButtonText(),
         icon: _getButtonIcon(),
         onPressed: isEnabled ? onTranslate : null,
-        type: ModernButtonType.primary,
-        size: ModernButtonSize.medium,
+        type: CustomButtonType.primary,
+        size: CustomButtonSize.medium,
         loading: isTranslating,
       ),
     );

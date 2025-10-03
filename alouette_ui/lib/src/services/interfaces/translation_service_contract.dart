@@ -1,7 +1,7 @@
 /// Translation Service Interface
 ///
 /// Provides an abstraction layer for translation functionality.
-abstract class ITranslationService {
+abstract class TranslationServiceContract {
   /// Initialize the translation service
   Future<bool> initialize();
 

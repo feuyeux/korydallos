@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../themes/app_theme.dart';
 import '../tokens/dimension_tokens.dart';
-import 'modern_button.dart';
+import 'custom_button.dart';
 
 /// TTS状态指示卡片 - 紧凑版本，类似翻译应用的配置状态组件
 class TTSStatusCard extends StatelessWidget {
@@ -60,11 +60,11 @@ class TTSStatusCard extends StatelessWidget {
             ),
           ),
           if (!isInitialized && onConfigurePressed != null)
-            ModernButton(
+            CustomButton(
               text: 'Configure',
               onPressed: onConfigurePressed,
-              type: ModernButtonType.text,
-              size: ModernButtonSize.small,
+              type: CustomButtonType.text,
+              size: CustomButtonSize.small,
               color: _getStatusColor(),
             ),
         ],

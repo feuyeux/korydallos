@@ -58,54 +58,151 @@ CRITICAL REQUIREMENTS:
 
   /// Get explicit language specification to avoid confusion
   String getExplicitLanguageSpec(String targetLang) {
-    final lang = targetLang.toLowerCase();
+    // Normalize: lowercase and extract primary language code
+    // Handles formats: 'ko-KR' -> 'ko', 'Korean' -> 'korean', 'KO' -> 'ko'
+    final normalized = targetLang.toLowerCase().trim();
+    final lang = normalized.split('-').first.split('_').first;
+    
     switch (lang) {
+      // Chinese variants
       case 'chinese':
       case 'zh':
       case 'cn':
+      case 'chs':
+      case 'simplified chinese':
         return 'Simplified Chinese (中文)';
       case 'traditional chinese':
       case 'zh-tw':
+      case 'tw':
+      case 'cht':
         return 'Traditional Chinese (繁体中文)';
+      
+      // English
       case 'english':
       case 'en':
         return 'English';
+      
+      // Japanese
       case 'japanese':
       case 'ja':
       case 'jp':
+      case 'jpn':
         return 'Japanese (日本語)';
+      
+      // Korean - 关键修复！
       case 'korean':
       case 'ko':
       case 'kr':
+      case 'kor':
         return 'Korean (한국어)';
+      
+      // French
       case 'french':
+      case 'français':
+      case 'francais':
       case 'fr':
+      case 'fra':
         return 'French (Français)';
+      
+      // German
       case 'german':
+      case 'deutsch':
       case 'de':
+      case 'deu':
+      case 'ger':
         return 'German (Deutsch)';
+      
+      // Spanish
       case 'spanish':
+      case 'español':
+      case 'espanol':
       case 'es':
+      case 'spa':
         return 'Spanish (Español)';
+      
+      // Italian
       case 'italian':
+      case 'italiano':
       case 'it':
+      case 'ita':
         return 'Italian (Italiano)';
+      
+      // Russian
       case 'russian':
+      case 'русский':
       case 'ru':
+      case 'rus':
         return 'Russian (Русский)';
+      
+      // Arabic
       case 'arabic':
       case 'ar':
+      case 'ara':
+      case 'sa':
         return 'Arabic (العربية)';
+      
+      // Hindi
       case 'hindi':
+      case 'हिन्दी':
       case 'hi':
+      case 'hin':
+      case 'in':
         return 'Hindi (हिन्दी)';
+      
+      // Greek
       case 'greek':
+      case 'ελληνικά':
       case 'el':
+      case 'gr':
+      case 'gre':
+      case 'ell':
         return 'Greek (Ελληνικά)';
+      
+      // Portuguese
+      case 'portuguese':
+      case 'português':
+      case 'portugues':
+      case 'pt':
+      case 'por':
+        return 'Portuguese (Português)';
+      
+      // Dutch
+      case 'dutch':
+      case 'nederlands':
+      case 'nl':
+      case 'nld':
+      case 'dut':
+        return 'Dutch (Nederlands)';
+      
+      // Polish
+      case 'polish':
+      case 'polski':
+      case 'pl':
+      case 'pol':
+        return 'Polish (Polski)';
+      
+      // Turkish
+      case 'turkish':
+      case 'türkçe':
+      case 'turkce':
+      case 'tr':
+      case 'tur':
+        return 'Turkish (Türkçe)';
+      
+      // Swedish
+      case 'swedish':
+      case 'svenska':
+      case 'sv':
+      case 'swe':
+        return 'Swedish (Svenska)';
+      
+      // Default fallback
       default:
-        // fallback: return English name if possible, else generic
-        // e.g. "zh-Hans" -> "Simplified Chinese", "pt" -> "Portuguese"
-        // For now, fallback to "Translate to $targetLang language"
+        // Try to extract meaningful language name from input
+        if (normalized.length > 2) {
+          // Likely a full name like "Korean" or "Japanese"
+          return '${targetLang[0].toUpperCase()}${targetLang.substring(1)}';
+        }
         return 'Translate to $targetLang language';
     }
   }

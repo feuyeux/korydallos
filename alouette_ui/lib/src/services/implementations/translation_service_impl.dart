@@ -1,11 +1,11 @@
 import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
-import '../interfaces/translation_service_interface.dart';
+import '../interfaces/translation_service_contract.dart';
 
 /// Translation Service Implementation
 ///
-/// Concrete implementation of ITranslationService that wraps the alouette_lib_trans library.
+/// Concrete implementation of TranslationServiceContract that wraps the alouette_lib_trans library.
 /// Provides thread-safe initialization and proper resource management.
-class TranslationServiceImpl implements ITranslationService {
+class TranslationServiceImpl implements TranslationServiceContract {
   late final trans_lib.TranslationService _service;
   bool _isInitialized = false;
   bool _isDisposed = false;
@@ -65,8 +65,8 @@ class TranslationServiceImpl implements ITranslationService {
 
     try {
       // Use auto-configuration if available, otherwise try to initialize
-      if (!_service!.isReady) {
-        final autoConfigured = await _service!.initialize();
+      if (!_service.isReady) {
+        final autoConfigured = await _service.initialize();
         if (!autoConfigured) {
           throw TranslationException(
             'No valid LLM configuration available. Please configure LLM settings.',
@@ -75,7 +75,7 @@ class TranslationServiceImpl implements ITranslationService {
       }
 
       // Perform translation using the unified API
-      final result = await _service!.translateWithAutoConfig(text, [
+      final result = await _service.translateWithAutoConfig(text, [
         targetLanguage,
       ]);
 
@@ -101,8 +101,8 @@ class TranslationServiceImpl implements ITranslationService {
 
     try {
       // Use auto-configuration if available, otherwise try to initialize
-      if (!_service!.isReady) {
-        final autoConfigured = await _service!.initialize();
+      if (!_service.isReady) {
+        final autoConfigured = await _service.initialize();
         if (!autoConfigured) {
           throw TranslationException(
             'No valid LLM configuration available. Please configure LLM settings.',
@@ -111,7 +111,7 @@ class TranslationServiceImpl implements ITranslationService {
       }
 
       // Perform translation using the unified API
-      final result = await _service!.translateWithAutoConfig(
+      final result = await _service.translateWithAutoConfig(
         text,
         targetLanguages,
       );

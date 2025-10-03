@@ -6,7 +6,7 @@ import '../../../config/tts_app_config.dart';
 /// Controller for TTS functionality using UnifiedTTSService from ServiceLocator
 class TTSController extends ChangeNotifier {
   // Current TTS service (UI interface)
-  ITTSService? _ttsService;
+  TTSServiceContract? _ttsService;
 
   // State variables
   bool _isInitialized = false;
@@ -195,7 +195,7 @@ class TTSController extends ChangeNotifier {
 
   /// Get platform information
   Future<Map<String, dynamic>> getPlatformInfo() async {
-    // ITTSService does not expose platform info in this refactor;
+    // TTSServiceContract does not expose platform info in this refactor;
     // return minimal info to populate the dialog consistently
     return {
       'platform': 'desktop',

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../tokens/dimension_tokens.dart';
 import '../tokens/typography_tokens.dart';
-import '../widgets/modern_button.dart';
+import '../widgets/custom_button.dart';
 
 class TTSConfigDialog extends StatefulWidget {
   final TTSService? ttsService;
@@ -67,11 +67,11 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                         child: Text('$e\n\n$stack'),
                       ),
                       actions: [
-                        ModernButton(
+                        CustomButton(
                           onPressed: () => Navigator.pop(context),
                           text: 'Close',
-                          type: ModernButtonType.text,
-                          size: ModernButtonSize.medium,
+                          type: CustomButtonType.text,
+                          size: CustomButtonSize.medium,
                         ),
                       ],
                     ),
@@ -265,21 +265,21 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                           Row(
                             children: [
                               Expanded(
-                                child: ModernButton(
+                                child: CustomButton(
                                   onPressed:
                                       _currentEngine == TTSEngineType.edge
                                       ? null
                                       : () => _switchEngine(TTSEngineType.edge),
                                   text: 'Edge TTS',
                                   type: _currentEngine == TTSEngineType.edge
-                                      ? ModernButtonType.primary
-                                      : ModernButtonType.outline,
-                                  size: ModernButtonSize.medium,
+                                      ? CustomButtonType.primary
+                                      : CustomButtonType.outline,
+                                  size: CustomButtonSize.medium,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: ModernButton(
+                                child: CustomButton(
                                   onPressed:
                                       _currentEngine == TTSEngineType.flutter
                                       ? null
@@ -288,9 +288,9 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                         ),
                                   text: 'Flutter TTS',
                                   type: _currentEngine == TTSEngineType.flutter
-                                      ? ModernButtonType.primary
-                                      : ModernButtonType.outline,
-                                  size: ModernButtonSize.medium,
+                                      ? CustomButtonType.primary
+                                      : CustomButtonType.outline,
+                                  size: CustomButtonSize.medium,
                                 ),
                               ),
                             ],
@@ -352,7 +352,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              ModernButton(
+                              CustomButton(
                                 onPressed:
                                     (widget.ttsService != null &&
                                         _currentVoice != null)
@@ -360,17 +360,17 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
                                     : null,
                                 text: 'Test',
                                 icon: Icons.play_arrow,
-                                type: ModernButtonType.primary,
-                                size: ModernButtonSize.medium,
+                                type: CustomButtonType.primary,
+                                size: CustomButtonSize.medium,
                               ),
-                              ModernButton(
+                              CustomButton(
                                 onPressed: widget.ttsService != null
                                     ? _stopTTS
                                     : null,
                                 text: 'Stop',
                                 icon: Icons.stop,
-                                type: ModernButtonType.secondary,
-                                size: ModernButtonSize.medium,
+                                type: CustomButtonType.secondary,
+                                size: CustomButtonSize.medium,
                               ),
                             ],
                           ),

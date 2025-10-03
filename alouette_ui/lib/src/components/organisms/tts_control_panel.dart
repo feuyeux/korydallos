@@ -206,24 +206,97 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
       children: [
         Row(
           children: [
-            Icon(Icons.volume_down),
+            Icon(Icons.tune, size: 20),
             const SizedBox(width: 8),
-            const AtomicText('Volume', variant: AtomicTextVariant.labelLarge),
-            const Spacer(),
-            AtomicText(
-              '${(widget.volume * 100).round()}%',
-              variant: AtomicTextVariant.labelMedium,
+            const AtomicText(
+              'Voice Parameters',
+              variant: AtomicTextVariant.labelLarge,
             ),
-            const SizedBox(width: 8),
-            Icon(Icons.volume_up),
           ],
         ),
+        const AtomicSpacer(AtomicSpacing.small),
+        // Three sliders in one row
+        Row(
+          children: [
+            // Speech Rate
+            Expanded(
+              child: _buildCompactSlider(
+                icon: Icons.speed,
+                label: 'Speech Rate',
+                value: widget.speechRate,
+                displayValue: '${widget.speechRate.toStringAsFixed(1)}x',
+                onChanged: widget.onSpeechRateChanged,
+                min: 0.5,
+                max: 2.0,
+                divisions: 15,
+              ),
+            ),
+            const SizedBox(width: SpacingTokens.m),
+            // Pitch
+            Expanded(
+              child: _buildCompactSlider(
+                icon: Icons.graphic_eq,
+                label: 'Pitch',
+                value: widget.pitch,
+                displayValue: '${widget.pitch.toStringAsFixed(1)}x',
+                onChanged: widget.onPitchChanged,
+                min: 0.5,
+                max: 2.0,
+                divisions: 15,
+              ),
+            ),
+            const SizedBox(width: SpacingTokens.m),
+            // Volume
+            Expanded(
+              child: _buildCompactSlider(
+                icon: Icons.volume_up,
+                label: 'Volume',
+                value: widget.volume,
+                displayValue: '${(widget.volume * 100).round()}%',
+                onChanged: widget.onVolumeChanged,
+                min: 0.0,
+                max: 1.0,
+                divisions: 10,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactSlider({
+    required IconData icon,
+    required String label,
+    required double value,
+    required String displayValue,
+    required ValueChanged<double>? onChanged,
+    required double min,
+    required double max,
+    required int divisions,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: ColorTokens.onSurfaceVariant),
+        const SizedBox(height: 4),
+        AtomicText(
+          displayValue,
+          variant: AtomicTextVariant.labelMedium,
+          color: ColorTokens.onSurface,
+        ),
         Slider(
-          value: widget.volume,
-          onChanged: widget.onVolumeChanged,
-          min: 0.0,
-          max: 1.0,
-          divisions: 10,
+          value: value,
+          onChanged: onChanged,
+          min: min,
+          max: max,
+          divisions: divisions,
+        ),
+        AtomicText(
+          label,
+          variant: AtomicTextVariant.labelSmall,
+          color: ColorTokens.onSurfaceVariant,
         ),
       ],
     );
@@ -238,60 +311,10 @@ class _TTSControlPanelState extends State<TTSControlPanel> {
           variant: AtomicTextVariant.labelLarge,
         ),
         const AtomicSpacer(AtomicSpacing.small),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.speed),
-                const SizedBox(width: 8),
-                const AtomicText(
-                  'Speech Rate',
-                  variant: AtomicTextVariant.labelLarge,
-                ),
-                const Spacer(),
-                AtomicText(
-                  '${widget.speechRate.toStringAsFixed(1)}x',
-                  variant: AtomicTextVariant.labelMedium,
-                ),
-              ],
-            ),
-            Slider(
-              value: widget.speechRate,
-              onChanged: widget.onSpeechRateChanged,
-              min: 0.5,
-              max: 2.0,
-              divisions: 15,
-            ),
-          ],
-        ),
-        const AtomicSpacer(AtomicSpacing.medium),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.tune),
-                const SizedBox(width: 8),
-                const AtomicText(
-                  'Pitch',
-                  variant: AtomicTextVariant.labelLarge,
-                ),
-                const Spacer(),
-                AtomicText(
-                  '${widget.pitch.toStringAsFixed(1)}x',
-                  variant: AtomicTextVariant.labelMedium,
-                ),
-              ],
-            ),
-            Slider(
-              value: widget.pitch,
-              onChanged: widget.onPitchChanged,
-              min: 0.5,
-              max: 2.0,
-              divisions: 15,
-            ),
-          ],
+        AtomicText(
+          'Additional settings and controls can be added here.',
+          variant: AtomicTextVariant.body,
+          color: ColorTokens.onSurfaceVariant,
         ),
       ],
     );

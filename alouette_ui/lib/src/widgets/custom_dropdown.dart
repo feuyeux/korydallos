@@ -3,7 +3,7 @@ import '../tokens/dimension_tokens.dart';
 import '../themes/app_theme.dart';
 
 /// 现代化的下拉选择框组件，为所有Alouette应用提供一致的选择体验
-class ModernDropdown<T> extends StatelessWidget {
+class CustomDropdown<T> extends StatelessWidget {
   final T? value;
   final List<DropdownMenuItem<T>>? items;
   final ValueChanged<T?>? onChanged;
@@ -15,7 +15,7 @@ class ModernDropdown<T> extends StatelessWidget {
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? contentPadding;
 
-  const ModernDropdown({
+  const CustomDropdown({
     super.key,
     this.value,
     this.items,

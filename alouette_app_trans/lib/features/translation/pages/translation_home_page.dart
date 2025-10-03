@@ -3,7 +3,6 @@ import 'package:alouette_ui/alouette_ui.dart';
 import '../controllers/translation_controller.dart';
 import '../../../config/translation_app_config.dart';
 import 'translation_page.dart';
-import '../../../widgets/translation_status_widget.dart';
 
 class TranslationHomePage extends StatefulWidget {
   const TranslationHomePage({super.key});
@@ -39,7 +38,7 @@ class _TranslationHomePageState extends State<TranslationHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ModernAppBar(
+      appBar: CustomAppBar(
         title: TranslationAppConfig.appName,
         showLogo: true,
         statusWidget: const TranslationStatusWidget(),

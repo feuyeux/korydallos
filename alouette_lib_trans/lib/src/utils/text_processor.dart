@@ -23,6 +23,9 @@ class TextProcessor {
     // Handle multi-line responses by taking the first meaningful line
     cleaned = _extractMainTranslation(cleaned);
 
+    // Remove emoji-only or invalid responses
+    cleaned = _removeInvalidContent(cleaned);
+
     // Final cleanup
     cleaned = cleaned.trim();
 
@@ -181,5 +184,20 @@ class TextProcessor {
     }
 
     return rawText.trim();
+  }
+
+  /// Remove invalid content like emoji-only responses or nonsense
+  static String _removeInvalidContent(String text) {
+    if (text.isEmpty) return text;
+
+    // Check if text is only emoji/symbols (no actual letters or meaningful content)
+    final hasLetters = RegExp(r'[a-zA-Z\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF\u0400-\u04FF]').hasMatch(text);
+    
+    if (!hasLetters && text.length < 10) {
+      // Text has no letters and is short - likely emoji/invalid
+      return '';
+    }
+
+    return text;
   }
 }

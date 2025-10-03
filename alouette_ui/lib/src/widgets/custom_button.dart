@@ -7,19 +7,19 @@ import '../tokens/elevation_tokens.dart';
 import '../tokens/effect_tokens.dart';
 
 /// 按钮类型枚举
-enum ModernButtonType { primary, secondary, outline, text }
+enum CustomButtonType { primary, secondary, outline, text }
 
 /// 按钮尺寸枚举
-enum ModernButtonSize { small, medium, large }
+enum CustomButtonSize { small, medium, large }
 
-/// 现代化的按钮组件，为所有Alouette应用提供一致的交互元素
+/// 自定义按钮组件，为所有Alouette应用提供一致的交互元素
 /// 重构后减少了重复代码，使用设计令牌系统提供一致性
-class ModernButton extends StatefulWidget {
+class CustomButton extends StatefulWidget {
   final String? text;
   final Widget? child;
   final VoidCallback? onPressed;
-  final ModernButtonType type;
-  final ModernButtonSize size;
+  final CustomButtonType type;
+  final CustomButtonSize size;
   final IconData? icon;
   final bool iconOnly;
   final bool loading;
@@ -28,13 +28,13 @@ class ModernButton extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
 
-  const ModernButton({
+  const CustomButton({
     super.key,
     this.text,
     this.child,
     this.onPressed,
-    this.type = ModernButtonType.primary,
-    this.size = ModernButtonSize.medium,
+    this.type = CustomButtonType.primary,
+    this.size = CustomButtonSize.medium,
     this.icon,
     this.iconOnly = false,
     this.loading = false,
@@ -48,10 +48,10 @@ class ModernButton extends StatefulWidget {
        );
 
   @override
-  State<ModernButton> createState() => _ModernButtonState();
+  State<CustomButton> createState() => _CustomButtonState();
 }
 
-class _ModernButtonState extends State<ModernButton> {
+class _CustomButtonState extends State<CustomButton> {
   bool _isHovering = false;
 
   @override
@@ -76,7 +76,7 @@ class _ModernButtonState extends State<ModernButton> {
         decoration: BoxDecoration(
           color: _getEffectiveBackgroundColor(buttonStyle),
           borderRadius: widget.borderRadius ?? EffectTokens.radiusMedium,
-          border: widget.type == ModernButtonType.outline
+          border: widget.type == CustomButtonType.outline
               ? Border.all(color: buttonStyle.borderColor, width: 1.0)
               : null,
           boxShadow: _getShadow(buttonStyle),
@@ -157,7 +157,7 @@ class _ModernButtonState extends State<ModernButton> {
   }
 
   List<BoxShadow>? _getShadow(_ButtonStyle style) {
-    if (widget.type == ModernButtonType.primary &&
+    if (widget.type == CustomButtonType.primary &&
         widget.onPressed != null &&
         !widget.loading) {
       return _isHovering
@@ -200,11 +200,11 @@ class _ButtonSize {
   });
 }
 
-extension _ModernButtonStyleHelper on _ModernButtonState {
+extension _CustomButtonStyleHelper on _CustomButtonState {
   /// 获取按钮样式配置
   _ButtonStyle _getButtonStyle(Color primaryColor, bool isDark) {
     switch (widget.type) {
-      case ModernButtonType.primary:
+      case CustomButtonType.primary:
         return _ButtonStyle(
           textColor: ColorTokens.onPrimary,
           backgroundColor: primaryColor,
@@ -212,7 +212,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           splashColor: Colors.white.withValues(alpha: 0.1),
           highlightColor: Colors.white.withValues(alpha: 0.05),
         );
-      case ModernButtonType.secondary:
+      case CustomButtonType.secondary:
         return _ButtonStyle(
           textColor: isDark ? ColorTokens.darkOnSurface : ColorTokens.onSurface,
           backgroundColor: isDark ? ColorTokens.gray800 : ColorTokens.gray100,
@@ -220,7 +220,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           splashColor: primaryColor.withValues(alpha: 0.1),
           highlightColor: primaryColor.withValues(alpha: 0.05),
         );
-      case ModernButtonType.outline:
+      case CustomButtonType.outline:
         return _ButtonStyle(
           textColor: primaryColor,
           backgroundColor: Colors.transparent,
@@ -228,7 +228,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
           splashColor: primaryColor.withValues(alpha: 0.1),
           highlightColor: primaryColor.withValues(alpha: 0.05),
         );
-      case ModernButtonType.text:
+      case CustomButtonType.text:
         return _ButtonStyle(
           textColor: primaryColor,
           backgroundColor: Colors.transparent,
@@ -242,7 +242,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
   /// 获取按钮尺寸配置
   _ButtonSize _getButtonSize() {
     switch (widget.size) {
-      case ModernButtonSize.small:
+      case CustomButtonSize.small:
         return _ButtonSize(
           height: DimensionTokens.buttonS,
           iconSize: DimensionTokens.iconS,
@@ -254,7 +254,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
                   vertical: SpacingTokens.xxs,
                 ),
         );
-      case ModernButtonSize.medium:
+      case CustomButtonSize.medium:
         return _ButtonSize(
           height: DimensionTokens.buttonM,
           iconSize: DimensionTokens.iconM,
@@ -266,7 +266,7 @@ extension _ModernButtonStyleHelper on _ModernButtonState {
                   vertical: SpacingTokens.xs,
                 ),
         );
-      case ModernButtonSize.large:
+      case CustomButtonSize.large:
         return _ButtonSize(
           height: DimensionTokens.buttonL,
           iconSize: DimensionTokens.iconL,

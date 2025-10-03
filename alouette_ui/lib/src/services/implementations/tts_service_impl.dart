@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
-import '../interfaces/tts_service_interface.dart';
+import '../interfaces/tts_service_contract.dart';
 
 /// TTS Service Implementation
 ///
-/// Concrete implementation of ITTSService that wraps the alouette_lib_tts library.
+/// Concrete implementation of TTSServiceContract that wraps the alouette_lib_tts library.
 /// Provides thread-safe initialization and proper resource management.
-class TTSServiceImpl implements ITTSService {
+class TTSServiceImpl implements TTSServiceContract {
   tts_lib.TTSService? _ttsService;
   bool _isInitialized = false;
   bool _isDisposed = false;

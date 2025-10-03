@@ -21,7 +21,7 @@ class TTSControlSection extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Control buttons
-          ModernCard(
+          CustomCard(
             child: Padding(
               padding: const EdgeInsets.all(8.0), // Reduced from 12 to 8
               child: Column(
@@ -50,7 +50,7 @@ class TTSControlSection extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: ModernButton(
+                        child: CustomButton(
                           onPressed:
                               controller.isInitialized &&
                                   !controller.isPlaying &&
@@ -58,21 +58,21 @@ class TTSControlSection extends StatelessWidget {
                               ? () => controller.speakText(textController.text)
                               : null,
                           text: 'Speak',
-                          type: ModernButtonType.primary,
-                          size: ModernButtonSize.medium,
+                          type: CustomButtonType.primary,
+                          size: CustomButtonSize.medium,
                           icon: Icons.play_arrow,
                         ),
                       ),
                       const SizedBox(width: 8), // Reduced from 12 to 8
                       Expanded(
-                        child: ModernButton(
+                        child: CustomButton(
                           onPressed:
                               controller.isInitialized && controller.isPlaying
                               ? controller.stopSpeaking
                               : null,
                           text: 'Stop',
-                          type: ModernButtonType.secondary,
-                          size: ModernButtonSize.medium,
+                          type: CustomButtonType.secondary,
+                          size: CustomButtonSize.medium,
                           icon: Icons.stop,
                         ),
                       ),
@@ -85,7 +85,7 @@ class TTSControlSection extends StatelessWidget {
 
           const SizedBox(height: 6), // Reduced from 8 to 6
           // Parameters
-          ModernCard(
+          CustomCard(
             child: Padding(
               padding: const EdgeInsets.all(8.0), // Reduced from 12 to 8
               child: Column(
@@ -111,83 +111,90 @@ class TTSControlSection extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8), // Reduced from 12 to 8
-                  // Parameter sliders
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
+                  // Parameter sliders - 3 in one row
+                  Row(
                     children: [
-                      // Rate slider
-                      _buildParameterSlider(
-                        context,
-                        icon: Icons.speed,
-                        label: 'Speech Rate',
-                        value: controller.rate,
-                        min: TTSAppConfig.minRate,
-                        max: TTSAppConfig.maxRate,
-                        divisions: 29,
-                        valueDisplay: '${controller.rate.toStringAsFixed(1)}x',
-                        onChanged: controller.isInitialized
-                            ? (v) async {
-                                await controller.updateRate(v);
-                                if (controller.isPlaying) {
-                                  await controller.stopSpeaking();
-                                  if (textController.text.trim().isNotEmpty) {
-                                    await controller.speakText(
-                                      textController.text.trim(),
-                                    );
+                      // Speech Rate slider
+                      Expanded(
+                        child: _buildCompactSlider(
+                          context,
+                          icon: Icons.speed,
+                          label: 'Rate',
+                          value: controller.rate,
+                          min: TTSAppConfig.minRate,
+                          max: TTSAppConfig.maxRate,
+                          divisions: 29,
+                          valueDisplay: '${controller.rate.toStringAsFixed(1)}x',
+                          onChanged: controller.isInitialized
+                              ? (v) async {
+                                  await controller.updateRate(v);
+                                  if (controller.isPlaying) {
+                                    await controller.stopSpeaking();
+                                    if (textController.text.trim().isNotEmpty) {
+                                      await controller.speakText(
+                                        textController.text.trim(),
+                                      );
+                                    }
                                   }
                                 }
-                              }
-                            : null,
+                              : null,
+                        ),
                       ),
+                      const SizedBox(width: 8),
 
                       // Pitch slider
-                      _buildParameterSlider(
-                        context,
-                        icon: Icons.piano,
-                        label: 'Pitch',
-                        value: controller.pitch,
-                        min: TTSAppConfig.minPitch,
-                        max: TTSAppConfig.maxPitch,
-                        divisions: 15,
-                        valueDisplay: '${controller.pitch.toStringAsFixed(1)}x',
-                        onChanged: controller.isInitialized
-                            ? (v) async {
-                                await controller.updatePitch(v);
-                                if (controller.isPlaying) {
-                                  await controller.stopSpeaking();
-                                  if (textController.text.trim().isNotEmpty) {
-                                    await controller.speakText(
-                                      textController.text.trim(),
-                                    );
+                      Expanded(
+                        child: _buildCompactSlider(
+                          context,
+                          icon: Icons.piano,
+                          label: 'Pitch',
+                          value: controller.pitch,
+                          min: TTSAppConfig.minPitch,
+                          max: TTSAppConfig.maxPitch,
+                          divisions: 15,
+                          valueDisplay: '${controller.pitch.toStringAsFixed(1)}x',
+                          onChanged: controller.isInitialized
+                              ? (v) async {
+                                  await controller.updatePitch(v);
+                                  if (controller.isPlaying) {
+                                    await controller.stopSpeaking();
+                                    if (textController.text.trim().isNotEmpty) {
+                                      await controller.speakText(
+                                        textController.text.trim(),
+                                      );
+                                    }
                                   }
                                 }
-                              }
-                            : null,
+                              : null,
+                        ),
                       ),
+                      const SizedBox(width: 8),
 
                       // Volume slider
-                      _buildParameterSlider(
-                        context,
-                        icon: Icons.volume_up,
-                        label: 'Volume',
-                        value: controller.volume,
-                        min: TTSAppConfig.minVolume,
-                        max: TTSAppConfig.maxVolume,
-                        divisions: 10,
-                        valueDisplay: '${(controller.volume * 100).toInt()}%',
-                        onChanged: controller.isInitialized
-                            ? (v) async {
-                                await controller.updateVolume(v);
-                                if (controller.isPlaying) {
-                                  await controller.stopSpeaking();
-                                  if (textController.text.trim().isNotEmpty) {
-                                    await controller.speakText(
-                                      textController.text.trim(),
-                                    );
+                      Expanded(
+                        child: _buildCompactSlider(
+                          context,
+                          icon: Icons.volume_up,
+                          label: 'Volume',
+                          value: controller.volume,
+                          min: TTSAppConfig.minVolume,
+                          max: TTSAppConfig.maxVolume,
+                          divisions: 10,
+                          valueDisplay: '${(controller.volume * 100).toInt()}%',
+                          onChanged: controller.isInitialized
+                              ? (v) async {
+                                  await controller.updateVolume(v);
+                                  if (controller.isPlaying) {
+                                    await controller.stopSpeaking();
+                                    if (textController.text.trim().isNotEmpty) {
+                                      await controller.speakText(
+                                        textController.text.trim(),
+                                      );
+                                    }
                                   }
                                 }
-                              }
-                            : null,
+                              : null,
+                        ),
                       ),
                     ],
                   ),
@@ -200,7 +207,7 @@ class TTSControlSection extends StatelessWidget {
     );
   }
 
-  Widget _buildParameterSlider(
+  Widget _buildCompactSlider(
     BuildContext context, {
     required IconData icon,
     required String label,
@@ -213,85 +220,40 @@ class TTSControlSection extends StatelessWidget {
   }) {
     final sliderColor = AppTheme.primaryColor;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.0), // Reduced from 2 to 1
-      child: Row(
-        children: [
-          Container(
-            width: 20, // Reduced from 24 to 20
-            height: 20, // Reduced from 24 to 20
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: sliderColor.withValues(alpha: 0.1),
-            ),
-            child: Icon(
-              icon,
-              color: sliderColor,
-              size: 12,
-            ), // Reduced from 14 to 12
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          icon,
+          color: sliderColor,
+          size: 18,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          valueDisplay,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(width: 6), // Reduced from 8 to 6
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 11, // Reduced from 12 to 11
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 3, // Reduced from 4 to 3
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: sliderColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(
-                          2,
-                        ), // Reduced from 3 to 2
-                      ),
-                      child: Text(
-                        valueDisplay,
-                        style: TextStyle(
-                          fontSize: 9, // Reduced from 10 to 9
-                          fontWeight: FontWeight.w500,
-                          color: sliderColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: sliderColor,
-                    inactiveTrackColor: sliderColor.withValues(alpha: 0.2),
-                    thumbColor: sliderColor,
-                    overlayColor: sliderColor.withValues(alpha: 0.2),
-                    trackHeight: 2.0, // Reduced from 2.5 to 2.0
-                    thumbShape: RoundSliderThumbShape(
-                      enabledThumbRadius: 8,
-                    ), // Smaller thumb
-                  ),
-                  child: Slider(
-                    value: value,
-                    min: min,
-                    max: max,
-                    divisions: divisions,
-                    onChanged: onChanged,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          onChanged: onChanged,
+          activeColor: sliderColor,
+          inactiveColor: sliderColor.withValues(alpha: 0.3),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey[600],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

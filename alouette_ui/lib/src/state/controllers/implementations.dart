@@ -9,7 +9,7 @@ import '../../../alouette_ui.dart';
 /// Translation controller implementation
 class TranslationController extends BaseStateController
     implements ITranslationController {
-  final ITranslationService _translationService;
+  final TranslationServiceContract _translationService;
   final StreamController<Map<String, String>> _translationController =
       StreamController<Map<String, String>>.broadcast();
 

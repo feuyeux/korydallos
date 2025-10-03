@@ -131,7 +131,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSectionCard(String title, List<Widget> children) {
-    return ModernCard(
+    return CustomCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

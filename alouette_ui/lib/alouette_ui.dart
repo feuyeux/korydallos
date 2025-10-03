@@ -21,8 +21,8 @@ export 'src/services/core/configuration_migration.dart';
 export 'src/services/core/logging_service.dart';
 
 // Service Interfaces
-export 'src/services/interfaces/tts_service_interface.dart';
-export 'src/services/interfaces/translation_service_interface.dart';
+export 'src/services/interfaces/tts_service_contract.dart';
+export 'src/services/interfaces/translation_service_contract.dart';
 export 'src/services/interfaces/configuration_service_interface.dart';
 
 // Service Implementations
@@ -57,14 +57,14 @@ export 'src/services/theme_service.dart';
 
 // Widgets (selected existing widgets)
 
-export 'src/widgets/config_status_widget.dart';
+export 'src/widgets/config_status_widget.dart'; // Includes both ConfigStatusWidget and TranslationStatusWidget
 
 // Removed: export 'src/widgets/language_selector.dart' - Use components/molecules/language_selector.dart instead
-export 'src/widgets/modern_app_bar.dart';
-export 'src/widgets/modern_button.dart';
-export 'src/widgets/modern_card.dart';
-export 'src/widgets/modern_dropdown.dart';
-export 'src/widgets/modern_text_field.dart';
+export 'src/widgets/custom_app_bar.dart';
+export 'src/widgets/custom_button.dart';
+export 'src/widgets/custom_card.dart';
+export 'src/widgets/custom_dropdown.dart';
+export 'src/widgets/custom_text_field.dart';
 export 'src/widgets/translation_input_widget.dart';
 export 'src/widgets/translation_result_widget.dart';
 
@@ -78,6 +78,11 @@ export 'src/models/unified_error.dart';
 
 // Error Handling Components
 export 'src/components/error/error_display_widget.dart';
+export 'src/core/errors/alouette_error.dart';
+export 'src/core/errors/error_handler.dart';
+
+// Splash and Initialization
+export 'src/widgets/splash_screen.dart';
 
 // Dialogs
 export 'src/dialogs/llm_config_dialog.dart';
@@ -93,6 +98,4 @@ export 'src/widgets/translation/translation_text_input.dart';
 export 'src/widgets/translation/language_selection_section.dart';
 export 'src/widgets/translation/translation_action_button.dart';
 
-// Configuration Components
-export 'src/widgets/configuration/configuration_panel.dart';
-export 'src/widgets/configuration/configuration_status_widget.dart';
+// Note: widgets/configuration/ directory has been removed (redundant)

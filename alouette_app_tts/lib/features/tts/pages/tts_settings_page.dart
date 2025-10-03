@@ -37,7 +37,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ModernAppBar(
+      appBar: CustomAppBar(
         title: 'TTS Settings',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -53,7 +53,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Engine Information
-                ModernCard(
+                CustomCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -77,7 +77,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
 
                 // Engine Selection
                 if (_platformInfo['supportedEngines'] != null)
-                  ModernCard(
+                  CustomCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -97,7 +97,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
                 const SizedBox(height: 16),
 
                 // Voice Parameters
-                ModernCard(
+                CustomCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -142,7 +142,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
                 const SizedBox(height: 16),
 
                 // Platform Information
-                ModernCard(
+                CustomCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -196,11 +196,11 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
 
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: ModernButton(
+        child: CustomButton(
           onPressed: () => widget.controller.switchEngine(engineType),
           text: engineName.toString().toUpperCase(),
-          type: isSelected ? ModernButtonType.primary : ModernButtonType.secondary,
-          size: ModernButtonSize.medium,
+          type: isSelected ? CustomButtonType.primary : CustomButtonType.secondary,
+          size: CustomButtonSize.medium,
         ),
       );
     }).toList();

@@ -5,7 +5,7 @@
 
 import 'package:alouette_lib_tts/alouette_tts.dart';
 
-abstract class ITTSService {
+abstract class TTSServiceContract {
   /// Initialize the TTS service
   ///
   /// Returns true if initialization was successful, false otherwise.

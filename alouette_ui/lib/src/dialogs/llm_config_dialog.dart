@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../constants/ui_constants.dart';
 import '../tokens/dimension_tokens.dart';
-import '../widgets/modern_button.dart';
+import '../widgets/custom_button.dart';
 
 class LLMConfigDialog extends StatefulWidget {
   final LLMConfig initialConfig;
@@ -292,12 +292,12 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
         // Test Connection Button
         SizedBox(
           width: double.infinity,
-          child: ModernButton(
+          child: CustomButton(
             onPressed: _isTestingConnection ? null : _testConnection,
             text: _isTestingConnection ? 'Testing...' : 'Test Connection',
             icon: _isTestingConnection ? null : Icons.wifi,
-            type: ModernButtonType.outline,
-            size: ModernButtonSize.medium,
+            type: CustomButtonType.outline,
+            size: CustomButtonSize.medium,
           ),
         ),
 
@@ -398,18 +398,18 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
 
   List<Widget> _buildActions() {
     return [
-      ModernButton(
+      CustomButton(
         onPressed: () => Navigator.of(context).pop(),
         text: 'Cancel',
-        type: ModernButtonType.text,
-        size: ModernButtonSize.medium,
+        type: CustomButtonType.text,
+        size: CustomButtonSize.medium,
       ),
       if (widget.useDialog) const SizedBox(width: 8),
-      ModernButton(
+      CustomButton(
         onPressed: _canSave() ? _saveConfig : null,
         text: 'Save',
-        type: ModernButtonType.primary,
-        size: ModernButtonSize.medium,
+        type: CustomButtonType.primary,
+        size: CustomButtonSize.medium,
       ),
     ];
   }

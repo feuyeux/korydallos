@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
-import 'modern_button.dart';
+import '../services/core/service_locator.dart';
+import '../dialogs/llm_config_dialog.dart';
+import 'custom_button.dart';
 
 /// Shared configuration status indicator widget
 /// Shows the current LLM connection status across translation apps
@@ -105,11 +107,11 @@ class ConfigStatusWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            ModernButton(
+            CustomButton(
               text: 'Configure',
               onPressed: onConfigurePressed,
-              type: ModernButtonType.text,
-              size: ModernButtonSize.small,
+              type: CustomButtonType.text,
+              size: CustomButtonSize.small,
             ),
           ],
         ),
@@ -117,3 +119,178 @@ class ConfigStatusWidget extends StatelessWidget {
     );
   }
 }
+
+/// Complete Translation Status Widget with auto-initialization
+/// This is the stateful wrapper that handles auto-configuration
+class TranslationStatusWidget extends StatefulWidget {
+  const TranslationStatusWidget({super.key});
+
+  @override
+  State<TranslationStatusWidget> createState() =>
+      _TranslationStatusWidgetState();
+}
+
+class _TranslationStatusWidgetState extends State<TranslationStatusWidget> {
+  late TranslationService _translationService;
+  bool _isChecking = true;
+  bool _isConfigured = false;
+  LLMConfig? _currentConfig;
+
+  @override
+  void initState() {
+    super.initState();
+    _translationService = ServiceLocator.get<TranslationService>();
+    
+    // Listen to service changes to update status automatically
+    _translationService.addListener(_onServiceChanged);
+    
+    // Delay check until after first frame to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkConfiguration();
+    });
+  }
+
+  @override
+  void dispose() {
+    _translationService.removeListener(_onServiceChanged);
+    super.dispose();
+  }
+
+  void _onServiceChanged() {
+    // When service state changes, re-check configuration
+    if (mounted && !_isChecking) {
+      _checkConfiguration();
+    }
+  }
+
+  Future<void> _checkConfiguration() async {
+    if (!mounted) return;
+    setState(() => _isChecking = true);
+
+    final logger = ServiceLocator.logger;
+
+    try {
+      // Strategy 1: Check if service already has auto-detected config
+      final existingConfig = _translationService.autoDetectedConfig;
+      
+      logger.debug('ConfigStatusWidget: Checking configuration', tag: 'ConfigStatus', details: {
+        'hasExistingConfig': existingConfig != null,
+        'provider': existingConfig?.provider ?? 'none',
+        'model': existingConfig?.selectedModel ?? 'none',
+      });
+      
+      if (existingConfig != null && existingConfig.selectedModel.isNotEmpty) {
+        // We have a complete config, test it
+        logger.debug('ConfigStatusWidget: Testing existing config', tag: 'ConfigStatus');
+        final status = await _translationService.testConnection(existingConfig);
+        logger.info('ConfigStatusWidget: Existing config test result', tag: 'ConfigStatus', details: {
+          'success': status.success,
+          'modelCount': status.modelCount,
+        });
+        if (!mounted) return;
+        setState(() {
+          _isConfigured = status.success;
+          _currentConfig = existingConfig;
+          _isChecking = false;
+        });
+        return;
+      }
+
+      // Strategy 2: Try default Ollama configuration (most common setup)
+      logger.info('ConfigStatusWidget: No existing config, trying default Ollama', tag: 'ConfigStatus');
+      const defaultConfig = LLMConfig(
+        provider: 'ollama',
+        serverUrl: 'http://localhost:11434',
+        selectedModel: '', // Will be auto-detected
+      );
+
+      // Quick connection test with 5 second timeout (increased from 3)
+      final status = await _translationService
+          .testConnection(defaultConfig, timeout: const Duration(seconds: 5))
+          .timeout(const Duration(seconds: 6));
+      
+      logger.info('ConfigStatusWidget: Default Ollama test result', tag: 'ConfigStatus', details: {
+        'success': status.success,
+        'modelCount': status.modelCount,
+        'message': status.message,
+      });
+      
+      if (!mounted) return;
+      
+      if (status.success) {
+        // Connection successful, get available models
+        final models = _translationService.availableModels;
+        final model = models.isNotEmpty ? models.first : '';
+        
+        logger.info('ConfigStatusWidget: Ollama connection successful', tag: 'ConfigStatus', details: {
+          'availableModels': models.length,
+          'selectedModel': model,
+        });
+        
+        final workingConfig = LLMConfig(
+          provider: 'ollama',
+          serverUrl: 'http://localhost:11434',
+          selectedModel: model,
+        );
+        
+        setState(() {
+          _isConfigured = true;
+          _currentConfig = workingConfig;
+          _isChecking = false;
+        });
+      } else {
+        // Connection failed - show manual configuration option
+        logger.warning('ConfigStatusWidget: Ollama connection failed', tag: 'ConfigStatus');
+        setState(() {
+          _isConfigured = false;
+          _currentConfig = null;
+          _isChecking = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.error('ConfigStatusWidget: Error checking configuration', tag: 'ConfigStatus', error: e, stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() {
+        _isConfigured = false;
+        _isChecking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ConfigStatusWidget(
+      isAutoConfiguring: _isChecking,
+      isConfigured: _isConfigured,
+      autoConfigStatus: _isChecking ? 'Checking connection...' : 'Ready',
+      llmConfig: _currentConfig ??
+          const LLMConfig(
+            provider: 'ollama',
+            serverUrl: 'http://localhost:11434',
+            selectedModel: '',
+          ),
+      onConfigurePressed: () => _showConfigDialog(context),
+    );
+  }
+
+  void _showConfigDialog(BuildContext context) async {
+    final result = await showDialog<LLMConfig>(
+      context: context,
+      builder: (context) => LLMConfigDialog(
+        initialConfig: _currentConfig ??
+            const LLMConfig(
+              provider: 'ollama',
+              serverUrl: 'http://localhost:11434',
+              selectedModel: '',
+            ),
+        translationService: _translationService,
+      ),
+    );
+
+    if (result != null && mounted) {
+      // Recheck configuration after dialog closes
+      _checkConfiguration();
+    }
+  }
+}
+

@@ -132,7 +132,7 @@ class _TTSHomePageState extends State<TTSHomePage> {
     }
 
     return Scaffold(
-      appBar: ModernAppBar(
+      appBar: CustomAppBar(
         title: TTSAppConfig.appTitle,
         showLogo: true,
         statusWidget: Row(

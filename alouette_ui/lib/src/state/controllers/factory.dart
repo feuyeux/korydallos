@@ -13,7 +13,7 @@ class ControllerFactory {
 
   /// Create a translation controller
   ITranslationController createTranslationController() {
-    final translationService = ServiceLocator.get<ITranslationService>();
+    final translationService = ServiceLocator.get<TranslationServiceContract>();
     return TranslationController(translationService);
   }
 

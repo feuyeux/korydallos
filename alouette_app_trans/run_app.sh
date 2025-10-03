@@ -32,9 +32,35 @@ fi
 
 echo -e "${GREEN}📂 Running from: $(pwd)${NC}"
 
-# 默认在macOS上运行，如果有参数则使用参数指定的平台
-PLATFORM=${1:-macos}
+# 解析参数
+CLEAN=false
+PLATFORM="macos"
+
+for arg in "$@"; do
+    case $arg in
+        --clean)
+            CLEAN=true
+            shift
+            ;;
+        macos|linux|windows|chrome|android|ios)
+            PLATFORM=$arg
+            shift
+            ;;
+        *)
+            ;;
+    esac
+done
+
 echo -e "${GREEN}🎯 Platform: $PLATFORM${NC}"
+
+# 清理构建缓存
+if [ "$CLEAN" = true ]; then
+    echo -e "${BLUE}🧹 Cleaning build cache...${NC}"
+    flutter clean
+    echo -e "${BLUE}📦 Getting dependencies...${NC}"
+    flutter pub get
+    echo -e "${GREEN}✅ Clean complete${NC}"
+fi
 
 # 运行应用
 echo -e "${GREEN}🚀 Launching Flutter app...${NC}"

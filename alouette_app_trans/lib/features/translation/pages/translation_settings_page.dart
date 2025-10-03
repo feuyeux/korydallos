@@ -64,7 +64,7 @@ class _TranslationSettingsPageState extends State<TranslationSettingsPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: ModernButton(
+                          child: CustomButton(
                             text: 'Configure LLM',
                             onPressed: _showConfigDialog,
                             icon: Icons.settings,
