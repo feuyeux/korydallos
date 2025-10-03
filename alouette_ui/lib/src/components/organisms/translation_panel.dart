@@ -53,56 +53,45 @@ class _TranslationPanelState extends State<TranslationPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
             // Text input - smaller
             _buildTextInput(),
-            const SizedBox(height: 1), // Minimal spacing
-
-            const SizedBox(height: 1), // Minimal spacing
+            const SizedBox(height: 4), // 统一间距为4px
             // Language chips - 6 per row with equal width
             ConstrainedBox(
               constraints: const BoxConstraints(
-                maxHeight: 140, // Increased height for 2 rows
-                minHeight: 70, // Increased minimum height for 1 row
+                maxHeight: 70, // 减少最大高度
+                minHeight: 35, // 减少最小高度
               ),
               child: SingleChildScrollView(child: _buildLanguageGrid()),
             ),
-            const SizedBox(height: 1), // Minimal spacing
+            const SizedBox(height: 4), // 统一间距为4px
             // Action buttons
             _buildActionBar(),
-            const SizedBox(height: 1), // Minimal spacing
             // Error display
             if (widget.errorMessage != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 4), // 统一间距为4px
               _buildErrorDisplay(),
             ],
 
             // Results
             if (widget.translationResults != null &&
                 widget.translationResults!.isNotEmpty) ...[
-              const SizedBox(height: 2), // Further reduced spacing from 4 to 2
+              const SizedBox(height: 4), // 统一间距为4px
               _buildResults(),
             ],
-          ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildTextInput() {
     return SizedBox(
-      height: 90,
+      height: 50, // 减少从90到50，最小化高度
       child: TextField(
         controller: widget.textController,
         maxLines: null,
@@ -346,7 +335,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
       final rowLanguages = languages.skip(i).take(6).toList();
       rows.add(_buildLanguageRow(rowLanguages));
       if (i + 6 < languages.length) {
-        rows.add(const SizedBox(height: 6)); // Spacing between rows
+        rows.add(const SizedBox(height: 2)); // 减少行间距从6到2
       }
     }
 
@@ -367,7 +356,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
               horizontal: 1,
             ), // Minimal horizontal padding
             child: SizedBox(
-              height: 38, // 增加高度以容纳更大的字体
+              height: 28, // 减少高度从38到28
               width: double.infinity, // Ensure full width usage
               child: FilterChip(
                 selected: isSelected,
