@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
-import 'home_controller.dart';
-import '../translation/translation_page.dart';
+import '../controllers/home_controller.dart';
+import '../../translation/pages/translation_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import 'package:alouette_ui/alouette_ui.dart';
 
 class TranslationPage extends StatefulWidget {
@@ -88,24 +89,17 @@ class _TranslationPageState extends State<TranslationPage>
                 stream: _controller.translationStream,
                 builder: (context, translationSnapshot) {
                   final translations = translationSnapshot.data ?? {};
-                  
+
                   if (translations.isEmpty) {
                     return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.translate,
-                            size: 32,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.translate, size: 32, color: Colors.grey),
                           SizedBox(height: 8),
                           Text(
                             'Translation results will appear here',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -201,7 +195,7 @@ class _TranslationPageState extends State<TranslationPage>
 
   Widget _buildTranslationItem(String language, String translatedText) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.green.shade200),
@@ -233,17 +227,13 @@ class _TranslationPageState extends State<TranslationPage>
                 const Spacer(),
                 // TTS play button
                 IconButton(
-                  icon: Icon(
-                    Icons.volume_up,
-                    size: 16,
-                    color: Colors.blue,
-                  ),
+                  icon: Icon(Icons.volume_up, size: 16, color: Colors.blue),
                   tooltip: 'Play with TTS',
                   onPressed: () => _playTTS(language, translatedText),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 // Copy button
                 IconButton(
                   icon: Icon(
@@ -261,7 +251,7 @@ class _TranslationPageState extends State<TranslationPage>
           ),
           // Translation text
           Padding(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(4),
             child: SelectableText(
               translatedText,
               style: const TextStyle(fontSize: 12),
@@ -275,24 +265,31 @@ class _TranslationPageState extends State<TranslationPage>
   Future<void> _playTTS(String language, String text) async {
     try {
       // Check if TTS service is available
-      if (!ServiceLocator.isRegistered<TTSServiceContract>()) {
+      if (!ServiceLocator.isRegistered<tts_lib.TTSService>()) {
         throw Exception('TTS service not available');
       }
 
-      final ttsService = ServiceLocator.get<TTSServiceContract>();
-      
+      final ttsService = ServiceLocator.get<tts_lib.TTSService>();
+
       // Check if TTS service is initialized
       if (!ttsService.isInitialized) {
         // Try to initialize TTS service
-        final initialized = await ttsService.initialize();
-        if (!initialized) {
-          throw Exception('Failed to initialize TTS service');
-        }
+        await ttsService.initialize();
       }
 
-      // Use the TTS service's language-aware voice selection
-      await ttsService.speakInLanguage(text, language);
-      
+      // Find a voice matching the language code and speak
+      final voices = await ttsService.getVoices();
+      final matchingVoice = voices
+          .where((v) => v.languageCode == language)
+          .firstOrNull;
+
+      if (matchingVoice != null) {
+        await ttsService.speakText(text, voiceName: matchingVoice.id);
+      } else {
+        // Fallback to default voice
+        await ttsService.speakText(text);
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -302,7 +299,6 @@ class _TranslationPageState extends State<TranslationPage>
         );
       }
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -314,8 +310,6 @@ class _TranslationPageState extends State<TranslationPage>
       }
     }
   }
-
-
 
   void _copyTranslation(String language, String translatedText) {
     Clipboard.setData(ClipboardData(text: translatedText));

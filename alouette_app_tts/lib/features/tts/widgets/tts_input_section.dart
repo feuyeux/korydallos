@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// Uses TTSVoice via controller; no direct package import needed here
+import 'package:alouette_lib_tts/alouette_tts.dart' show VoiceModel;
 import 'package:alouette_ui/alouette_ui.dart';
 import '../controllers/tts_controller.dart' as local;
 
@@ -36,19 +36,19 @@ class _TTSInputSectionState extends State<TTSInputSection> {
         widget.controller.availableVoices.isNotEmpty) {
       // Find current voice and set language accordingly
       final currentVoice = widget.controller.availableVoices
-          .where((voice) => voice.name == widget.controller.currentVoice)
+          .where((voice) => voice.id == widget.controller.currentVoice)
           .firstOrNull;
 
       if (currentVoice != null) {
         setState(() {
-          _selectedLanguage = currentVoice.language;
+          _selectedLanguage = currentVoice.languageCode;
           _selectedVoice = currentVoice.name;
         });
       } else {
         // Set default to first available language and voice
         final firstVoice = widget.controller.availableVoices.first;
         setState(() {
-          _selectedLanguage = firstVoice.language;
+          _selectedLanguage = firstVoice.languageCode;
           _selectedVoice = firstVoice.name;
         });
         widget.controller.changeVoice(firstVoice.name);
@@ -61,7 +61,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
     if (!widget.controller.isInitialized) return [];
 
     final languages = widget.controller.availableVoices
-        .map((voice) => voice.language)
+        .map((voice) => voice.languageCode)
         .toSet()
         .toList();
 
@@ -70,13 +70,13 @@ class _TTSInputSectionState extends State<TTSInputSection> {
   }
 
   /// Get voices for selected language
-  List<TTSVoice> get _voicesForSelectedLanguage {
+  List<VoiceModel> get _voicesForSelectedLanguage {
     if (!widget.controller.isInitialized || _selectedLanguage == null) {
       return [];
     }
 
     return widget.controller.availableVoices
-        .where((voice) => voice.language == _selectedLanguage)
+        .where((voice) => voice.languageCode == _selectedLanguage)
         .toList();
   }
 
@@ -112,16 +112,13 @@ class _TTSInputSectionState extends State<TTSInputSection> {
   }
 
   /// Get voice display name with gender info
-  String _getVoiceDisplayName(TTSVoice voice) {
+  String _getVoiceDisplayName(VoiceModel voice) {
     final parts = <String>[];
 
-    parts.add(voice.name);
+    parts.add(voice.displayName);
 
-    // Add gender info
-    // gender may be null
-    if (voice.gender != null && voice.gender!.isNotEmpty) {
-      parts.add('(${voice.gender})');
-    }
+    // Add gender info - gender is an enum, always has a value
+    parts.add('(${voice.gender.name})');
 
     return parts.join(' ');
   }
@@ -297,7 +294,7 @@ class _TTSInputSectionState extends State<TTSInputSection> {
                                   items: _voicesForSelectedLanguage
                                       .map(
                                         (voice) => DropdownMenuItem<String>(
-                                          value: voice.name,
+                                          value: voice.id,
                                           child: Text(
                                             _getVoiceDisplayName(voice),
                                             overflow: TextOverflow.ellipsis,

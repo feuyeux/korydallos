@@ -2,6 +2,7 @@
 library alouette_ui.state.controllers.factory;
 
 import 'package:flutter/widgets.dart';
+import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 
 import '../../../alouette_ui.dart';
 
@@ -13,7 +14,8 @@ class ControllerFactory {
 
   /// Create a translation controller
   ITranslationController createTranslationController() {
-    final translationService = ServiceLocator.get<TranslationServiceContract>();
+    final translationService =
+        ServiceLocator.get<trans_lib.TranslationService>();
     return TranslationController(translationService);
   }
 

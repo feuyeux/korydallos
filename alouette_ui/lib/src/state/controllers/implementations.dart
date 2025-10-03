@@ -3,13 +3,14 @@ library alouette_ui.state.controllers.implementations;
 
 import 'dart:async';
 import 'package:alouette_lib_tts/alouette_tts.dart' as lib_tts;
+import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 
 import '../../../alouette_ui.dart';
 
 /// Translation controller implementation
 class TranslationController extends BaseStateController
     implements ITranslationController {
-  final TranslationServiceContract _translationService;
+  final trans_lib.TranslationService _translationService;
   final StreamController<Map<String, String>> _translationController =
       StreamController<Map<String, String>>.broadcast();
 
@@ -77,24 +78,26 @@ class TranslationController extends BaseStateController
     }
 
     await executeAsync(() async {
-      final results = <String, String>{};
+      try {
+        // Use the new translateWithAutoConfig method
+        final result = await _translationService.translateWithAutoConfig(
+          _inputText,
+          _targetLanguages,
+        );
 
-      for (final targetLang in _targetLanguages) {
-        try {
-          final translation = await _translationService.translate(
-            text: _inputText,
-            sourceLanguage: _sourceLanguage,
-            targetLanguage: targetLang,
-          );
-          results[targetLang] = translation;
-        } catch (e) {
-          results[targetLang] = 'Translation failed: $e';
+        _translations.clear();
+        _translations.addAll(result.translations);
+        _translationController.add(translations);
+      } catch (e) {
+        // Handle translation error
+        final errorResults = <String, String>{};
+        for (final targetLang in _targetLanguages) {
+          errorResults[targetLang] = 'Translation failed: $e';
         }
+        _translations.clear();
+        _translations.addAll(errorResults);
+        _translationController.add(translations);
       }
-
-      _translations.clear();
-      _translations.addAll(results);
-      _translationController.add(translations);
     });
   }
 
@@ -129,8 +132,8 @@ class TTSController extends BaseStateController implements ITTSController {
   bool _isPaused = false;
   // Controller uses 0.0-1.0 range where 0.5 = normal (0% adjustment)
   // For Edge TTS: rate/pitch are mapped to -50% to +50% around 0.5 midpoint
-  double _speechRate = 1.0;   // 1.0 = normal speed (1.0x)
-  double _speechPitch = 1.0;  // 1.0 = normal pitch (1.0x)
+  double _speechRate = 1.0; // 1.0 = normal speed (1.0x)
+  double _speechPitch = 1.0; // 1.0 = normal pitch (1.0x)
   double _speechVolume = 1.0; // 1.0 = 100% volume
 
   // Use lib layer directly
@@ -146,7 +149,9 @@ class TTSController extends BaseStateController implements ITTSController {
       await _libTTSService.initialize();
       await _initializeVoices();
       // Reset error state after successful initialization (handles hot reload residual errors)
-      try { clearError(); } catch (_) {}
+      try {
+        clearError();
+      } catch (_) {}
     } catch (e) {
       setError('Failed to initialize TTS service: $e');
     }
@@ -315,14 +320,16 @@ class TTSController extends BaseStateController implements ITTSController {
     ensureNotDisposed();
     await executeAsync(() async {
       await _libTTSService.switchEngine(engine);
-      try { clearError(); } catch (_) {}
+      try {
+        clearError();
+      } catch (_) {}
     });
   }
 
   Future<void> _initializeVoices() async {
     try {
       final voices = await _libTTSService.getVoices();
-      
+
       // Handle VoiceModel objects from lib layer
       if (voices is List) {
         _availableVoices = voices.map((voice) {
@@ -340,7 +347,7 @@ class TTSController extends BaseStateController implements ITTSController {
       } else {
         throw Exception('Unexpected voices format: ${voices.runtimeType}');
       }
-      
+
       if (_availableVoices.isNotEmpty && _selectedVoice == null) {
         // Prefer an English voice by default
         final enVoice = _availableVoices.firstWhere(

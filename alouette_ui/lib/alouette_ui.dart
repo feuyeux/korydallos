@@ -20,15 +20,9 @@ export 'src/services/core/configuration_manager.dart';
 export 'src/services/core/configuration_migration.dart';
 export 'src/services/core/logging_service.dart';
 
-// Service Interfaces
-export 'src/services/interfaces/tts_service_contract.dart';
-export 'src/services/interfaces/translation_service_contract.dart';
-export 'src/services/interfaces/configuration_service_interface.dart';
-
-// Service Implementations
-export 'src/services/implementations/tts_service_impl.dart';
-export 'src/services/implementations/translation_service_impl.dart';
-export 'src/services/implementations/configuration_service_impl.dart';
+// Note: Service interfaces and implementations have been removed.
+// ServiceManager now uses direct library types (alouette_lib_tts.TTSService, alouette_lib_trans.TranslationService)
+// for better simplicity and maintainability.
 
 // Design Tokens
 export 'src/tokens/color_tokens.dart';
@@ -83,6 +77,7 @@ export 'src/core/errors/error_handler.dart';
 
 // Splash and Initialization
 export 'src/widgets/splash_screen.dart';
+export 'src/core/app_initialization.dart';
 
 // Dialogs
 export 'src/dialogs/llm_config_dialog.dart';

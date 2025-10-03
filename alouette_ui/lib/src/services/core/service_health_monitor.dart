@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
+import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
 import 'service_locator.dart';
-import '../interfaces/tts_service_contract.dart';
-import '../interfaces/translation_service_contract.dart';
 
 /// Service Health Monitor
 ///
@@ -56,17 +56,17 @@ class ServiceHealthMonitor {
     final report = ServiceHealthReport(timestamp: DateTime.now());
 
     // Check TTS service
-    if (ServiceLocator.isRegistered<TTSServiceContract>()) {
+    if (ServiceLocator.isRegistered<tts_lib.TTSService>()) {
       final status = await _checkTTSHealth();
-      _healthStatus[TTSServiceContract] = status;
-      report.serviceStatus[TTSServiceContract] = status;
+      _healthStatus[tts_lib.TTSService] = status;
+      report.serviceStatus[tts_lib.TTSService] = status;
     }
 
     // Check Translation service
-    if (ServiceLocator.isRegistered<TranslationServiceContract>()) {
+    if (ServiceLocator.isRegistered<trans_lib.TranslationService>()) {
       final status = await _checkTranslationHealth();
-      _healthStatus[TranslationServiceContract] = status;
-      report.serviceStatus[TranslationServiceContract] = status;
+      _healthStatus[trans_lib.TranslationService] = status;
+      report.serviceStatus[trans_lib.TranslationService] = status;
     }
 
     // Broadcast the health report
@@ -77,7 +77,7 @@ class ServiceHealthMonitor {
   /// Check TTS service health
   static Future<ServiceHealthStatus> _checkTTSHealth() async {
     try {
-      final service = ServiceLocator.get<TTSServiceContract>();
+      final service = ServiceLocator.get<tts_lib.TTSService>();
 
       if (!service.isInitialized) {
         return ServiceHealthStatus(
@@ -88,7 +88,7 @@ class ServiceHealthMonitor {
       }
 
       // Try to get voices as a health check
-      await service.getAvailableVoices();
+      await service.getVoices();
 
       return ServiceHealthStatus(isHealthy: true, lastChecked: DateTime.now());
     } catch (e) {
@@ -103,18 +103,18 @@ class ServiceHealthMonitor {
   /// Check Translation service health
   static Future<ServiceHealthStatus> _checkTranslationHealth() async {
     try {
-      final service = ServiceLocator.get<TranslationServiceContract>();
+      final service = ServiceLocator.get<trans_lib.TranslationService>();
 
-      if (!service.isInitialized) {
+      if (!service.isReady) {
         return ServiceHealthStatus(
           isHealthy: false,
           lastChecked: DateTime.now(),
-          error: 'Service not initialized',
+          error: 'Service not ready',
         );
       }
 
-      // Try to get supported languages as a health check
-      await service.getSupportedLanguages();
+      // Just check if service is ready - no specific method call needed
+      // Translation service health is based on isReady status
 
       return ServiceHealthStatus(isHealthy: true, lastChecked: DateTime.now());
     } catch (e) {

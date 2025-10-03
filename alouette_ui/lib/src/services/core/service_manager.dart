@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart' as trans_lib;
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import '../core/service_locator.dart';
 import '../core/service_configuration.dart';
-import '../interfaces/tts_service_contract.dart';
-import '../interfaces/translation_service_contract.dart';
-import '../implementations/tts_service_impl.dart';
-import '../implementations/translation_service_impl.dart';
+import '../core/configuration_manager.dart';
 
 /// Service Manager for Alouette Applications
 ///
 /// Provides centralized service management using dependency injection.
 /// Manages the lifecycle of all services including initialization, registration, and disposal.
+///
+/// Now uses direct library types instead of wrapper interfaces for better simplicity and maintainability.
 class ServiceManager {
   static bool _isInitialized = false;
   static final List<String> _initializationLog = [];
@@ -46,26 +46,26 @@ class ServiceManager {
         _log('Starting service initialization...');
       }
 
-      // Register services as singletons
+      // Register services as singletons using direct library types
       if (config.initializeTTS) {
-        ServiceLocator.registerSingleton<TTSServiceContract>(() => TTSServiceImpl());
+        ServiceLocator.registerSingleton<tts_lib.TTSService>(
+          () => tts_lib.TTSService(),
+        );
         _log('TTS service registered');
       }
 
       if (config.initializeTranslation) {
-        final translationImpl = TranslationServiceImpl();
-        ServiceLocator.registerSingleton<TranslationServiceContract>(
-          () => translationImpl,
-        );
-        // Also register the underlying TranslationService for widgets that need it
-        // Use lazy access to avoid accessing before initialization
         ServiceLocator.registerSingleton<trans_lib.TranslationService>(
-          () => ServiceLocator.get<TranslationServiceContract>() is TranslationServiceImpl 
-              ? (ServiceLocator.get<TranslationServiceContract>() as TranslationServiceImpl).underlyingServiceSafe
-              : trans_lib.TranslationService(),
+          () => trans_lib.TranslationService(),
         );
         _log('Translation service registered');
       }
+
+      // Register ConfigurationManager as a singleton
+      ServiceLocator.registerSingleton<ConfigurationManager>(
+        () => ConfigurationManager.instance,
+      );
+      _log('ConfigurationManager registered');
 
       // Initialize services with timeout
       final initFuture = _initializeServicesWithConfig(config);
@@ -107,7 +107,6 @@ class ServiceManager {
         durationMs: stopwatch.elapsedMilliseconds,
       );
 
-
       await dispose(); // Cleanup on failure
       return result;
     }
@@ -121,17 +120,35 @@ class ServiceManager {
     final futures = <Future<void>>[];
 
     if (config.initializeTTS) {
-      futures.add(_initializeService<TTSServiceContract>('TTS', config));
+      futures.add(_initializeService<tts_lib.TTSService>('TTS', config));
     }
 
     if (config.initializeTranslation) {
       futures.add(
-        _initializeService<TranslationServiceContract>('Translation', config),
+        _initializeService<trans_lib.TranslationService>('Translation', config),
       );
     }
 
+    // Initialize ConfigurationManager
+    futures.add(_initializeConfigurationManager());
+
     // Wait for all services to initialize
     await Future.wait(futures);
+  }
+
+  /// Initialize ConfigurationManager
+  static Future<void> _initializeConfigurationManager() async {
+    try {
+      final configManager = ServiceLocator.get<ConfigurationManager>();
+      await configManager.initialize();
+
+      _serviceStatus[ConfigurationManager] = true;
+      _log('ConfigurationManager initialized');
+    } catch (e) {
+      _serviceStatus[ConfigurationManager] = false;
+      _log('ConfigurationManager initialization failed: $e');
+      rethrow;
+    }
   }
 
   /// Initialize a specific service
@@ -143,19 +160,20 @@ class ServiceManager {
       final service = ServiceLocator.get<T>();
 
       bool success = false;
-      if (service is TTSServiceContract) {
-        success = await service.initialize(
-          autoFallback: config.ttsAutoFallback,
-        );
-      } else if (service is TranslationServiceContract) {
+      if (service is tts_lib.TTSService) {
+        await service.initialize(autoFallback: config.ttsAutoFallback);
+        success = true;
+      } else if (service is trans_lib.TranslationService) {
         success = await service.initialize();
       }
 
       if (!success) {
         // For TranslationService, allow app to continue even if auto-config fails
-        if (service is TranslationServiceContract) {
+        if (service is trans_lib.TranslationService) {
           _serviceStatus[T] = false;
-          _log('$serviceName service initialized but auto-configuration failed - service can still be configured manually');
+          _log(
+            '$serviceName service initialized but auto-configuration failed - service can still be configured manually',
+          );
           return; // Don't throw, allow app to start
         }
         throw Exception('Failed to initialize $serviceName service');
@@ -166,7 +184,7 @@ class ServiceManager {
     } catch (e) {
       _serviceStatus[T] = false;
       _log('$serviceName service failed: $e');
-      
+
       // For TranslationService, don't rethrow - allow app to start
       if (serviceName == 'Translation') {
         _log('Continuing without Translation service auto-configuration');
@@ -180,36 +198,36 @@ class ServiceManager {
   ///
   /// Returns the singleton TTS service instance.
   /// Throws ServiceNotRegisteredException if not initialized.
-  static TTSServiceContract getTTSService() {
+  static tts_lib.TTSService getTTSService() {
     _ensureInitialized();
-    _ensureServiceAvailable<TTSServiceContract>('TTS');
-    return ServiceLocator.get<TTSServiceContract>();
+    _ensureServiceAvailable<tts_lib.TTSService>('TTS');
+    return ServiceLocator.get<tts_lib.TTSService>();
   }
 
   /// Get Translation service instance
   ///
   /// Returns the singleton Translation service instance.
   /// Throws ServiceNotRegisteredException if not initialized.
-  static TranslationServiceContract getTranslationService() {
+  static trans_lib.TranslationService getTranslationService() {
     _ensureInitialized();
-    _ensureServiceAvailable<TranslationServiceContract>('Translation');
-    return ServiceLocator.get<TranslationServiceContract>();
+    _ensureServiceAvailable<trans_lib.TranslationService>('Translation');
+    return ServiceLocator.get<trans_lib.TranslationService>();
   }
 
   /// Register a custom TTS service implementation
   ///
   /// Useful for testing or using alternative implementations.
-  static void registerTTSService(TTSServiceContract service) {
-    ServiceLocator.register<TTSServiceContract>(service);
-    _serviceStatus[TTSServiceContract] = true;
+  static void registerTTSService(tts_lib.TTSService service) {
+    ServiceLocator.register<tts_lib.TTSService>(service);
+    _serviceStatus[tts_lib.TTSService] = true;
   }
 
   /// Register a custom Translation service implementation
   ///
   /// Useful for testing or using alternative implementations.
-  static void registerTranslationService(TranslationServiceContract service) {
-    ServiceLocator.register<TranslationServiceContract>(service);
-    _serviceStatus[TranslationServiceContract] = true;
+  static void registerTranslationService(trans_lib.TranslationService service) {
+    ServiceLocator.register<trans_lib.TranslationService>(service);
+    _serviceStatus[trans_lib.TranslationService] = true;
   }
 
   /// Check if services are initialized
@@ -225,8 +243,8 @@ class ServiceManager {
   /// Get service initialization status
   static Map<String, bool> getServiceStatus() {
     return {
-      'TTS': isServiceAvailable<TTSServiceContract>(),
-      'Translation': isServiceAvailable<TranslationServiceContract>(),
+      'TTS': isServiceAvailable<tts_lib.TTSService>(),
+      'Translation': isServiceAvailable<trans_lib.TranslationService>(),
     };
   }
 
@@ -245,15 +263,16 @@ class ServiceManager {
       _log('Starting service disposal...');
 
       // Dispose TTS service if it exists
-      if (ServiceLocator.isRegistered<TTSServiceContract>()) {
-        final ttsService = ServiceLocator.get<TTSServiceContract>();
+      if (ServiceLocator.isRegistered<tts_lib.TTSService>()) {
+        final ttsService = ServiceLocator.get<tts_lib.TTSService>();
         ttsService.dispose();
         _log('TTS service disposed');
       }
 
       // Dispose Translation service if it exists
-      if (ServiceLocator.isRegistered<TranslationServiceContract>()) {
-        final translationService = ServiceLocator.get<TranslationServiceContract>();
+      if (ServiceLocator.isRegistered<trans_lib.TranslationService>()) {
+        final translationService =
+            ServiceLocator.get<trans_lib.TranslationService>();
         translationService.dispose();
         _log('Translation service disposed');
       }
@@ -326,7 +345,7 @@ extension ServiceManagerHelpers on ServiceManager {
   /// Quick access to TTS speak functionality
   static Future<void> speak(String text, {String? voiceName}) async {
     final ttsService = ServiceManager.getTTSService();
-    await ttsService.speak(text, voiceName: voiceName);
+    await ttsService.speakText(text, voiceName: voiceName);
   }
 
   /// Quick access to TTS stop functionality
@@ -336,42 +355,20 @@ extension ServiceManagerHelpers on ServiceManager {
   }
 
   /// Quick access to get available voices
-  static Future<List<TTSVoice>> getVoices() async {
+  static Future<List<tts_lib.VoiceModel>> getVoices() async {
     final ttsService = ServiceManager.getTTSService();
-    return await ttsService.getAvailableVoices();
+    return await ttsService.getVoices();
   }
 
-  /// Quick access to translation functionality
-  static Future<String> translate({
+  /// Quick access to translation functionality with auto-config
+  static Future<trans_lib.TranslationResult> translate({
     required String text,
-    String? sourceLanguage,
-    required String targetLanguage,
-  }) async {
-    final translationService = ServiceManager.getTranslationService();
-    return await translationService.translate(
-      text: text,
-      sourceLanguage: sourceLanguage,
-      targetLanguage: targetLanguage,
-    );
-  }
-
-  /// Quick access to multi-language translation
-  static Future<Map<String, String>> translateToMultiple({
-    required String text,
-    String? sourceLanguage,
     required List<String> targetLanguages,
   }) async {
     final translationService = ServiceManager.getTranslationService();
-    return await translationService.translateToMultiple(
-      text: text,
-      sourceLanguage: sourceLanguage,
-      targetLanguages: targetLanguages,
+    return await translationService.translateWithAutoConfig(
+      text,
+      targetLanguages,
     );
-  }
-
-  /// Quick access to get supported languages
-  static Future<List<LanguageInfo>> getSupportedLanguages() async {
-    final translationService = ServiceManager.getTranslationService();
-    return await translationService.getSupportedLanguages();
   }
 }

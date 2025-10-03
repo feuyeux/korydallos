@@ -31,19 +31,24 @@ class ConfigurationManager {
       return _initializationCompleter.future;
     }
 
-    try {
-      _configService = customService ?? ConfigurationServiceImpl();
-      await _configService!.initialize();
+    // If initialization is already in progress, return the same future
+    if (!_initializationCompleter.isCompleted) {
+      try {
+        _configService = customService ?? ConfigurationServiceImpl();
+        await _configService!.initialize();
 
-      _isInitialized = true;
-      _initializationCompleter.complete();
-
-
-    } catch (e) {
-      debugPrint('Failed to initialize ConfigurationManager: $e');
-      _initializationCompleter.completeError(e);
-      rethrow;
+        _isInitialized = true;
+        _initializationCompleter.complete();
+      } catch (e) {
+        debugPrint('Failed to initialize ConfigurationManager: $e');
+        if (!_initializationCompleter.isCompleted) {
+          _initializationCompleter.completeError(e);
+        }
+        rethrow;
+      }
     }
+    
+    return _initializationCompleter.future;
   }
 
   /// Ensure the manager is initialized before use

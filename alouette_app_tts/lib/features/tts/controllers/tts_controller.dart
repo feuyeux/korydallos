@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import 'package:alouette_ui/alouette_ui.dart';
 import '../../../config/tts_app_config.dart';
 
 /// Controller for TTS functionality using UnifiedTTSService from ServiceLocator
 class TTSController extends ChangeNotifier {
-  // Current TTS service (UI interface)
-  TTSServiceContract? _ttsService;
+  // Current TTS service (direct library type)
+  tts_lib.TTSService? _ttsService;
 
   // State variables
   bool _isInitialized = false;
   bool _isPlaying = false;
   String? _currentVoice;
-  List<TTSVoice> _availableVoices = [];
-  TTSEngineType? _currentEngine;
+  List<tts_lib.VoiceModel> _availableVoices = [];
+  tts_lib.TTSEngineType? _currentEngine;
 
   // TTS parameters
   double _rate = TTSAppConfig.defaultTTSConfig.speechRate;
@@ -27,8 +27,8 @@ class TTSController extends ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get isPlaying => _isPlaying;
   String? get currentVoice => _currentVoice;
-  List<TTSVoice> get availableVoices => _availableVoices;
-  TTSEngineType? get currentEngine => _currentEngine;
+  List<tts_lib.VoiceModel> get availableVoices => _availableVoices;
+  tts_lib.TTSEngineType? get currentEngine => _currentEngine;
   double get rate => _rate;
   double get pitch => _pitch;
   double get volume => _volume;
@@ -65,16 +65,16 @@ class TTSController extends ChangeNotifier {
   /// Load available voices
   Future<void> _loadVoices() async {
     try {
-      _availableVoices = await _ttsService!.getAvailableVoices();
+      _availableVoices = await _ttsService!.getVoices();
 
       // Set default voice if none selected
       if (_currentVoice == null && _availableVoices.isNotEmpty) {
         // Prefer en-US if exists
         final en = _availableVoices.firstWhere(
-          (v) => v.language == 'en-US',
+          (v) => v.languageCode == 'en-US',
           orElse: () => _availableVoices.first,
         );
-        _currentVoice = en.name;
+        _currentVoice = en.id;
       }
     } catch (e) {
       _setError('Failed to load voices: $e');
@@ -93,7 +93,7 @@ class TTSController extends ChangeNotifier {
       notifyListeners();
 
       // Speak the text
-      await _ttsService!.speak(
+      await _ttsService!.speakText(
         text,
         voiceName: _currentVoice,
         rate: _rate,
@@ -169,7 +169,7 @@ class TTSController extends ChangeNotifier {
   }
 
   /// Switch TTS engine
-  Future<void> switchEngine(TTSEngineType engineType) async {
+  Future<void> switchEngine(tts_lib.TTSEngineType engineType) async {
     if (!_isInitialized ||
         _ttsService == null ||
         _currentEngine == engineType) {

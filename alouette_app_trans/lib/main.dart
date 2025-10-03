@@ -8,117 +8,13 @@ void main() async {
   // Initialize only core services (non-blocking)
   ServiceLocator.initialize();
 
-  // Run app immediately - services will be initialized asynchronously
-  runApp(const TranslationAppWrapper());
-}
-
-/// Wrapper that handles async service initialization
-class TranslationAppWrapper extends StatelessWidget {
-  const TranslationAppWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  // Run app with unified initialization wrapper
+  runApp(
+    AppInitializationWrapper(
       title: 'Alouette Translator',
-      debugShowCheckedModeBanner: false,
-      home: FutureBuilder<bool>(
-        future: _initializeServices(),
-        builder: (context, snapshot) {
-          // Show splash screen while loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const SplashScreen(message: 'Initializing translation service...');
-          }
-
-          // Show error screen if initialization failed
-          if (snapshot.hasError || snapshot.data == false) {
-            return InitializationErrorScreen(
-              error: snapshot.error,
-              onRetry: () {
-                // Force rebuild to retry initialization
-                (context as Element).markNeedsBuild();
-              },
-            );
-          }
-
-          // Services initialized successfully
-          return const TranslationApp();
-        },
-      ),
-    );
-  }
-
-  Future<bool> _initializeServices() async {
-    final logger = ServiceLocator.logger;
-
-    try {
-      logger.info('Starting Translation app initialization', tag: 'Main');
-
-      // Initialize services in parallel
-      await Future.wait([
-        _initializeTranslationService(),
-        _initializeThemeService(),
-      ]);
-
-      logger.info('All services initialized successfully', tag: 'Main');
-      return true;
-    } catch (error, stackTrace) {
-      logger.fatal(
-        'Service initialization failed',
-        tag: 'Main',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return false;
-    }
-  }
-
-  Future<void> _initializeTranslationService() async {
-    final logger = ServiceLocator.logger;
-    try {
-      logger.debug('Initializing Translation service', tag: 'ServiceInit');
-
-      // Use short timeout for translation - it can be configured manually later
-      final result = await ServiceManager.initialize(
-        const ServiceConfiguration(
-          initializeTTS: false,
-          initializeTranslation: true,
-          initializationTimeoutMs: 5000, // 5 seconds - allow manual config later
-        ),
-      ).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          // Timeout is OK - user can configure manually
-          logger.info('Translation auto-config timed out - manual configuration available', tag: 'ServiceInit');
-          return ServiceInitializationResult(
-            isSuccessful: true, // Continue anyway
-            serviceResults: {'Translation': false},
-            errors: ['Auto-configuration timed out'],
-            durationMs: 5000,
-          );
-        },
-      );
-
-      logger.info('Translation service initialized: ${result.isSuccessful}', tag: 'ServiceInit');
-    } catch (e) {
-      // Allow translation service to fail - can be configured manually
-      logger.warning('Translation auto-config failed - manual configuration available', tag: 'ServiceInit', error: e);
-      // Don't rethrow - app can still start
-    }
-  }
-
-  Future<void> _initializeThemeService() async {
-    final logger = ServiceLocator.logger;
-    try {
-      logger.debug('Initializing Theme service', tag: 'ServiceInit');
-
-      ServiceLocator.registerSingleton<ThemeService>(() => ThemeService());
-      final themeService = ServiceLocator.get<ThemeService>();
-      await themeService.initialize();
-
-      logger.info('Theme service initialized', tag: 'ServiceInit');
-    } catch (e, stackTrace) {
-      logger.error('Theme initialization failed', tag: 'ServiceInit', error: e, stackTrace: stackTrace);
-      rethrow;
-    }
-  }
+      splashMessage: 'Initializing translation service...',
+      initializer: TranslationAppInitializer(),
+      app: const TranslationApp(),
+    ),
+  );
 }

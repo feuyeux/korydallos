@@ -89,7 +89,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
             // Results
             if (widget.translationResults != null &&
                 widget.translationResults!.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 2), // Further reduced spacing from 4 to 2
               _buildResults(),
             ],
           ],
@@ -213,7 +213,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
           'Translation Results',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4), // Reduced from 8 to 4
         ...widget.translationResults!.entries.map(
           (entry) => _buildResultItem(entry),
         ),
@@ -233,7 +233,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
     );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4), // Reduced from 8 to 4
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
@@ -262,7 +262,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // Reduced from 8 to 6
           Text(entry.value, style: const TextStyle(fontSize: 16)),
         ],
       ),

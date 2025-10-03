@@ -289,7 +289,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4), // Reduced from 8 to 4
         SizedBox(
           height: 300, // 可根据实际需求调整高度
           child: Scrollbar(
@@ -300,7 +300,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 final language = translation.languages[index];
                 final translatedText = translation.translations[language] ?? '';
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: 8), // Reduced from 12 to 8
                   child: _buildTranslationItem(
                     context,
                     language,
@@ -399,13 +399,16 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
               ],
             ),
           ),
-
           // Translation text
           Padding(
-            padding: EdgeInsets.all(isCompactStyle ? 6 : 12),
-            child: SelectableText(
+            padding: EdgeInsets.all(isCompactStyle ? 8 : 12), // Slightly reduced padding
+            child: Text(
               translatedText,
-              style: TextStyle(fontSize: isCompactStyle ? 12 : 14),
+              style: TextStyle(
+                fontSize: isCompactStyle
+                    ? TypographyTokens.bodySmallStyle.fontSize!
+                    : TypographyTokens.bodyLargeStyle.fontSize!,
+              ),
             ),
           ),
         ],
