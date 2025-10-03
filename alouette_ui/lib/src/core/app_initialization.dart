@@ -145,7 +145,7 @@ class TranslationAppInitializer extends AppInitializer {
       final result =
           await ServiceManager.initialize(
             const ServiceConfiguration(
-              initializeTTS: false,
+              initializeTTS: false, // Translation-only app, no TTS
               initializeTranslation: true,
               initializationTimeoutMs:
                   5000, // 5 seconds - allow manual config later

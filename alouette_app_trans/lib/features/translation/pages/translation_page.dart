@@ -15,31 +15,28 @@ class _TranslationPageState extends State<TranslationPage> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: 4,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
-            child: ListenableBuilder(
-              listenable: widget.controller,
-              builder: (context, child) {
-                return TranslationInputWidget(
-                  textController: widget.controller.textController,
-                  selectedLanguages: widget.controller.selectedLanguages,
-                  onLanguagesChanged: widget.controller.updateSelectedLanguages,
-                  onLanguageToggle: widget.controller.toggleLanguage,
-                  onTranslate: _translateText,
-                  isTranslating: widget.controller.isTranslating,
-                  isConfigured: widget.controller.isConfigured,
-                );
-              },
-            ),
+        // Input area - fixed size to minimize gap
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
+          child: ListenableBuilder(
+            listenable: widget.controller,
+            builder: (context, child) {
+              return TranslationInputWidget(
+                textController: widget.controller.textController,
+                selectedLanguages: widget.controller.selectedLanguages,
+                onLanguagesChanged: widget.controller.updateSelectedLanguages,
+                onLanguageToggle: widget.controller.toggleLanguage,
+                onTranslate: _translateText,
+                isTranslating: widget.controller.isTranslating,
+                isConfigured: widget.controller.isConfigured,
+              );
+            },
           ),
         ),
+        // Results area - takes remaining space
         Expanded(
-          flex: 5,
           child: Card(
             margin: const EdgeInsets.fromLTRB(8.0, 0.5, 8.0, 1.0),
             child: Padding(

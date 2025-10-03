@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart';
+import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import '../constants/language_constants.dart';
 import '../tokens/dimension_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
 class TranslationResultWidget extends StatefulWidget {
   final TranslationService translationService;
-  final TTSService? ttsService;
+  final tts_lib.TTSService? ttsService;
   final bool isCompactMode;
   final bool isTTSInitialized;
 
@@ -27,7 +27,7 @@ class TranslationResultWidget extends StatefulWidget {
 
 class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   final Map<String, bool> _playingStates = {};
-  AudioPlayer? _audioPlayer;
+  tts_lib.AudioPlayer? _audioPlayer;
 
   @override
   void initState() {
@@ -331,6 +331,13 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         languageCode.isNotEmpty;
     final isCompactStyle = widget.isCompactMode;
 
+    // Debug logging
+    debugPrint('🎯 Building translation item for $language:');
+    debugPrint('  - ttsService: ${widget.ttsService != null}');
+    debugPrint('  - isTTSInitialized: ${widget.isTTSInitialized}');
+    debugPrint('  - languageCode: $languageCode');
+    debugPrint('  - hasTTS: $hasTTS');
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -430,7 +437,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
 
     try {
       // Initialize audio player if needed
-      _audioPlayer ??= AudioPlayer();
+      _audioPlayer ??= tts_lib.AudioPlayer();
 
       // Get language code and find matching voice
       final languageCode = _getLanguageCode(language);
@@ -479,16 +486,16 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           );
         }
       }
-    } on TTSError catch (e) {
+    } on tts_lib.TTSError catch (e) {
       debugPrint('TTS Error for $language: ${e.message}');
 
       if (mounted) {
         String userMessage;
-        if (e.code == TTSErrorCodes.voiceNotFound) {
+        if (e.code == tts_lib.TTSErrorCodes.voiceNotFound) {
           userMessage = '$language voice not available on this platform';
-        } else if (e.code == TTSErrorCodes.platformNotSupported) {
+        } else if (e.code == tts_lib.TTSErrorCodes.platformNotSupported) {
           userMessage = '$language not supported in web browser';
-        } else if (e.code == TTSErrorCodes.synthesisError) {
+        } else if (e.code == tts_lib.TTSErrorCodes.synthesisError) {
           userMessage = 'Failed to play $language audio';
         } else {
           userMessage = 'Cannot play $language on this device';
@@ -555,13 +562,13 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   /// Get language code from language key (which may be code or name)
   String? _getLanguageCode(String languageKey) {
     try {
-      debugPrint('Processing language key: $languageKey');
+      debugPrint('🔍 Processing language key: $languageKey');
 
-      // First check if it's already a language code format (e.g., zh-CN, en-US)
-      if (languageKey.contains('-') && languageKey.length >= 2) {
+      // First check if it's already a language code format (e.g., zh-CN, en-US, ru-RU)
+      if (languageKey.contains('-')) {
         final parts = languageKey.split('-');
-        if (parts.length == 2 && parts[0].length == 2 && parts[1].length == 2) {
-          debugPrint('Language key $languageKey is already a language code');
+        if (parts.length == 2 && parts[0].length == 2) {
+          debugPrint('✅ Language key $languageKey is already a language code');
           return languageKey.toLowerCase();
         }
       }
@@ -569,7 +576,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       // If not a language code format, try to find from language name mapping
       final map = LanguageConstants.translationLanguageNames;
       debugPrint(
-        'Available language mappings: ${map.entries.take(5).map((e) => '${e.key}: ${e.value}').join(', ')}...',
+        '📋 Available language mappings: ${map.entries.take(3).map((e) => '${e.key}: ${e.value}').join(', ')}...',
       );
 
       final entry = map.entries.firstWhere(
@@ -578,7 +585,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       );
 
       if (entry.key.isEmpty) {
-        debugPrint('No language code found for: $languageKey');
+        debugPrint('❌ No language code found for: $languageKey');
         return null;
       }
 
@@ -586,15 +593,15 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       final parts = entry.key.replaceAll('_', '-').split('-');
       final lang = parts[0].toLowerCase();
       if (parts.length == 1) {
-        debugPrint('Language code for $languageKey: $lang');
+        debugPrint('✅ Language code for $languageKey: $lang');
         return lang;
       }
       final region = parts[1].toUpperCase();
       final result = '$lang-$region';
-      debugPrint('Language code for $languageKey: $result');
+      debugPrint('✅ Language code for $languageKey: $result');
       return result;
     } catch (e) {
-      debugPrint('Error getting language code for $languageKey: $e');
+      debugPrint('❌ Error getting language code for $languageKey: $e');
       return null;
     }
   }

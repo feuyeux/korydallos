@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import 'package:alouette_ui/alouette_ui.dart';
@@ -32,90 +31,66 @@ class _TranslationPageState extends State<TranslationPage>
 
   @override
   Widget build(BuildContext context) {
+    // 直接在build中获取服务 - 确保总是最新状态
+    final translationService = ServiceLocator.get<TranslationService>();
+    final ttsService = ServiceLocator.isRegistered<tts_lib.TTSService>() 
+        ? ServiceLocator.get<tts_lib.TTSService>() 
+        : null;
+    final isTTSInitialized = ttsService?.isInitialized ?? false;
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: 4,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
-            child: StreamBuilder<bool>(
-              stream: _controller.loadingStream,
-              builder: (context, loadingSnapshot) {
-                final isTranslating = loadingSnapshot.data ?? false;
-                return StreamBuilder<List<String>>(
-                  stream: _languageController.selectionStream,
-                  builder: (context, selectionSnapshot) {
-                    final selectedLanguages = selectionSnapshot.data ?? [];
-                    return TranslationInputWidget(
-                      textController: _textController,
-                      selectedLanguages: selectedLanguages,
-                      onLanguagesChanged: (languages) {
-                        // 先清除所有选择，然后选择新的语言列表
-                        _languageController.clearSelection();
-                        if (languages.isNotEmpty) {
-                          _languageController.selectMultiple(languages);
-                        }
-                      },
-                      onLanguageToggle: (language, selected) {
-                        if (selected) {
-                          _languageController.select(language);
-                        } else {
-                          _languageController.deselect(language);
-                        }
-                      },
-                      onTranslate: _translateText,
-                      onClearResults: () {
-                        _controller.clearTranslations();
-                      },
-                      isTranslating: isTranslating,
-                      isConfigured:
-                          true, // UI library controller handles configuration internally
-                    );
-                  },
-                );
-              },
-            ),
+        // Input area
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 0.5),
+          child: StreamBuilder<bool>(
+            stream: _controller.loadingStream,
+            builder: (context, loadingSnapshot) {
+              final isTranslating = loadingSnapshot.data ?? false;
+              return StreamBuilder<List<String>>(
+                stream: _languageController.selectionStream,
+                builder: (context, selectionSnapshot) {
+                  final selectedLanguages = selectionSnapshot.data ?? [];
+                  return TranslationInputWidget(
+                    textController: _textController,
+                    selectedLanguages: selectedLanguages,
+                    onLanguagesChanged: (languages) {
+                      _languageController.clearSelection();
+                      if (languages.isNotEmpty) {
+                        _languageController.selectMultiple(languages);
+                      }
+                    },
+                    onLanguageToggle: (language, selected) {
+                      if (selected) {
+                        _languageController.select(language);
+                      } else {
+                        _languageController.deselect(language);
+                      }
+                    },
+                    onTranslate: _translateText,
+                    onClearResults: () {
+                      _controller.clearTranslations();
+                    },
+                    isTranslating: isTranslating,
+                    isConfigured: true,
+                  );
+                },
+              );
+            },
           ),
         ),
+        // Results area - with TTS support (get services directly in build)
         Expanded(
-          flex: 5,
           child: Card(
             margin: const EdgeInsets.fromLTRB(8.0, 0.5, 8.0, 1.0),
             child: Padding(
               padding: const EdgeInsets.all(6.0),
-              child: StreamBuilder<Map<String, String>>(
-                stream: _controller.translationStream,
-                builder: (context, translationSnapshot) {
-                  final translations = translationSnapshot.data ?? {};
-
-                  if (translations.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.translate, size: 32, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text(
-                            'Translation results will appear here',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: translations.length,
-                    itemBuilder: (context, index) {
-                      final language = translations.keys.elementAt(index);
-                      final translatedText = translations[language] ?? '';
-                      return _buildTranslationItem(language, translatedText);
-                    },
-                  );
-                },
+              child: TranslationResultWidget(
+                translationService: translationService,
+                ttsService: ttsService,
+                isTTSInitialized: isTTSInitialized,
+                isCompactMode: true,
               ),
             ),
           ),
@@ -190,136 +165,6 @@ class _TranslationPageState extends State<TranslationPage>
     if (result != null && mounted) {
       // Configuration is handled by the UI library controller internally
       context.showSuccessMessage('Configuration updated successfully');
-    }
-  }
-
-  Widget _buildTranslationItem(String language, String translatedText) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Language title bar
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(7),
-                topRight: Radius.circular(7),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  language,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                    color: Colors.green.shade800,
-                  ),
-                ),
-                const Spacer(),
-                // TTS play button
-                IconButton(
-                  icon: Icon(Icons.volume_up, size: 16, color: Colors.blue),
-                  tooltip: 'Play with TTS',
-                  onPressed: () => _playTTS(language, translatedText),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 2),
-                // Copy button
-                IconButton(
-                  icon: Icon(
-                    Icons.copy,
-                    size: 16,
-                    color: Colors.green.shade700,
-                  ),
-                  tooltip: 'Copy translation',
-                  onPressed: () => _copyTranslation(language, translatedText),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-          // Translation text
-          Padding(
-            padding: const EdgeInsets.all(4),
-            child: SelectableText(
-              translatedText,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _playTTS(String language, String text) async {
-    try {
-      // Check if TTS service is available
-      if (!ServiceLocator.isRegistered<tts_lib.TTSService>()) {
-        throw Exception('TTS service not available');
-      }
-
-      final ttsService = ServiceLocator.get<tts_lib.TTSService>();
-
-      // Check if TTS service is initialized
-      if (!ttsService.isInitialized) {
-        // Try to initialize TTS service
-        await ttsService.initialize();
-      }
-
-      // Find a voice matching the language code and speak
-      final voices = await ttsService.getVoices();
-      final matchingVoice = voices
-          .where((v) => v.languageCode == language)
-          .firstOrNull;
-
-      if (matchingVoice != null) {
-        await ttsService.speakText(text, voiceName: matchingVoice.id);
-      } else {
-        // Fallback to default voice
-        await ttsService.speakText(text);
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Playing $language audio'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('TTS not available: ${e.toString()}'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  void _copyTranslation(String language, String translatedText) {
-    Clipboard.setData(ClipboardData(text: translatedText));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$language translation copied'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
     }
   }
 }

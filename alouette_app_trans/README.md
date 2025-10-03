@@ -26,7 +26,7 @@ Alouette Translator is a cross-platform translation application built with Flutt
 - 🌍 **多语言支持** - 支持中文、英文、日文、韩文、法文、德文、西班牙文、意大利文、俄文、阿拉伯文、印地文、希腊文
 - 🔄 **批量翻译** - 一次性翻译到多个目标语言
 - ⚙️ **灵活配置** - 支持自定义服务器 URL、API 密钥、模型选择
-- � **实时状态** - 显示连接状态、翻译进度和模型信息
+- 📊 **实时状态** - 显示连接状态、翻译进度和模型信息
 
 ### User Interface
 

@@ -13,6 +13,8 @@ dependencies:
   # Service interfaces from functional libraries
   alouette_lib_trans:
     path: ../alouette_lib_trans
+  # TTS library - kept as dependency for TTS-related UI components
+  # Apps that don't need TTS (like alouette_app_trans) should simply not use TTS components
   alouette_lib_tts:
     path: ../alouette_lib_tts
   # Persistent storage for configuration and preferences

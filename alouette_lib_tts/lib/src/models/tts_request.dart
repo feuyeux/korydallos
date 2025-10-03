@@ -1,5 +1,5 @@
 /// TTS Request Model
-/// 
+///
 /// Unified request object for all TTS operations.
 /// Encapsulates all parameters needed for text-to-speech synthesis and playback.
 class TTSRequest {
@@ -19,16 +19,16 @@ class TTSRequest {
   final String format;
 
   /// Speech rate (1.0 = normal speed, <1.0 slower, >1.0 faster)
-  /// Typical range: 0.1 - 3.0
+  /// Typical range: 0.5 - 2.0
   /// Maps to:
-  /// - Edge TTS: percentage adjustment (1.0 -> 0%, 0.5 -> -50%, 2.0 -> +100%)
+  /// - Edge TTS: percentage adjustment (1.0 -> 0%, 0.5 -> -50%, 1.5 -> +50%, 2.0 -> +100%)
   /// - Flutter TTS: platform-specific scale
   final double rate;
 
   /// Pitch (1.0 = normal pitch, <1.0 lower, >1.0 higher)
   /// Typical range: 0.5 - 2.0
   /// Maps to:
-  /// - Edge TTS: Hz adjustment (1.0 -> 0Hz)
+  /// - Edge TTS: Hz adjustment (1.0 -> 0Hz, 0.5 -> -50Hz, 1.5 -> +50Hz)
   /// - Flutter TTS: platform-specific scale
   final double pitch;
 
@@ -41,8 +41,8 @@ class TTSRequest {
     this.languageCode,
     this.languageName,
     this.format = 'mp3',
-    this.rate = 0.5,   // 0.5 = normal (no adjustment)
-    this.pitch = 0.5,  // 0.5 = normal (no adjustment)
+    this.rate = 1.0, // 1.0 = normal speed (no adjustment)
+    this.pitch = 1.0, // 1.0 = normal pitch (no adjustment)
     this.volume = 1.0, // 1.0 = 100% volume
   });
 
