@@ -24,7 +24,6 @@ class LLMConfigService {
       case 'ollama':
         return {
           'serverUrl': '$baseUrl:11434',
-          'apiKey': '',
           'description': 'Ollama typically runs on port 11434',
           'setupInstructions': [
             'Install Ollama from https://ollama.ai',
@@ -37,7 +36,6 @@ class LLMConfigService {
       case 'lmstudio':
         return {
           'serverUrl': '$baseUrl:1234',
-          'apiKey': '',
           'description': 'LM Studio typically runs on port 1234',
           'setupInstructions': [
             'Install LM Studio from https://lmstudio.ai',
@@ -55,7 +53,6 @@ class LLMConfigService {
       default:
         return {
           'serverUrl': '$baseUrl:11434',
-          'apiKey': '',
           'description': 'Default configuration',
           'setupInstructions': [],
           'commonModels': [],
@@ -70,7 +67,6 @@ class LLMConfigService {
       provider: provider,
       serverUrl: settings['serverUrl'] as String,
       selectedModel: '',
-      apiKey: settings['apiKey'] as String?,
     );
   }
 
@@ -87,7 +83,6 @@ class LLMConfigService {
       'provider': config.provider,
       'serverUrl': config.serverUrl,
       'selectedModel': config.selectedModel,
-      'hasApiKey': config.apiKey?.isNotEmpty ?? false,
       'isValid': validation['isValid'],
       'errors': validation['errors'],
       'warnings': validation['warnings'],

@@ -60,8 +60,10 @@ class _TranslationHomePageState extends State<TranslationHomePage> {
   void _showConfigDialog() async {
     final result = await _controller.showConfigDialog(context);
 
+    // The controller already handles saving the configuration
+    // No need to call updateLLMConfig again
     if (result != null) {
-      _controller.updateLLMConfig(result);
+      // Configuration was saved successfully
     }
   }
 }

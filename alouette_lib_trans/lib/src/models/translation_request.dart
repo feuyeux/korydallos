@@ -18,9 +18,6 @@ class TranslationRequest {
   /// The model name to use for translation
   final String modelName;
 
-  /// Optional API key for authentication
-  final String? apiKey;
-
   /// Additional request parameters specific to the provider
   final Map<String, dynamic>? additionalParams;
 
@@ -33,7 +30,6 @@ class TranslationRequest {
     required this.provider,
     required this.serverUrl,
     required this.modelName,
-    this.apiKey,
     this.additionalParams,
     this.sourceLanguage,
   });
@@ -46,7 +42,6 @@ class TranslationRequest {
       'provider': provider,
       'server_url': serverUrl,
       'model_name': modelName,
-      'api_key': apiKey,
       'additional_params': additionalParams,
       'source_language': sourceLanguage,
     };
@@ -60,7 +55,6 @@ class TranslationRequest {
       provider: json['provider'] ?? 'ollama',
       serverUrl: json['server_url'] ?? '',
       modelName: json['model_name'] ?? '',
-      apiKey: json['api_key'],
       additionalParams: json['additional_params'] != null
           ? Map<String, dynamic>.from(json['additional_params'])
           : null,
@@ -75,7 +69,6 @@ class TranslationRequest {
     String? provider,
     String? serverUrl,
     String? modelName,
-    String? apiKey,
     Map<String, dynamic>? additionalParams,
     String? sourceLanguage,
   }) {
@@ -85,7 +78,6 @@ class TranslationRequest {
       provider: provider ?? this.provider,
       serverUrl: serverUrl ?? this.serverUrl,
       modelName: modelName ?? this.modelName,
-      apiKey: apiKey ?? this.apiKey,
       additionalParams: additionalParams ?? this.additionalParams,
       sourceLanguage: sourceLanguage ?? this.sourceLanguage,
     );
@@ -173,7 +165,6 @@ class TranslationRequest {
         other.provider == provider &&
         other.serverUrl == serverUrl &&
         other.modelName == modelName &&
-        other.apiKey == apiKey &&
         other.sourceLanguage == sourceLanguage;
   }
 
@@ -185,7 +176,6 @@ class TranslationRequest {
       provider,
       serverUrl,
       modelName,
-      apiKey,
       sourceLanguage,
     );
   }

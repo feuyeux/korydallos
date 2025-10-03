@@ -300,7 +300,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
                 final language = translation.languages[index];
                 final translatedText = translation.translations[language] ?? '';
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8), // Reduced from 12 to 8
+                  padding: const EdgeInsets.only(
+                    bottom: 8,
+                  ), // Reduced from 12 to 8
                   child: _buildTranslationItem(
                     context,
                     language,
@@ -401,7 +403,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           ),
           // Translation text
           Padding(
-            padding: EdgeInsets.all(isCompactStyle ? 8 : 12), // Slightly reduced padding
+            padding: EdgeInsets.all(
+              isCompactStyle ? 8 : 12,
+            ), // Slightly reduced padding
             child: Text(
               translatedText,
               style: TextStyle(

@@ -4,6 +4,7 @@ import 'package:alouette_ui/alouette_ui.dart';
 
 class AppTranslationController extends ChangeNotifier {
   final TranslationService _translationService;
+  bool _isDisposed = false;
 
   AppTranslationController()
     : _translationService = ServiceLocator.get<TranslationService>();
@@ -144,7 +145,8 @@ class AppTranslationController extends ChangeNotifier {
     );
 
     // If user saved a new configuration, update and save it
-    if (result != null) {
+    // But only if the controller is still valid (not disposed)
+    if (result != null && !_isDisposed) {
       await updateLLMConfig(result);
     }
 
@@ -180,6 +182,7 @@ class AppTranslationController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     textController.dispose();
     super.dispose();
   }

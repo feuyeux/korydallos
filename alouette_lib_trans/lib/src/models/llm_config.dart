@@ -6,9 +6,6 @@ class LLMConfig {
   /// The server URL for the LLM provider
   final String serverUrl;
 
-  /// Optional API key for authentication
-  final String? apiKey;
-
   /// The selected model name
   final String selectedModel;
 
@@ -18,7 +15,6 @@ class LLMConfig {
   const LLMConfig({
     required this.provider,
     required this.serverUrl,
-    this.apiKey,
     required this.selectedModel,
     this.providerSpecific,
   });
@@ -60,11 +56,6 @@ class LLMConfig {
       }
     }
 
-    // Provider-specific warnings
-    if (provider == 'lmstudio' && (apiKey == null || apiKey!.isEmpty)) {
-      warnings.add('API key is recommended for LM Studio');
-    }
-
     // URL-related warnings
     if (serverUrl.isNotEmpty) {
       if (serverUrl.contains('localhost') || serverUrl.contains('127.0.0.1')) {
@@ -95,7 +86,6 @@ class LLMConfig {
     return {
       'provider': provider,
       'server_url': serverUrl,
-      'api_key': apiKey,
       'selected_model': selectedModel,
       'provider_specific': providerSpecific,
     };
@@ -106,7 +96,6 @@ class LLMConfig {
     return LLMConfig(
       provider: json['provider'] ?? 'ollama',
       serverUrl: json['server_url'] ?? 'http://localhost:11434',
-      apiKey: json['api_key'],
       selectedModel: json['selected_model'] ?? '',
       providerSpecific: json['provider_specific'] != null
           ? Map<String, dynamic>.from(json['provider_specific'])
@@ -118,14 +107,12 @@ class LLMConfig {
   LLMConfig copyWith({
     String? provider,
     String? serverUrl,
-    String? apiKey,
     String? selectedModel,
     Map<String, dynamic>? providerSpecific,
   }) {
     return LLMConfig(
       provider: provider ?? this.provider,
       serverUrl: serverUrl ?? this.serverUrl,
-      apiKey: apiKey ?? this.apiKey,
       selectedModel: selectedModel ?? this.selectedModel,
       providerSpecific: providerSpecific ?? this.providerSpecific,
     );
@@ -137,13 +124,12 @@ class LLMConfig {
     return other is LLMConfig &&
         other.provider == provider &&
         other.serverUrl == serverUrl &&
-        other.apiKey == apiKey &&
         other.selectedModel == selectedModel;
   }
 
   @override
   int get hashCode {
-    return Object.hash(provider, serverUrl, apiKey, selectedModel);
+    return Object.hash(provider, serverUrl, selectedModel);
   }
 
   @override

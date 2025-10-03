@@ -22,7 +22,6 @@ class LLMConfigDialog extends StatefulWidget {
 
 class _LLMConfigDialogState extends State<LLMConfigDialog> {
   late TextEditingController _serverUrlController;
-  late TextEditingController _apiKeyController;
   String _selectedProvider = 'ollama';
   String _selectedModel = '';
   bool _isTestingConnection = false;
@@ -37,48 +36,65 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
     _serverUrlController = TextEditingController(
       text: widget.initialConfig.serverUrl,
     );
-    _apiKeyController = TextEditingController(
-      text: widget.initialConfig.apiKey ?? '',
-    );
     _selectedModel = widget.initialConfig.selectedModel;
 
     // Try to load available models if already configured
     _loadAvailableModels();
+
+    // Auto-test connection if we have a valid configuration
+    if (widget.initialConfig.serverUrl.isNotEmpty &&
+        widget.initialConfig.selectedModel.isNotEmpty) {
+      // Delay the auto-test to ensure UI is ready
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _testConnection();
+      });
+    }
   }
 
   @override
   void dispose() {
     _serverUrlController.dispose();
-    _apiKeyController.dispose();
     super.dispose();
   }
 
   /// Load available models for the current configuration
   Future<void> _loadAvailableModels() async {
     try {
-      final config = LLMConfig(
-        provider: widget.initialConfig.provider,
-        serverUrl: widget.initialConfig.serverUrl,
-        apiKey: widget.initialConfig.apiKey,
-        selectedModel: '',
-      );
+      // Only try to load models if we have a valid configuration
+      if (widget.initialConfig.serverUrl.isNotEmpty &&
+          widget.initialConfig.provider.isNotEmpty) {
+        final config = LLMConfig(
+          provider: widget.initialConfig.provider,
+          serverUrl: widget.initialConfig.serverUrl,
+          selectedModel: '',
+        );
 
-      final models = await widget.translationService.getAvailableModels(config);
-      if (mounted && models.isNotEmpty) {
-        setState(() {
-          // Remove duplicates from the models list
-          _availableModels = models.toSet().toList();
-          _connectionSuccess = true;
-          _connectionMessage =
-              'Connected. ${_availableModels.length} models available.';
-          // Ensure selected model is valid
-          if (!_availableModels.contains(_selectedModel)) {
-            _selectedModel = _availableModels.first;
-          }
-        });
+        final models = await widget.translationService.getAvailableModels(
+          config,
+        );
+        if (mounted && models.isNotEmpty) {
+          setState(() {
+            // Remove duplicates from the models list
+            _availableModels = models.toSet().toList();
+            _connectionSuccess = true;
+            _connectionMessage =
+                'Connected. ${_availableModels.length} models available.';
+            // Ensure selected model is valid
+            if (!_availableModels.contains(_selectedModel) &&
+                _selectedModel.isNotEmpty) {
+              _selectedModel = _availableModels.first;
+            }
+          });
+        }
       }
     } catch (e) {
       // Silently fail - user can test connection manually
+      if (mounted) {
+        setState(() {
+          _connectionMessage = 'Failed to load models: $e';
+          _connectionSuccess = false;
+        });
+      }
     }
   }
 
@@ -95,9 +111,6 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
     final config = LLMConfig(
       provider: _selectedProvider,
       serverUrl: _serverUrlController.text.trim(),
-      apiKey: _apiKeyController.text.trim().isEmpty
-          ? null
-          : _apiKeyController.text.trim(),
       selectedModel: '',
     );
 
@@ -122,6 +135,17 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
           }
         }
       });
+
+      // Automatically dismiss success message after 5 seconds
+      if (result.success) {
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() {
+              _connectionMessage = null;
+            });
+          }
+        });
+      }
     } catch (error) {
       setState(() {
         _connectionSuccess = false;
@@ -137,21 +161,17 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
   /// Save configuration
   void _saveConfig() {
     if (!_connectionSuccess || _selectedModel.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please test connection and select a model first'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      // Show validation error in the connection status area
+      setState(() {
+        _connectionSuccess = false;
+        _connectionMessage = 'Please test connection and select a model first';
+      });
       return;
     }
 
     final config = LLMConfig(
       provider: _selectedProvider,
       serverUrl: _serverUrlController.text.trim(),
-      apiKey: _apiKeyController.text.trim().isEmpty
-          ? null
-          : _apiKeyController.text.trim(),
       selectedModel: _selectedModel,
     );
 
@@ -264,31 +284,6 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
 
         const SizedBox(height: SpacingTokens.l),
 
-        // API Key (for LM Studio)
-        if (_selectedProvider == 'lmstudio') ...[
-          Text(
-            'API Key (Optional)',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _apiKeyController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              hintText: 'Leave empty if not required',
-            ),
-            obscureText: true,
-            onChanged: (_) {
-              setState(() {
-                _connectionSuccess = false;
-                _connectionMessage = null;
-              });
-            },
-          ),
-          const SizedBox(height: SpacingTokens.l),
-        ],
-
         // Test Connection Button
         SizedBox(
           width: double.infinity,
@@ -344,6 +339,19 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                         ),
                       ),
                     ),
+                    if (_connectionSuccess) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () {
+                          setState(() {
+                            _connectionMessage = null;
+                          });
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -388,6 +396,13 @@ class _LLMConfigDialogState extends State<LLMConfigDialog> {
                   ),
                 ),
                 hint: const Text('Select a model'),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${_availableModels.length} models available',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
             ],
           ),

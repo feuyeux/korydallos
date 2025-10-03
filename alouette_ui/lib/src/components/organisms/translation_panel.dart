@@ -14,6 +14,7 @@ class TranslationPanel extends StatefulWidget {
   final VoidCallback? onClear;
   final bool isTranslating;
   final bool isCompactMode;
+  final bool isConfigured;
   final String? errorMessage;
   final Map<String, String>? translationResults;
 
@@ -26,6 +27,7 @@ class TranslationPanel extends StatefulWidget {
     this.onClear,
     this.isTranslating = false,
     this.isCompactMode = false,
+    this.isConfigured = true,
     this.errorMessage,
     this.translationResults,
   });
@@ -122,7 +124,8 @@ class _TranslationPanelState extends State<TranslationPanel> {
   Widget _buildActionBar() {
     final hasText = _currentText.isNotEmpty;
     final hasLanguages = widget.selectedLanguages.isNotEmpty;
-    final canTranslate = hasText && hasLanguages && !widget.isTranslating;
+    final canTranslate =
+        hasText && hasLanguages && !widget.isTranslating && widget.isConfigured;
 
     return Row(
       children: [
@@ -157,9 +160,11 @@ class _TranslationPanelState extends State<TranslationPanel> {
         Expanded(
           flex: 2,
           child: ElevatedButton.icon(
-            onPressed: canTranslate ? () {
-              widget.onTranslate?.call();
-            } : null,
+            onPressed: canTranslate
+                ? () {
+                    widget.onTranslate?.call();
+                  }
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: hasLanguages ? null : Colors.grey,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -244,7 +249,12 @@ class _TranslationPanelState extends State<TranslationPanel> {
         children: [
           Row(
             children: [
-              Text(language.flag, style: TextStyle(fontSize: PlatformDetector().flagFontSize * 1.125)), // 18.0 equivalent
+              Text(
+                language.flag,
+                style: TextStyle(
+                  fontSize: PlatformDetector().flagFontSize * 1.125,
+                ),
+              ), // 18.0 equivalent
               const SizedBox(width: 8),
               Text(
                 language.name,
@@ -270,14 +280,20 @@ class _TranslationPanelState extends State<TranslationPanel> {
   }
 
   void _handleLanguageTap(LanguageOption language) {
-    final currentSelection = List<LanguageOption>.from(widget.selectedLanguages);
-    
+    final currentSelection = List<LanguageOption>.from(
+      widget.selectedLanguages,
+    );
+
     // 通过语言代码比较来确定是否已选中
-    final wasSelected = currentSelection.any((selected) => selected.code == language.code);
-    
+    final wasSelected = currentSelection.any(
+      (selected) => selected.code == language.code,
+    );
+
     if (wasSelected) {
       // 移除所有匹配的语言代码
-      currentSelection.removeWhere((selected) => selected.code == language.code);
+      currentSelection.removeWhere(
+        (selected) => selected.code == language.code,
+      );
     } else {
       // 添加语言（确保不重复）
       if (!currentSelection.any((selected) => selected.code == language.code)) {
@@ -291,14 +307,20 @@ class _TranslationPanelState extends State<TranslationPanel> {
   void _selectAllLanguages() {
     // 检查是否所有语言都已选中（通过比较语言代码）
     final selectedCodes = widget.selectedLanguages.map((l) => l.code).toSet();
-    final allCodes = LanguageConstants.supportedLanguages.map((l) => l.code).toSet();
-    final isAllSelected = selectedCodes.containsAll(allCodes) && allCodes.containsAll(selectedCodes);
-    
+    final allCodes = LanguageConstants.supportedLanguages
+        .map((l) => l.code)
+        .toSet();
+    final isAllSelected =
+        selectedCodes.containsAll(allCodes) &&
+        allCodes.containsAll(selectedCodes);
+
     if (isAllSelected) {
       widget.onLanguagesChanged?.call([]);
     } else {
       // 否则全选
-      final allLanguages = List<LanguageOption>.from(LanguageConstants.supportedLanguages);
+      final allLanguages = List<LanguageOption>.from(
+        LanguageConstants.supportedLanguages,
+      );
       widget.onLanguagesChanged?.call(allLanguages);
     }
   }
@@ -306,11 +328,11 @@ class _TranslationPanelState extends State<TranslationPanel> {
   void _clearLanguages() {
     widget.onLanguagesChanged?.call([]);
     widget.textController.clear();
-    
+
     setState(() {
       _currentText = '';
     });
-    
+
     // 调用 onClear 回调来清理翻译结果
     widget.onClear?.call();
   }
@@ -335,8 +357,10 @@ class _TranslationPanelState extends State<TranslationPanel> {
     return Row(
       children: languages.map((language) {
         // 通过语言代码比较来确定是否选中，而不是对象引用
-        final isSelected = widget.selectedLanguages.any((selected) => selected.code == language.code);
-        
+        final isSelected = widget.selectedLanguages.any(
+          (selected) => selected.code == language.code,
+        );
+
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -395,7 +419,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
   void _copyToClipboard(String text) {
     try {
       Clipboard.setData(ClipboardData(text: text));
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Translation copied to clipboard')),
       );

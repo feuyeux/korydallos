@@ -4,11 +4,8 @@ import '../controllers/translation_controller.dart';
 
 class TranslationPage extends StatefulWidget {
   final AppTranslationController controller;
-  
-  const TranslationPage({
-    super.key,
-    required this.controller,
-  });
+
+  const TranslationPage({super.key, required this.controller});
 
   @override
   State<TranslationPage> createState() => _TranslationPageState();
@@ -80,8 +77,10 @@ class _TranslationPageState extends State<TranslationPage> {
   void _showConfigDialog() async {
     final result = await widget.controller.showConfigDialog(context);
 
+    // The controller already handles saving the configuration
+    // No need to call updateLLMConfig again
     if (result != null) {
-      widget.controller.updateLLMConfig(result);
+      // Configuration was saved successfully
     }
   }
 }

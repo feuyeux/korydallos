@@ -47,7 +47,7 @@ class ConfigurationManager {
         rethrow;
       }
     }
-    
+
     return _initializationCompleter.future;
   }
 

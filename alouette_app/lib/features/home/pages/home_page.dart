@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import 'package:alouette_lib_trans/alouette_lib_trans.dart';
-import '../controllers/home_controller.dart';
-import '../../translation/pages/translation_page.dart';
+import 'package:alouette_app_trans/alouette_app_trans.dart';
+import '../widgets/app_translation_status_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,18 +11,27 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with AutoControllerDisposal {
-  late final HomeController _controller;
+  late final AppTranslationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = HomeController();
+    _controller = AppTranslationController();
+    _controller.addListener(_onControllerChanged);
+    _controller.initialize();
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -32,10 +40,10 @@ class _HomePageState extends State<HomePage> with AutoControllerDisposal {
       appBar: CustomAppBar(
         title: 'Alouette Translator',
         showLogo: true,
-        statusWidget: const TranslationStatusWidget(), // 新增状态组件
+        statusWidget: AppTranslationStatusWidget(controller: _controller),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8.0), // 向左移动按钮
+            padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
               icon: const Icon(Icons.settings),
               onPressed: _showConfigDialog,
@@ -44,26 +52,23 @@ class _HomePageState extends State<HomePage> with AutoControllerDisposal {
           ),
         ],
       ),
-      body: const TranslationPage(),
+      body: TranslationPage(controller: _controller),
     );
   }
 
   void _showConfigDialog() async {
-    final translationService = ServiceLocator.get<TranslationService>();
-    final result = await showDialog<LLMConfig>(
-      context: context,
-      builder: (context) => LLMConfigDialog(
-        initialConfig: const LLMConfig(
-          provider: 'ollama',
-          serverUrl: 'http://localhost:11434',
-          selectedModel: '',
-        ),
-        translationService: translationService,
-      ),
-    );
+    final result = await _controller.showConfigDialog(context);
 
-    if (result != null) {
-      // Configuration is handled by the UI library controller internally
+    // The controller already handles saving the configuration
+    // No need to call updateLLMConfig again
+    if (result != null && mounted) {
+      // Configuration was saved successfully
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Configuration updated successfully'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 }

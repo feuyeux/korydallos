@@ -229,10 +229,7 @@ class TranslationService extends ChangeNotifier {
         try {
           final modelsFuture = provider.getAvailableModels(config);
           _availableModels = timeout != null
-              ? await modelsFuture.timeout(
-                  timeout,
-                  onTimeout: () => <String>[],
-                )
+              ? await modelsFuture.timeout(timeout, onTimeout: () => <String>[])
               : await modelsFuture;
         } catch (e) {
           // Don't fail the connection test if model fetching fails
@@ -290,7 +287,6 @@ class TranslationService extends ChangeNotifier {
       provider: config.provider,
       serverUrl: config.serverUrl,
       modelName: config.selectedModel,
-      apiKey: config.apiKey,
       additionalParams: additionalParams,
     );
   }
@@ -473,7 +469,7 @@ class TranslationService extends ChangeNotifier {
   }) async {
     // Use different base URL for Android to avoid localhost issues
     final baseUrl = isAndroid ? 'http://10.0.2.2' : 'http://localhost';
-    
+
     // Use 2 second timeout in quick mode
     final timeout = quickMode ? const Duration(seconds: 2) : null;
 
@@ -559,7 +555,7 @@ class TranslationService extends ChangeNotifier {
     try {
       // Use quick mode (shorter timeout) when retries are disabled (startup scenario)
       final quickMode = !enableRetry;
-      
+
       // Use enhanced auto-detection logic with platform support and retry mechanism
       for (
         int attempt = 1;
@@ -580,7 +576,9 @@ class TranslationService extends ChangeNotifier {
           }
 
           // Fallback to basic auto-detection
-          final basicAutoDetected = await autoDetectConfig(quickMode: quickMode);
+          final basicAutoDetected = await autoDetectConfig(
+            quickMode: quickMode,
+          );
           if (basicAutoDetected != null) {
             _autoDetectedConfig = basicAutoDetected;
             notifyListeners();

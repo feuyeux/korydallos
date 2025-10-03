@@ -67,6 +67,7 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
       onClear: _onClear,
       isTranslating: widget.isTranslating,
       isCompactMode: _isCompactMode,
+      isConfigured: widget.isConfigured, // Add this line
     );
   }
 
@@ -95,12 +96,12 @@ class _TranslationInputWidgetState extends State<TranslationInputWidget> {
   void _onClear() {
     widget.textController.clear();
     widget.onReset?.call();
-    
+
     // 同时清除语言选择
     if (widget.onLanguagesChanged != null) {
       widget.onLanguagesChanged!([]);
     }
-    
+
     // 清除翻译结果
     if (widget.onClearResults != null) {
       widget.onClearResults!();

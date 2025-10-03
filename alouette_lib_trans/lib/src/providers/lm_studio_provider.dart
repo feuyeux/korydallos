@@ -46,9 +46,6 @@ class LMStudioProvider extends TranslationProvider {
     };
 
     final headers = {'Content-Type': 'application/json'};
-    if (config.apiKey != null && config.apiKey!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer ${config.apiKey}';
-    }
 
     try {
       final response = await _httpClient.post(
@@ -112,9 +109,6 @@ class LMStudioProvider extends TranslationProvider {
       final apiUrl = '${config.normalizedServerUrl}/v1/models';
 
       final headers = {'Content-Type': 'application/json'};
-      if (config.apiKey != null && config.apiKey!.isNotEmpty) {
-        headers['Authorization'] = 'Bearer ${config.apiKey}';
-      }
 
       final response = await _httpClient.get(
         apiUrl,
@@ -167,9 +161,6 @@ class LMStudioProvider extends TranslationProvider {
       final apiUrl = '${config.normalizedServerUrl}/v1/models';
 
       final headers = {'Content-Type': 'application/json'};
-      if (config.apiKey != null && config.apiKey!.isNotEmpty) {
-        headers['Authorization'] = 'Bearer ${config.apiKey}';
-      }
 
       final response = await _httpClient.get(
         apiUrl,

@@ -31,10 +31,7 @@ class CombinedAppInitializer extends AppInitializer {
       logger.info('Starting Combined app initialization', tag: 'AppInit');
 
       // Initialize services in parallel for faster startup
-      await Future.wait([
-        _initializeServices(),
-        _initializeThemeService(),
-      ]);
+      await Future.wait([_initializeServices(), _initializeThemeService()]);
 
       logger.info('All services initialized successfully', tag: 'AppInit');
       return true;

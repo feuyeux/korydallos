@@ -48,6 +48,7 @@ class ServiceManager {
 
       // Register services as singletons using direct library types
       if (config.initializeTTS) {
+        _log('Registering TTS service');
         ServiceLocator.registerSingleton<tts_lib.TTSService>(
           () => tts_lib.TTSService(),
         );
@@ -55,6 +56,7 @@ class ServiceManager {
       }
 
       if (config.initializeTranslation) {
+        _log('Registering Translation service');
         ServiceLocator.registerSingleton<trans_lib.TranslationService>(
           () => trans_lib.TranslationService(),
         );
@@ -62,6 +64,7 @@ class ServiceManager {
       }
 
       // Register ConfigurationManager as a singleton
+      _log('Registering ConfigurationManager');
       ServiceLocator.registerSingleton<ConfigurationManager>(
         () => ConfigurationManager.instance,
       );
@@ -139,8 +142,13 @@ class ServiceManager {
   /// Initialize ConfigurationManager
   static Future<void> _initializeConfigurationManager() async {
     try {
+      _log('Getting ConfigurationManager instance');
       final configManager = ServiceLocator.get<ConfigurationManager>();
+      _log('Got ConfigurationManager instance: $configManager');
+
+      _log('Initializing ConfigurationManager');
       await configManager.initialize();
+      _log('ConfigurationManager initialized');
 
       _serviceStatus[ConfigurationManager] = true;
       _log('ConfigurationManager initialized');
@@ -157,14 +165,20 @@ class ServiceManager {
     ServiceConfiguration config,
   ) async {
     try {
+      _log('Getting service instance for $serviceName');
       final service = ServiceLocator.get<T>();
+      _log('Got service instance for $serviceName: $service');
 
       bool success = false;
       if (service is tts_lib.TTSService) {
+        _log('Initializing TTS service');
         await service.initialize(autoFallback: config.ttsAutoFallback);
         success = true;
+        _log('TTS service initialized successfully');
       } else if (service is trans_lib.TranslationService) {
+        _log('Initializing Translation service');
         success = await service.initialize();
+        _log('Translation service initialized with success=$success');
       }
 
       if (!success) {
