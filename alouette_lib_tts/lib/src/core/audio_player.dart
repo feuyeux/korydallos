@@ -57,10 +57,15 @@ class AudioPlayer {
       _state = PlaybackState.playing;
 
       // 使用 audioplayers 进行应用内播放
-      await _audioPlayer.play(ap.DeviceFileSource(filePath));
+  await _audioPlayer.play(ap.DeviceFileSource(filePath));
 
-      // 等待播放完成
-      await _audioPlayer.onPlayerComplete.first;
+  // 等待播放完成或停止
+  await _audioPlayer.onPlayerStateChanged.firstWhere(
+    (state) =>
+    state == ap.PlayerState.completed ||
+    state == ap.PlayerState.stopped ||
+    state == ap.PlayerState.disposed,
+  );
 
       _state = PlaybackState.idle;
       TTSLogger.debug('Audio playback completed successfully');

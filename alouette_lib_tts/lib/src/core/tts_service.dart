@@ -233,7 +233,23 @@ class TTSService implements TTSServiceInterface {
     _ensureInitialized();
 
     try {
-      await _processor!.stop();
+      final stopTasks = <Future<void>>[];
+
+      if (_processor != null) {
+        stopTasks.add(_processor!.stop());
+      }
+
+      if (_audioPlayer != null &&
+          (_audioPlayer!.state == PlaybackState.playing ||
+              _audioPlayer!.state == PlaybackState.paused)) {
+        stopTasks.add(_audioPlayer!.stop());
+      }
+
+      if (stopTasks.isEmpty) {
+        return;
+      }
+
+      await Future.wait(stopTasks);
     } catch (e) {
       throw TTSError(
         'Failed to stop TTS using ${_currentEngine?.name} engine: $e',
