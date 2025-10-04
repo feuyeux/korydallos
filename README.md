@@ -8,14 +8,14 @@ Alouette follows a layered architecture with clear separation of concerns:
 
 ```
 Applications Layer
-├── alouette-app (Combined functionality)
-├── alouette-app-trans (Translation specialist)
-└── alouette-app-tts (TTS specialist)
+├── alouette_app (Combined functionality)
+├── alouette_app_trans (Translation specialist)
+└── alouette_app_tts (TTS specialist)
 
 Library Layer
-├── alouette-lib-trans (Translation services)
-├── alouette-lib-tts (TTS services)
-└── alouette-ui-shared (UI components & services)
+├── alouette_lib_trans (Translation services)
+├── alouette_lib_tts (TTS services)
+└── alouette_ui (UI components & services)
 
 Platform Layer
 ├── Edge TTS (Desktop platforms)
@@ -42,7 +42,7 @@ Alouette supports 12+ languages with high-quality neural voices:
 
 ## 📱 Applications
 
-### alouette-app
+### alouette_app
 
 **Combined Translation & TTS Application**
 
@@ -50,7 +50,7 @@ Alouette supports 12+ languages with high-quality neural voices:
 - Unified interface for seamless workflow between translation and speech synthesis
 - Ideal for users who need both functionalities
 
-### alouette-app-trans
+### alouette_app_trans
 
 **Specialized Translation Application**
 
@@ -58,7 +58,7 @@ Alouette supports 12+ languages with high-quality neural voices:
 - Supports Ollama and LM Studio for privacy-focused translation
 - Batch translation to multiple languages simultaneously
 
-### alouette-app-tts
+### alouette_app_tts
 
 **Specialized Text-to-Speech Application**
 
@@ -68,32 +68,30 @@ Alouette supports 12+ languages with high-quality neural voices:
 
 ## 📚 Libraries
 
-### alouette-lib-trans
+### alouette_lib_trans
 
 **Translation Services Library**
 
 - Centralized AI translation functionality
 - Support for multiple LLM providers (Ollama, LM Studio)
 - Comprehensive error handling and connection management
-- Unified API for all translation operations
 
-### alouette-lib-tts
+### alouette_lib_tts
 
 **Text-to-Speech Services Library**
 
 - Multi-platform TTS with automatic engine selection
 - Edge TTS integration for high-quality desktop synthesis
 - Flutter TTS for native mobile and web support
-- Cross-platform audio playback and file generation
 
-### alouette-ui-shared
+### alouette_ui
 
 **Shared UI Components & Services Library**
 
 - Atomic design component system (atoms, molecules, organisms)
 - Centralized service locator and dependency injection
 - Design token system for consistent theming
-- Configuration management and theme switching
+- Configuration management and service orchestration
 
 ## 🚀 Quick Start
 
@@ -144,87 +142,35 @@ Each application includes platform-specific run scripts for convenience:
 
 ```bash
 # Run the main combined application
-cd alouette-app && ./run_app.sh
-# Or manually:
-cd alouette-app && flutter run
+cd alouette_app && ./run_app.sh
 
 # Run the translation-focused application
-cd alouette-app-trans && ./run_app.sh
-# Or manually:
-cd alouette-app-trans && flutter run
+cd alouette_app_trans && ./run_app.sh
 
 # Run the TTS-focused application
-cd alouette-app-tts && ./run_app.sh
-# Or manually:
-cd alouette-app-tts && flutter run
+cd alouette_app_tts && ./run_app.sh
 ```
 
 #### **Windows (PowerShell)**
 
-**Option 1: Using the unified launcher (Recommended)**
 ```powershell
-# Run the main combined application
-.\run_alouette.ps1 -App app
-
-# Run the translation-focused application
-.\run_alouette.ps1 -App trans
-
-# Run the TTS-focused application
-.\run_alouette.ps1 -App tts
-
-# Run with specific platform
-.\run_alouette.ps1 -App app -Platform chrome
-```
-
-**Option 2: Using individual scripts**
-```powershell
-# Run the main combined application
-cd alouette-app
+# Run any application
+cd alouette_app
 .\run_app.ps1
 
-# Run the translation-focused application
-cd ..\alouette-app-trans
+cd alouette_app_trans
 .\run_app.ps1
 
-# Run the TTS-focused application
-cd ..\alouette-app-tts
+cd alouette_app_tts
 .\run_app.ps1
 ```
 
-**Option 3: Manual Flutter commands**
-```powershell
-# Run any application manually
-cd alouette-app
-flutter pub get
-flutter run
-```
-
-**PowerShell Troubleshooting:**
-- **Fixed encoding issues**: All scripts now use ASCII-compatible output (no emoji characters)
-- If execution policy blocks scripts, run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-- For best experience, use Windows Terminal or PowerShell 7+ instead of legacy Command Prompt
-- Use the unified launcher `run_alouette.ps1` for the most reliable experience
-- All output now uses `[TAG]` format instead of emoji for better compatibility
-
-#### **Windows (Command Prompt)**
-
-```cmd
-# Run the main combined application
-cd alouette-app & flutter run
-
-# Run the translation-focused application
-cd alouette-app-trans & flutter run
-
-# Run the TTS-focused application
-cd alouette-app-tts & flutter run
-```
-
-#### **Platform-Specific Notes**
+**Platform-Specific Notes:**
 
 - **macOS**: Ensure Xcode is installed for iOS development
-- **Windows**: Ensure Visual Studio with C++ tools is installed for Windows development
-- **Linux**: Install required development packages: `sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev`
-- **All Platforms**: Use `flutter doctor` to verify your development environment setup
+- **Windows**: Ensure Visual Studio with C++ tools is installed
+- **Linux**: Install development packages: `sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev`
+- **All Platforms**: Use `flutter doctor` to verify your development environment
 
 ## 🏛️ Architecture Principles
 
@@ -258,114 +204,8 @@ cd alouette-app-tts & flutter run
 - Atomic design component hierarchy
 - Consistent user experience across all applications
 
-## 🔧 Development
 
-### Project Structure
-
-```
-alouette/
-├── alouette-app/              # Main combined application
-├── alouette-app-trans/        # Translation specialist app
-├── alouette-app-tts/          # TTS specialist app
-├── alouette-lib-trans/        # Translation services library
-├── alouette-lib-tts/          # TTS services library
-├── alouette-ui-shared/        # Shared UI components library
-├── .kiro/                     # Kiro IDE configuration
-│   └── specs/                 # Architecture specifications
-└── docs/                      # Additional documentation
-```
-
-### Development Workflow
-
-1. **Library Development**: Implement core functionality in libraries first
-2. **Application Integration**: Applications consume library services
-3. **UI Components**: Use shared components from alouette-ui-shared
-4. **Testing**: Test libraries independently, then integration testing
-5. **Documentation**: Update documentation for any API changes
-
-### Key Design Patterns
-
-- **Service Locator**: Centralized dependency management
-- **Strategy Pattern**: Platform-specific TTS engine selection
-- **Observer Pattern**: Reactive configuration updates
-- **Factory Pattern**: Service and component creation
-- **Atomic Design**: Hierarchical UI component organization
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Test all libraries
-find . -name "test" -type d -not -path "./.*" -exec dirname {} \; | xargs -I {} sh -c 'cd "{}" && flutter test'
-
-# Test specific library
-cd alouette-lib-trans && flutter test
-cd alouette-lib-tts && flutter test
-cd alouette-ui-shared && flutter test
-```
-
-### Test Coverage
-
-- **Unit Tests**: Core library functionality
-- **Widget Tests**: UI component behavior
-- **Integration Tests**: Cross-library interactions
-- **Platform Tests**: Platform-specific functionality
-
-## 📖 Documentation
-
-### Library Documentation
-
-- [Translation Library](alouette-lib-trans/README.md) - AI translation services
-- [TTS Library](alouette-lib-tts/README.md) - Text-to-speech services
-- [UI Shared Library](alouette-ui-shared/README.md) - UI components and services
-
-### Application Documentation
-
-- [Main App](alouette-app/README.md) - Combined functionality
-- [Translation App](alouette-app-trans/README.md) - Translation specialist
-- [TTS App](alouette-app-tts/README.md) - TTS specialist
-
-### Architecture Documentation
-
-- [Migration Guide](MIGRATION_GUIDE.md) - Upgrading from legacy architecture
-- [API Documentation](API_DOCUMENTATION.md) - Complete API reference
-- [Platform Guide](PLATFORM_GUIDE.md) - Platform-specific behavior
-
-## 🔄 Migration from Legacy Architecture
-
-If you're upgrading from the previous architecture, see the [Migration Guide](MIGRATION_GUIDE.md) for detailed instructions on:
-
-- Updating import statements
-- Migrating to new service APIs
-- Using the service locator pattern
-- Adopting shared UI components
-- Configuration management changes
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow the architecture principles and naming conventions
-4. Add tests for new functionality
-5. Update documentation as needed
-6. Commit changes (`git commit -m 'Add amazing feature'`)
-7. Push to branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Development Guidelines
-
-- Follow Flutter naming conventions (snake_case files, PascalCase classes)
-- Implement features in libraries first, then consume in applications
-- Use the service locator for dependency management
-- Follow atomic design principles for UI components
-- Add comprehensive tests and documentation
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Flutter](https://flutter.dev) - Cross-platform UI framework
 - [Edge TTS](https://github.com/rany2/edge-tts) - High-quality text-to-speech

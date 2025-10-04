@@ -136,29 +136,18 @@ class MyHomePage extends StatelessWidget {
 ### Component Hierarchy
 
 ```
-alouette-ui-shared/
+alouette_ui/
 ├── lib/
 │   ├── alouette_ui.dart          # Main export
 │   └── src/
 │       ├── components/                   # UI Components
 │       │   ├── atoms/                    # Basic elements
-│       │   │   ├── alouette_button.dart
-│       │   │   ├── alouette_text_field.dart
-│       │   │   ├── alouette_slider.dart
-│       │   │   └── atomic_elements.dart
 │       │   ├── molecules/                # Composite components
-│       │   │   ├── language_selector.dart
-│       │   │   ├── voice_selector.dart
-│       │   │   ├── status_indicator.dart
-│       │   │   └── molecular_components.dart
 │       │   └── organisms/                # Complex components
-│       │       ├── translation_panel.dart
-│       │       ├── tts_control_panel.dart
-│       │       └── config_dialog.dart
-│       ├── core/                         # Core services
-│       │   ├── service_locator.dart
-│       │   ├── service_manager.dart
-│       │   └── configuration_manager.dart
+│       ├── services/                     # Core services
+│       │   ├── core/                     # Service locator & manager
+│       │   ├── tts_service.dart
+│       │   └── translation_service.dart
 │       ├── tokens/                       # Design tokens
 │       │   ├── color_tokens.dart
 │       │   ├── typography_tokens.dart
@@ -168,8 +157,6 @@ alouette-ui-shared/
 │       │   ├── app_theme.dart
 │       │   └── theme_service.dart
 │       └── widgets/                      # Utility widgets
-│           ├── theme_configuration_widget.dart
-│           └── design_token_showcase.dart
 ```
 
 ## Atomic Design Components
@@ -795,16 +782,6 @@ When contributing to the UI shared library:
 5. **Register with service locator**: Make services discoverable
 
 ## Documentation
-
-### Additional Resources
-
-- [Atomic Design Implementation](ATOMIC_DESIGN_IMPLEMENTATION.md) - Detailed component architecture
-- [Design Tokens README](DESIGN_TOKENS_README.md) - Complete design token system
-- [Design Token Migration Guide](DESIGN_TOKEN_MIGRATION_GUIDE.md) - Migration instructions
-- [Service Locator README](README_SERVICE_LOCATOR.md) - Service architecture details
-- [Configuration README](README_CONFIGURATION.md) - Configuration system guide
-
-### API Documentation
 
 Complete API documentation is available in the source code and through dart doc:
 

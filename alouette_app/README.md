@@ -37,7 +37,7 @@ Alouette App is the flagship application of the Alouette ecosystem, providing us
 Alouette App follows the refactored architecture principles:
 
 ```
-alouette-app/
+alouette_app/
 ├── lib/
 │   ├── main.dart                    # Application entry point
 │   ├── app/
@@ -45,8 +45,7 @@ alouette-app/
 │   │   └── app_router.dart          # Navigation configuration
 │   ├── features/
 │   │   ├── home/                    # Home page and dashboard
-│   │   ├── translation/             # Translation workflows
-│   │   └── tts/                     # TTS workflows
+│   │   └── translation/             # Translation workflows
 │   ├── shared/
 │   │   ├── constants/               # App-specific constants
 │   │   └── utils/                   # Utility functions
@@ -78,7 +77,7 @@ The application depends on the refactored libraries:
 
 1. **Navigate to the app directory**
    ```bash
-   cd alouette-app
+   cd alouette_app
    ```
 
 2. **Install dependencies**
@@ -202,33 +201,6 @@ The application uses atomic design components from alouette-ui-shared:
 - `TranslationPanel` - Complete translation interface
 - `TTSControlPanel` - Full TTS control interface
 - `ConfigDialog` - Settings and configuration
-
-## Testing
-
-### Running Tests
-
-```bash
-# Unit tests
-flutter test
-
-# Integration tests
-flutter test integration_test/
-
-# Widget tests
-flutter test test/widget/
-
-# Specific test file
-flutter test test/features/translation/translation_test.dart
-```
-
-### Test Coverage
-
-The application includes comprehensive tests for:
-
-- **Feature workflows**: Translation and TTS user flows
-- **Service integration**: Proper service usage and error handling
-- **UI components**: Widget behavior and user interactions
-- **Configuration**: Settings management and persistence
 
 ## Platform-Specific Features
 

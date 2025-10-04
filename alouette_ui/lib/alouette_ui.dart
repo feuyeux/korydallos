@@ -41,8 +41,8 @@ export 'src/components/organisms/organisms.dart';
 // State Management
 export 'src/state/state.dart';
 
-// Constants (legacy support) - with name hiding to avoid conflicts
-export 'src/constants/ui_constants.dart' hide UISizes, TextStyles;
+// Constants
+export 'src/constants/ui_constants.dart';
 export 'src/constants/language_constants.dart';
 
 // Themes and Theme Management

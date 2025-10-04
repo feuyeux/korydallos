@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../interfaces/configuration_service_interface.dart';
-import '../implementations/configuration_service_impl.dart';
+import 'configuration_service.dart';
 import '../../models/app_configuration.dart';
 
 /// High-level configuration manager for Alouette applications
@@ -19,14 +18,12 @@ class ConfigurationManager {
 
   ConfigurationManager._internal();
 
-  ConfigurationServiceInterface? _configService;
+  ConfigurationService? _configService;
   bool _isInitialized = false;
   final Completer<void> _initializationCompleter = Completer<void>();
 
   /// Initialize the configuration manager
-  Future<void> initialize({
-    ConfigurationServiceInterface? customService,
-  }) async {
+  Future<void> initialize() async {
     if (_isInitialized) {
       return _initializationCompleter.future;
     }
@@ -34,7 +31,7 @@ class ConfigurationManager {
     // If initialization is already in progress, return the same future
     if (!_initializationCompleter.isCompleted) {
       try {
-        _configService = customService ?? ConfigurationServiceImpl();
+        _configService = ConfigurationService();
         await _configService!.initialize();
 
         _isInitialized = true;

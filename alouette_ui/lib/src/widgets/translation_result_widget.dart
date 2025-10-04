@@ -336,13 +336,6 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         languageCode.isNotEmpty;
     final isCompactStyle = widget.isCompactMode;
 
-    // Debug logging
-    debugPrint('🎯 Building translation item for $language:');
-    debugPrint('  - ttsService: ${widget.ttsService != null}');
-    debugPrint('  - isTTSInitialized: ${widget.isTTSInitialized}');
-    debugPrint('  - languageCode: $languageCode');
-    debugPrint('  - hasTTS: $hasTTS');
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -465,8 +458,6 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           orElse: () => availableVoices.first,
         );
 
-        debugPrint('TTS: Using voice ${matchingVoice.name} for $language');
-
         // Synthesize text to audio data
         final audioData = await widget.ttsService!.synthesizeText(
           text,
@@ -516,8 +507,6 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         );
       }
     } catch (error) {
-      debugPrint('Unexpected TTS error for $language: $error');
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

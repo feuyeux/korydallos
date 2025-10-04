@@ -62,29 +62,3 @@ class AppSpecificSizes {
   static const double cardElevation = 2.0;
   static const double cardElevationHover = 4.0;
 }
-
-/// Legacy aliases for backward compatibility - DEPRECATED
-/// Use the corresponding design tokens instead
-@Deprecated('Use SpacingTokens.l instead')
-class UISizes {
-  @Deprecated('Use SpacingTokens.l instead')
-  static const double spacingM = 16.0;
-
-  @Deprecated('Use AppSpecificSizes.languageSelectionHeight instead')
-  static const double languageSelectionHeight =
-      AppSpecificSizes.languageSelectionHeight;
-
-  @Deprecated('Use AppSpecificSizes.fixedLanguageChipsHeight instead')
-  static const double fixedLanguageChipsHeight =
-      AppSpecificSizes.fixedLanguageChipsHeight;
-}
-
-/// Legacy text styles - DEPRECATED
-/// Use TypographyTokens instead
-@Deprecated('Use TypographyTokens instead')
-class TextStyles {
-  @Deprecated('Use TypographyTokens.bodySmall.fontSize instead')
-  static const double smallFontSize = 10.0;
-  @Deprecated('Use TypographyTokens.bodyMedium.fontSize instead')
-  static const double mediumFontSize = 12.0;
-}

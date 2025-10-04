@@ -90,8 +90,6 @@ class EdgeTTSProcessor extends BaseTTSProcessor {
               '--write-media',
               tempFile.path,
             ];
-            // Print assembled args to verify actual values passed to edge-tts
-            print('[EdgeTTS] Command args: ${args.join(' ')}');
 
             final result = await Process.run(
               'edge-tts',

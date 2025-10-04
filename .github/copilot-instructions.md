@@ -45,12 +45,6 @@ final ttsService = ServiceLocator.get<TTSService>();
 final translationService = ServiceLocator.get<TranslationService>();
 ```
 
-**Important Service Type Changes (2025-10-03):**
-- ✅ **Use**: `TranslationService` (direct class)
-- ❌ **Avoid**: `ITranslationService` (deprecated interface)
-- ✅ **Use**: `TTSService` (direct class)  
-- ❌ **Avoid**: `ITTSService` (deprecated interface)
-
 **Critical:** Services MUST be initialized through `ServiceManager` before use. Each app type uses different `ServiceConfiguration`:
 - `ServiceConfiguration.combined` - Both TTS and translation
 - `ServiceConfiguration.ttsOnly` - TTS apps
@@ -93,12 +87,11 @@ Never use hardcoded colors (`Colors.blue`), sizes (`16.0`), or Material widgets 
 - **Service locator:** `alouette_ui/lib/src/services/core/service_locator.dart` - DI container
 
 ### Core Service Implementations
-- **TTS service:** `alouette_ui/lib/src/services/tts_service.dart` - Unified TTS service (replaces interface+impl)
-- **Translation service:** `alouette_ui/lib/src/services/translation_service.dart` - Unified translation service (replaces interface+impl)
+- **TTS service:** `alouette_ui/lib/src/services/tts_service.dart` - Unified TTS service
+- **Translation service:** `alouette_ui/lib/src/services/translation_service.dart` - Unified translation service
 - **Underlying libraries:** 
   - `alouette_lib_tts/lib/src/core/tts_service.dart` - Core TTS engine
   - `alouette_lib_trans/lib/src/core/translation_service.dart` - Core translation engine
-- **Legacy files (deprecated):** `alouette_ui/lib/src/services/{interfaces,implementations}/` - Kept for backward compatibility
 
 ### Component Exports
 - **Main export:** `alouette_ui/lib/alouette_ui.dart` - Barrel file for all shared resources
@@ -314,15 +307,6 @@ logger.error('Error', tag: 'FeatureName', error: e, stackTrace: st);
    }
    ```
 
-9. **Using Deprecated Service APIs:** Avoid using `I` prefixed interfaces (deprecated 2025-10-03):
-   ```dart
-   // ❌ DON'T - Deprecated
-   final ITranslationService service = ServiceLocator.get<ITranslationService>();
-   
-   // ✅ DO - Current
-   final TranslationService service = ServiceLocator.get<TranslationService>();
-   ```
-
 ## When Adding New Features
 
 1. **Determine Layer:**
@@ -347,9 +331,7 @@ logger.error('Error', tag: 'FeatureName', error: e, stackTrace: st);
 - **Why Local LLMs?** Privacy-focused translation without cloud dependencies. Users control their data.
 - **Why Platform-Specific TTS?** Desktop neural voices (Edge TTS) are higher quality than system TTS. Mobile/web use system for native integration.
 
-## References
+## Recent Updates
 
-- Main README: `/README.md` - Full architecture overview
-- Library READMEs: `/alouette_lib_{trans,tts}/README.md` - API documentation
-- UI Library README: `/alouette_ui/README.md` - Component catalog and service docs
-- Migration patterns: Check `main.dart` files for service initialization examples
+- **2025-10-04**: Project cleanup - removed deprecated code, build artifacts, and IDE configurations
+- **2025-10-03**: Simplified service architecture - direct use of library services instead of interface pattern

@@ -63,6 +63,9 @@ build/
 
 # iOS
 **/ios/Flutter/.last_build_id
+**/ios/Podfile.lock
+**/macos/Podfile.lock
+Podfile.lock
 
 # Web
 **/web/build/
