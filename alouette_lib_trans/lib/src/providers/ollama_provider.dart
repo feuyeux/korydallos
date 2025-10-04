@@ -29,18 +29,20 @@ class OllamaProvider extends TranslationProvider {
 
     // Use a more specific system prompt for Qwen models
     final String systemPrompt;
-    
+
     if (config.selectedModel.contains('qwen')) {
       // For Qwen models, use explicit examples to prevent emoji responses
       final langSpec = getExplicitLanguageSpec(targetLanguage);
-      systemPrompt = '''You are a professional translator. Your task is to translate text to $langSpec.
+      systemPrompt =
+          '''You are a professional translator. Your task is to translate text naturally into $langSpec, making sure the result reads like it was written by a native speaker.
 
 CRITICAL RULES:
 1. Output ONLY the translated text in the target language
 2. NO emojis, NO symbols, NO English explanations
-3. Use proper words in the target language
-4. If the input is a single word, translate it to a single word or short phrase
-5. Never respond with emojis like 😊 or 👍
+3. Use proper words in the target language that match natural, idiomatic usage
+4. Prioritize meaning over literal word-by-word mapping; drop or change connectors that feel unnatural
+5. If the input is a single word, translate it to a single word or short phrase
+6. Never respond with emojis like 😊 or 👍
 
 Examples:
 Input: "great" → Output: "훌륭한" (Korean) or "素晴らしい" (Japanese) or "很好" (Chinese)

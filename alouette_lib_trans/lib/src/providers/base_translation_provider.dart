@@ -37,12 +37,14 @@ abstract class TranslationProvider {
   /// Get the system prompt for translation
   String getSystemPrompt(String targetLanguage) {
     final explicitLang = getExplicitLanguageSpec(targetLanguage);
-    return '''You are a professional translator. Translate the given text directly to $explicitLang.
+    return '''You are a professional translator. Translate the given text naturally into $explicitLang, adapting phrasing to what a native speaker would actually say.
 
 CRITICAL REQUIREMENTS:
 - Provide ONLY the translation, no explanations, no thinking, no reasoning
 - Maintain the original meaning and tone
-- Use natural, fluent language
+- Use natural, fluent language that sounds idiomatic to native speakers
+- Prioritize meaning over literal word matching; restructure sentences when needed
+- Remove or replace source-language filler words, connectors, or particles that feel unnatural in the target language
 - Do not include phrases like "Translation:" or any prefixes
 - NEVER use <thinking> tags or any XML-style tags
 - NEVER output any thinking process or reasoning
@@ -62,7 +64,7 @@ CRITICAL REQUIREMENTS:
     // Handles formats: 'ko-KR' -> 'ko', 'Korean' -> 'korean', 'KO' -> 'ko'
     final normalized = targetLang.toLowerCase().trim();
     final lang = normalized.split('-').first.split('_').first;
-    
+
     switch (lang) {
       // Chinese variants
       case 'chinese':
@@ -76,26 +78,26 @@ CRITICAL REQUIREMENTS:
       case 'tw':
       case 'cht':
         return 'Traditional Chinese (繁体中文)';
-      
+
       // English
       case 'english':
       case 'en':
         return 'English';
-      
+
       // Japanese
       case 'japanese':
       case 'ja':
       case 'jp':
       case 'jpn':
         return 'Japanese (日本語)';
-      
+
       // Korean - 关键修复！
       case 'korean':
       case 'ko':
       case 'kr':
       case 'kor':
         return 'Korean (한국어)';
-      
+
       // French
       case 'french':
       case 'français':
@@ -103,7 +105,7 @@ CRITICAL REQUIREMENTS:
       case 'fr':
       case 'fra':
         return 'French (Français)';
-      
+
       // German
       case 'german':
       case 'deutsch':
@@ -111,7 +113,7 @@ CRITICAL REQUIREMENTS:
       case 'deu':
       case 'ger':
         return 'German (Deutsch)';
-      
+
       // Spanish
       case 'spanish':
       case 'español':
@@ -119,28 +121,28 @@ CRITICAL REQUIREMENTS:
       case 'es':
       case 'spa':
         return 'Spanish (Español)';
-      
+
       // Italian
       case 'italian':
       case 'italiano':
       case 'it':
       case 'ita':
         return 'Italian (Italiano)';
-      
+
       // Russian
       case 'russian':
       case 'русский':
       case 'ru':
       case 'rus':
         return 'Russian (Русский)';
-      
+
       // Arabic
       case 'arabic':
       case 'ar':
       case 'ara':
       case 'sa':
         return 'Arabic (العربية)';
-      
+
       // Hindi
       case 'hindi':
       case 'हिन्दी':
@@ -148,7 +150,7 @@ CRITICAL REQUIREMENTS:
       case 'hin':
       case 'in':
         return 'Hindi (हिन्दी)';
-      
+
       // Greek
       case 'greek':
       case 'ελληνικά':
@@ -157,7 +159,7 @@ CRITICAL REQUIREMENTS:
       case 'gre':
       case 'ell':
         return 'Greek (Ελληνικά)';
-      
+
       // Portuguese
       case 'portuguese':
       case 'português':
@@ -165,7 +167,7 @@ CRITICAL REQUIREMENTS:
       case 'pt':
       case 'por':
         return 'Portuguese (Português)';
-      
+
       // Dutch
       case 'dutch':
       case 'nederlands':
@@ -173,14 +175,14 @@ CRITICAL REQUIREMENTS:
       case 'nld':
       case 'dut':
         return 'Dutch (Nederlands)';
-      
+
       // Polish
       case 'polish':
       case 'polski':
       case 'pl':
       case 'pol':
         return 'Polish (Polski)';
-      
+
       // Turkish
       case 'turkish':
       case 'türkçe':
@@ -188,14 +190,14 @@ CRITICAL REQUIREMENTS:
       case 'tr':
       case 'tur':
         return 'Turkish (Türkçe)';
-      
+
       // Swedish
       case 'swedish':
       case 'svenska':
       case 'sv':
       case 'swe':
         return 'Swedish (Svenska)';
-      
+
       // Default fallback
       default:
         // Try to extract meaningful language name from input

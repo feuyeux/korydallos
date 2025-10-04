@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../tokens/dimension_tokens.dart';
 
+const _logoAssetPath = 'packages/alouette_ui/assets/icons/alouette_rounded.png';
+
 /// 现代化的应用栏组件，为所有Alouette应用提供一致的顶部导航栏
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -38,13 +40,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: statusWidget != null
           ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo部分
                 if (showLogo) ...[
-                  Icon(Icons.translate, size: DimensionTokens.iconM + 4),
+                  _buildLogo(size: DimensionTokens.iconM + 4),
                   const SizedBox(width: 8),
                 ],
-                // 状态组件部分
                 Expanded(child: statusWidget!),
               ],
             )
@@ -54,7 +55,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (showLogo) ...[
-                    Icon(Icons.translate, size: DimensionTokens.iconM + 8),
+                    _buildLogo(size: DimensionTokens.iconM + 8),
                     const SizedBox(width: 4),
                   ],
                   Text(
@@ -89,4 +90,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize =>
       Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+
+  Widget _buildLogo({required double size}) {
+    return Image.asset(
+      _logoAssetPath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Icon(Icons.translate, size: size),
+    );
+  }
 }

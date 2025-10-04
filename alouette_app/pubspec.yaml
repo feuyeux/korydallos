@@ -18,8 +18,6 @@ dependencies:
     path: ../alouette_lib_trans
   alouette_ui:
     path: ../alouette_ui
-  alouette_app_trans:
-    path: ../alouette_app_trans
 
 dev_dependencies:
   flutter_test:

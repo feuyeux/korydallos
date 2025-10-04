@@ -6,8 +6,10 @@
 
 // Organism components
 export 'translation_panel.dart';
+export 'translation_page_base.dart';
 export 'tts_control_panel.dart';
 
 // Re-export commonly used classes for convenience
 export 'translation_panel.dart' show TranslationPanel;
+export 'translation_page_base.dart' show TranslationPageBase;
 export 'tts_control_panel.dart' show TTSControlPanel;

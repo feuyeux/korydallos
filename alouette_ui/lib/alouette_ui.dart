@@ -92,5 +92,7 @@ export 'src/utils/ui_utils.dart';
 export 'src/widgets/translation/translation_text_input.dart';
 export 'src/widgets/translation/language_selection_section.dart';
 export 'src/widgets/translation/translation_action_button.dart';
+export 'src/widgets/translation/translation_page_view.dart'
+    show TranslationPageView, showTranslationConfigDialog;
 
 // Note: widgets/configuration/ directory has been removed (redundant)

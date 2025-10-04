@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
-        android:label="alouette-tts"
+        android:label="Alouette Trans"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

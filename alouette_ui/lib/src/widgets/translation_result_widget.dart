@@ -56,40 +56,45 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     final translation = widget.translationService.currentTranslation;
 
     if (translation == null) {
-      return Card(
+      return SizedBox(
+        width: double.infinity,
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.translate,
-                size: widget.isCompactMode ? 32 : 48,
-                color: Colors.grey.shade400,
-              ),
-              SizedBox(height: widget.isCompactMode ? 8 : 16),
-              Text(
-                'Translation results will appear here',
-                style: TextStyle(
-                  fontSize: widget.isCompactMode ? 12 : 14,
-                  color: Colors.grey.shade600,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: SpacingTokens.l),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.translate,
+                  size: widget.isCompactMode ? 32 : 48,
+                  color: Colors.grey.shade400,
                 ),
-              ),
-              if (!widget.isCompactMode) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: widget.isCompactMode ? 8 : 16),
                 Text(
-                  'Enter text and select languages to get started',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  'Translation results will appear here',
+                  style: TextStyle(
+                    fontSize: widget.isCompactMode ? 12 : 14,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
+                if (!widget.isCompactMode) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enter text and select languages to get started',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );
     }
 
-    return Card(
+    return SizedBox(
+      width: double.infinity,
       child: Padding(
-        padding: const EdgeInsets.all(SpacingTokens.l),
+        padding: const EdgeInsets.symmetric(vertical: SpacingTokens.s),
         child: widget.isCompactMode
             ? _buildCompactLayout(translation)
             : _buildStandardLayout(translation),
@@ -339,6 +344,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     debugPrint('  - hasTTS: $hasTTS');
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(

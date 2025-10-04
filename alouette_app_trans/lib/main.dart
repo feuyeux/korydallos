@@ -11,7 +11,7 @@ void main() async {
   // Run app with unified initialization wrapper
   runApp(
     AppInitializationWrapper(
-      title: 'Alouette Translator',
+      title: 'Alouette Trans',
       splashMessage: 'Initializing translation service...',
       initializer: TranslationAppInitializer(),
       app: const TranslationApp(),

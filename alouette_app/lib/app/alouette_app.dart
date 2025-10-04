@@ -8,7 +8,7 @@ class AlouetteApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Alouette App',
+      title: 'Alouette',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       home: const AppRouter(),
