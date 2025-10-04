@@ -23,7 +23,7 @@ class _TTSPageState extends State<TTSPage> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-  final inputHeight = _resolveInputHeight(constraints.maxHeight);
+        final inputHeight = _resolveInputHeight(constraints.maxHeight);
 
         Widget buildInputSection() => ListenableBuilder(
           listenable: widget.controller,
