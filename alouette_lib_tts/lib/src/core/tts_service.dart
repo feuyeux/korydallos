@@ -7,8 +7,10 @@ import '../enums/tts_engine_type.dart';
 import '../exceptions/tts_exceptions.dart';
 import '../utils/tts_logger.dart';
 import '../utils/error_handler.dart';
+import 'package:flutter/foundation.dart';
+
 import 'tts_engine_factory.dart';
-import 'platform_detector.dart';
+import '../utils/platform_utils.dart';
 import 'tts_service_interface.dart';
 import 'audio_player.dart';
 import 'voice_service.dart';
@@ -22,7 +24,6 @@ class TTSService implements TTSServiceInterface {
   bool _initialized = false;
 
   final TTSEngineFactory _engineFactory = TTSEngineFactory.instance;
-  final PlatformDetector _platformDetector = PlatformDetector();
 
   /// Get audio player instance
   AudioPlayer get audioPlayer {
@@ -54,16 +55,16 @@ class TTSService implements TTSServiceInterface {
     try {
       if (preferredEngine != null) {
         // Check if preferred engine is supported on current platform
-        final strategy = _platformDetector.getTTSStrategy();
+        final strategy = PlatformUtils.getTTSStrategy();
 
         if (!strategy.isEngineSupported(preferredEngine)) {
           TTSLogger.warning(
-            'Preferred engine ${preferredEngine.name} is not supported on ${_platformDetector.platformName}',
+            'Preferred engine ${preferredEngine.name} is not supported on ${PlatformUtils.platformName}',
           );
 
           if (!autoFallback) {
             throw TTSError(
-              'Engine ${preferredEngine.name} is not supported on ${_platformDetector.platformName}',
+              'Engine ${preferredEngine.name} is not supported on ${PlatformUtils.platformName}',
               code: TTSErrorCodes.platformNotSupported,
             );
           }
@@ -108,7 +109,7 @@ class TTSService implements TTSServiceInterface {
       TTSLogger.initialization(
         'TTS service',
         'completed',
-        'Using ${_currentEngine?.name} engine on ${_platformDetector.platformName}',
+        'Using ${_currentEngine?.name} engine on ${PlatformUtils.platformName}',
       );
     } catch (e) {
       throw ErrorHandler.handleInitializationError(e, 'TTS service');
@@ -126,18 +127,18 @@ class TTSService implements TTSServiceInterface {
     }
 
     // Check if target engine is supported on current platform
-    final strategy = _platformDetector.getTTSStrategy();
+    final strategy = PlatformUtils.getTTSStrategy();
     if (!strategy.isEngineSupported(engineType)) {
       if (!autoFallback) {
         throw TTSError(
-          'Engine ${engineType.name} is not supported on ${_platformDetector.platformName}',
+          'Engine ${engineType.name} is not supported on ${PlatformUtils.platformName}',
           code: TTSErrorCodes.platformNotSupported,
         );
       }
 
       // Use platform fallback strategy
       TTSLogger.warning(
-        'Engine ${engineType.name} not supported on ${_platformDetector.platformName}, using platform fallback',
+        'Engine ${engineType.name} not supported on ${PlatformUtils.platformName}, using platform fallback',
       );
       final fallbackEngines = strategy.getFallbackEngines();
 
@@ -153,7 +154,7 @@ class TTSService implements TTSServiceInterface {
       }
 
       throw TTSError(
-        'No suitable fallback engine available for ${engineType.name} on ${_platformDetector.platformName}',
+        'No suitable fallback engine available for ${engineType.name} on ${PlatformUtils.platformName}',
         code: TTSErrorCodes.noFallbackAvailable,
       );
     }
@@ -167,7 +168,7 @@ class TTSService implements TTSServiceInterface {
       TTSLogger.engine(
         'Switched',
         engineType.name,
-        'Engine switch completed successfully on ${_platformDetector.platformName}',
+        'Engine switch completed successfully on ${PlatformUtils.platformName}',
       );
 
       // Dispose old processor
@@ -262,7 +263,7 @@ class TTSService implements TTSServiceInterface {
   /// Get platform and engine information
   Future<Map<String, dynamic>> getPlatformInfo() async {
     final platformInfo = await _engineFactory.getPlatformInfo();
-    final strategy = _platformDetector.getTTSStrategy();
+    final strategy = PlatformUtils.getTTSStrategy();
 
     return {
       ...platformInfo,
@@ -373,18 +374,30 @@ class TTSService implements TTSServiceInterface {
 
   /// Get platform-specific configuration for an engine
   Map<String, dynamic> getEngineConfig(TTSEngineType engineType) {
-    final strategy = _platformDetector.getTTSStrategy();
+    final strategy = PlatformUtils.getTTSStrategy();
     return strategy.getEngineConfig(engineType);
   }
 
   /// Get recommended engine for current platform
   TTSEngineType getRecommendedEngine() {
-    return _platformDetector.getRecommendedEngine();
+    return PlatformUtils.recommendedEngine;
   }
 
   /// Get fallback engines for current platform
   List<TTSEngineType> getFallbackEngines() {
-    return _platformDetector.getFallbackEngines();
+    return PlatformUtils.getFallbackEngines();
+  }
+
+  /// Clear audio cache for all items
+  void clearAudioCache() {
+    _processor?.cacheManager.clearAudioCache();
+    TTSLogger.debug('Cleared all audio caches');
+  }
+
+  /// Clear audio cache for a specific text and voice
+  void clearAudioCacheItem(String text, String voiceName, {String format = 'mp3'}) {
+    _processor?.cacheManager.clearAudioCacheItem(text, voiceName, format);
+    TTSLogger.debug('Cleared audio cache for specific item');
   }
 
   /// Reinitialize service with new settings

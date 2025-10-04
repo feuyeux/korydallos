@@ -261,6 +261,20 @@ class CacheManager {
     TTSLogger.debug('Cleared all audio caches');
   }
 
+  /// 清除特定的音频缓存项
+  void clearAudioCacheItem(String text, String voiceName, String format) {
+    if (!_config.enableAudioCache) return;
+
+    final key = _generateAudioCacheKey(text, voiceName, format);
+    final removed = _audioCache.remove(key);
+    
+    if (removed != null) {
+      TTSLogger.debug(
+        'Cleared specific audio cache: text=${text.substring(0, text.length > 20 ? 20 : text.length)}..., voice=$voiceName',
+      );
+    }
+  }
+
   String _generateAudioCacheKey(String text, String voiceName, String format) {
     final textHash = _generateTextHash(text);
     return 'audio_${textHash}_${voiceName}_$format';

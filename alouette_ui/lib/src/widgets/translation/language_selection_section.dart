@@ -97,7 +97,7 @@ class LanguageSelectionSection extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '${language.flag} ${language.name}',
-                  style: TextStyle(fontSize: PlatformDetector().flagFontSize * 0.625), // 10.0 equivalent
+                  style: TextStyle(fontSize: PlatformUtils.flagFontSize * 0.625), // 10.0 equivalent
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

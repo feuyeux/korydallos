@@ -87,6 +87,10 @@ class _TTSPageState extends State<TTSPage> {
     final preferred = maxHeight * 0.35;
     final maxAllowed = maxHeight * 0.55;
 
-    return preferred.clamp(minHeight, maxAllowed).toDouble();
+    // Ensure min is less than max before clamping
+    final actualMin = minHeight;
+    final actualMax = maxAllowed.clamp(minHeight, double.infinity);
+
+    return preferred.clamp(actualMin, actualMax).toDouble();
   }
 }

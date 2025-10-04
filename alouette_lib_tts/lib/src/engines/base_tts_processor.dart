@@ -16,6 +16,9 @@ abstract class TTSProcessor {
   /// Get the engine name
   String get engineName;
 
+  /// Get cache manager
+  CacheManager get cacheManager;
+
   /// Get all available voices
   Future<List<VoiceModel>> getAvailableVoices();
 
@@ -115,12 +118,18 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
         final audioData = await synthesizer();
 
-        // Cache results (include parameters in cache key if provided)
-        _cacheManager.cacheAudio(text, voiceKey, format, audioData);
-
-        TTSLogger.debug(
-          'Text synthesis completed successfully - ${audioData.length} bytes generated',
-        );
+        // Only cache actual audio data (> 10 bytes)
+        // Don't cache minimal placeholder data from direct playback mode
+        if (audioData.length > 10) {
+          _cacheManager.cacheAudio(text, voiceKey, format, audioData);
+          TTSLogger.debug(
+            'Text synthesis completed and cached - ${audioData.length} bytes generated',
+          );
+        } else {
+          TTSLogger.debug(
+            'Text synthesis completed (direct playback mode) - ${audioData.length} bytes, not cached',
+          );
+        }
 
         return audioData;
       },

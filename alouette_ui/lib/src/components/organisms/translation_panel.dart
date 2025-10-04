@@ -241,7 +241,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
               Text(
                 language.flag,
                 style: TextStyle(
-                  fontSize: PlatformDetector().flagFontSize * 1.125,
+                  fontSize: PlatformUtils.flagFontSize * 1.125,
                 ),
               ), // 18.0 equivalent
               const SizedBox(width: 8),

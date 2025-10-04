@@ -141,7 +141,7 @@ class LanguageChip extends StatelessWidget {
     return FilterChip(
       selected: isSelected,
       onSelected: (_) => onTap(),
-      avatar: Text(language.flag, style: TextStyle(fontSize: PlatformDetector().flagFontSize * 0.875)), // 14.0 equivalent
+      avatar: Text(language.flag, style: TextStyle(fontSize: PlatformUtils.flagFontSize * 0.875)), // 14.0 equivalent
       label: Text(
         language.name,
         style: TextStyle(

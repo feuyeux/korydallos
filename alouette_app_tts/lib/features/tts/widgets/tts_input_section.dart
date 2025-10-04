@@ -42,16 +42,16 @@ class _TTSInputSectionState extends State<TTSInputSection> {
       if (currentVoice != null) {
         setState(() {
           _selectedLanguage = currentVoice.languageCode;
-          _selectedVoice = currentVoice.name;
+          _selectedVoice = currentVoice.id;
         });
       } else {
         // Set default to first available language and voice
         final firstVoice = widget.controller.availableVoices.first;
         setState(() {
           _selectedLanguage = firstVoice.languageCode;
-          _selectedVoice = firstVoice.name;
+          _selectedVoice = firstVoice.id;
         });
-        widget.controller.changeVoice(firstVoice.name);
+        widget.controller.changeVoice(firstVoice.id);
       }
     }
   }
@@ -136,9 +136,9 @@ class _TTSInputSectionState extends State<TTSInputSection> {
     if (voicesForLanguage.isNotEmpty) {
       final firstVoice = voicesForLanguage.first;
       setState(() {
-        _selectedVoice = firstVoice.name;
+        _selectedVoice = firstVoice.id;
       });
-      widget.controller.changeVoice(firstVoice.name);
+      widget.controller.changeVoice(firstVoice.id);
     }
   }
 

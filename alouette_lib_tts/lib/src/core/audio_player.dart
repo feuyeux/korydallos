@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:audioplayers/audioplayers.dart' as ap;
 import '../models/tts_error.dart';
 import '../utils/tts_logger.dart';
@@ -90,13 +91,29 @@ class AudioPlayer {
   /// [audioData] 音频数据字节数组
   /// [format] 音频格式，默认为 'mp3'
   Future<void> playBytes(Uint8List audioData, {String format = 'mp3'}) async {
-    // 使用资源管理器的 withTempFile 方法自动管理临时文件
+    TTSLogger.debug(
+      'Playing audio bytes: ${audioData.length} bytes for format $format',
+    );
+
+    // Check if this is minimal audio data (direct playback indicator)
+    // In direct playback mode, the TTS engine plays directly and returns
+    // a minimal placeholder (≤10 bytes) to indicate completion
+    if (audioData.length <= 10) {
+      TTSLogger.debug(
+        'Skipping playback of minimal audio data - direct playback already occurred',
+      );
+      return;
+    }
+
+    // Web 平台：直接播放字节数据，不需要临时文件
+    if (kIsWeb) {
+      await _audioPlayer.play(ap.BytesSource(audioData));
+      return;
+    }
+
+    // 桌面和移动平台：使用资源管理器的 withTempFile 方法自动管理临时文件
     await _resourceManager.withTempFile(
       (tempFile) async {
-        TTSLogger.debug(
-          'Playing audio bytes: ${audioData.length} bytes for format $format',
-        );
-
         await tempFile.writeAsBytes(audioData);
         await play(tempFile.path);
       },

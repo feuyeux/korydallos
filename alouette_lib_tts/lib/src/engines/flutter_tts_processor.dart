@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
 
@@ -47,7 +47,23 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
     await _ensureInitialized();
 
     return getVoicesWithCache(() async {
-      final voices = await _tts.getVoices as List<dynamic>?;
+      // On Web, the voices might not be immediately available
+      // Retry a few times with delays
+      List<dynamic>? voices;
+      int retries = kIsWeb ? 3 : 1;
+      
+      for (int i = 0; i < retries; i++) {
+        voices = await _tts.getVoices as List<dynamic>?;
+        
+        if (voices != null && voices.isNotEmpty) {
+          break;
+        }
+        
+        if (i < retries - 1) {
+          TTSLogger.debug('No voices available yet, retrying in 500ms (attempt ${i + 1}/$retries)');
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+      }
 
       if (voices == null || voices.isEmpty) {
         throw TTSError(
@@ -92,9 +108,14 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       // Apply parameters from request
       await _applyParameters(request);
       
+      // For Web platform, always use direct speech playback
+      if (kIsWeb) {
+        return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
+      }
+      
       // For macOS and platforms where file synthesis has sandboxing issues,
       // use direct speech playback instead of generating audio files
-      if (Platform.isMacOS || kIsWeb) {
+      if (!kIsWeb && Platform.isMacOS) {
         return _synthesizeDirectPlay(request.text, request.voiceName ?? '');
       }
 
@@ -245,11 +266,22 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       final volume = request.volume;  // 1.0 = 100%
 
       if (kIsWeb) {
-        // Web platform: 1.0 is normal for all parameters
-        await _tts.setSpeechRate(rate);
-        await _tts.setVolume(volume);
-        await _tts.setPitch(pitch);
-      } else if (Platform.isMacOS) {
+        // Web platform: Optimize parameters for better quality
+        // Slightly slower rate improves clarity (0.9 instead of 1.0)
+        final optimizedRate = rate > 1.0 ? rate : (rate * 0.95).clamp(0.75, 1.0);
+        // Slightly higher pitch can improve clarity for some voices (1.05 instead of 1.0)
+        final optimizedPitch = (pitch * 1.05).clamp(0.5, 2.0);
+        // Ensure volume is at maximum for best quality
+        final optimizedVolume = volume.clamp(0.8, 1.0);
+        
+        await _tts.setSpeechRate(optimizedRate);
+        await _tts.setVolume(optimizedVolume);
+        await _tts.setPitch(optimizedPitch);
+        
+        TTSLogger.debug(
+          'Web TTS optimized params: rate=$optimizedRate, pitch=$optimizedPitch, volume=$optimizedVolume',
+        );
+      } else if (!kIsWeb && Platform.isMacOS) {
         // macOS: 0.5 is their "normal" rate, so convert: 1.0 -> 0.5
         await _tts.setSpeechRate(rate * 0.5);
         await _tts.setVolume(volume);
@@ -298,18 +330,24 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         targetVoice = null;
       }
 
-      // If exact match fails, try fuzzy matching
+      // If exact match fails, try fuzzy matching with quality preference
       if (targetVoice == null) {
-        // Try matching by language code
+        // Try matching by language code with quality preference
         final locale = _extractLocaleFromVoiceName(voiceName);
         if (locale != null) {
-          try {
-            targetVoice = voices.firstWhere(
-              (voice) =>
-                  voice.languageCode.toLowerCase() == locale.toLowerCase(),
-            );
-          } catch (e) {
-            targetVoice = null;
+          // On Web platform, prefer high-quality voices
+          if (kIsWeb) {
+            targetVoice = _selectBestWebVoice(voices, locale);
+          } else {
+            // On other platforms, use first match
+            try {
+              targetVoice = voices.firstWhere(
+                (voice) =>
+                    voice.languageCode.toLowerCase() == locale.toLowerCase(),
+              );
+            } catch (e) {
+              targetVoice = null;
+            }
           }
         }
 
@@ -526,6 +564,81 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       return VoiceGender.male;
     }
     return VoiceGender.unknown;
+  }
+
+  /// Select best quality voice for Web platform
+  /// Prioritizes: Google/Neural voices > Premium voices > Standard voices
+  VoiceModel? _selectBestWebVoice(List<VoiceModel> voices, String targetLocale) {
+    final matchingVoices = voices.where(
+      (voice) => voice.languageCode.toLowerCase() == targetLocale.toLowerCase(),
+    ).toList();
+
+    if (matchingVoices.isEmpty) {
+      return null;
+    }
+
+    // Quality scoring: Higher score = better quality
+    VoiceModel? bestVoice;
+    int bestScore = -1;
+
+    for (final voice in matchingVoices) {
+      int score = 0;
+      final nameLower = voice.name.toLowerCase();
+      final idLower = voice.id.toLowerCase();
+
+      // Highest priority: Google voices (usually highest quality on Web)
+      if (nameLower.contains('google') || idLower.contains('google')) {
+        score += 100;
+      }
+
+      // High priority: Neural/Premium voices
+      if (nameLower.contains('neural') ||
+          nameLower.contains('premium') ||
+          nameLower.contains('enhanced')) {
+        score += 50;
+      }
+
+      // Medium priority: Natural/HD voices
+      if (nameLower.contains('natural') ||
+          nameLower.contains('hd') ||
+          nameLower.contains('high quality')) {
+        score += 30;
+      }
+
+      // Prefer online voices (usually better quality than offline)
+      if (nameLower.contains('online') || !nameLower.contains('offline')) {
+        score += 20;
+      }
+
+      // Bonus for specific high-quality voice names
+      final highQualityNames = [
+        'wavenet',
+        'neural2',
+        'journey',
+        'studio',
+        'polyglot',
+      ];
+      for (final quality in highQualityNames) {
+        if (nameLower.contains(quality)) {
+          score += 40;
+          break;
+        }
+      }
+
+      // Update best voice if this one scores higher
+      if (score > bestScore) {
+        bestScore = score;
+        bestVoice = voice;
+      }
+    }
+
+    if (bestVoice != null) {
+      TTSLogger.debug(
+        'Selected best Web voice: ${bestVoice.name} (score: $bestScore) for locale: $targetLocale',
+      );
+    }
+
+    return bestVoice ?? matchingVoices.first;
   }
 
   /// Parse gender information from voice name

@@ -464,13 +464,31 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           matchingVoice.name,
         );
 
-        // Play the audio (if audio data is not empty)
-        if (audioData.isNotEmpty) {
-          await _audioPlayer!.playBytes(audioData);
+        // Check if this is minimal audio data (direct playback mode)
+        // In direct playback mode (Web/macOS), the TTS engine plays directly
+        // and returns a minimal placeholder (≤10 bytes)
+        if (audioData.length <= 10) {
+          debugPrint('TTS: Direct playback mode - audio already played for $language');
+          // Wait a bit to ensure playback completes
+          await Future.delayed(const Duration(milliseconds: 500));
+        } else {
+          // Play the audio file for desktop/mobile platforms
+          try {
+            await _audioPlayer!.playBytes(audioData);
+            debugPrint('TTS: File playback completed for $language');
+          } catch (playbackError) {
+            // If playback fails, clear cache and rethrow
+            debugPrint('❌ Playback failed for $language, clearing cache: $playbackError');
+            // Clear cache for this specific text+voice combination to allow retry
+            widget.ttsService!.clearAudioCacheItem(
+              text,
+              matchingVoice.name,
+              format: 'mp3',
+            );
+            rethrow;
+          }
         }
-        // If audioData is empty, it means the TTS engine played directly
 
-        debugPrint('TTS: Playback completed for $language');
       } else {
         debugPrint('TTS: No voices available for language code: $languageCode');
         if (mounted) {
@@ -485,6 +503,14 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       }
     } on tts_lib.TTSError catch (e) {
       debugPrint('TTS Error for $language: ${e.message}');
+
+      // Clear cache on synthesis errors to allow retry
+      if (e.code == tts_lib.TTSErrorCodes.synthesisError ||
+          e.code == tts_lib.TTSErrorCodes.voiceNotFound ||
+          e.code == tts_lib.TTSErrorCodes.platformNotSupported) {
+        widget.ttsService?.clearAudioCacheItem(text, '', format: 'mp3');
+        debugPrint('🗑️ Cleared cache due to TTS error');
+      }
 
       if (mounted) {
         String userMessage;
@@ -507,7 +533,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         );
       }
     } catch (error) {
-      if (mounted) {
+      debugPrint('❌ Unexpected error playing $language TTS: $error');
+      // Only show error if it's not related to minimal audio data playback
+      if (mounted && !error.toString().contains('minimal') && !error.toString().contains('Direct playback')) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Cannot play $language audio'),

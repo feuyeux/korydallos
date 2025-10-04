@@ -1,41 +1,100 @@
-import 'dart:io';
+import 'dart:io' show Directory, Platform, Process;
 import 'package:flutter/foundation.dart';
 import '../enums/tts_engine_type.dart';
 
-/// 平台检测和 TTS 引擎选择工具类
-/// 参照 hello-tts-dart 的设计模式，提供跨平台检测功能
+/// Platform detection and TTS engine selection utility class
+/// Provides cross-platform detection and TTS strategy management
+/// Combines functionality from both PlatformUtils and PlatformDetector
 class PlatformUtils {
-  /// 检测当前平台是否为桌面平台
-  /// 包括 Windows、macOS、Linux
+  /// Check if current platform is desktop
+  /// Includes Windows, macOS, Linux
   static bool get isDesktop =>
       !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
-  /// 检测当前平台是否为移动平台
-  /// 包括 Android、iOS
+  /// Check if current platform is mobile
+  /// Includes Android, iOS
   static bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-  /// 检测当前平台是否为 Web 平台
+  /// Check if current platform is web
   static bool get isWeb => kIsWeb;
 
-  /// 获取当前平台名称
+  /// Get the current platform name
   static String get platformName {
     if (kIsWeb) return 'web';
-    if (Platform.isWindows) return 'windows';
-    if (Platform.isMacOS) return 'macos';
-    if (Platform.isLinux) return 'linux';
-    if (Platform.isAndroid) return 'android';
-    if (Platform.isIOS) return 'ios';
+    if (!kIsWeb && Platform.isWindows) return 'windows';
+    if (!kIsWeb && Platform.isMacOS) return 'macos';
+    if (!kIsWeb && Platform.isLinux) return 'linux';
+    if (!kIsWeb && Platform.isAndroid) return 'android';
+    if (!kIsWeb && Platform.isIOS) return 'ios';
     return 'unknown';
   }
 
-  /// 获取推荐的 TTS 引擎类型
-  /// Desktop 平台推荐使用 Edge TTS，Mobile/Web 平台推荐使用 Flutter TTS
-  static TTSEngineType get recommendedEngine {
-    if (isDesktop) {
-      return TTSEngineType.edge;
-    } else {
-      return TTSEngineType.flutter;
+  /// Check if platform supports process execution
+  static bool get supportsProcessExecution {
+    return !kIsWeb && isDesktop;
+  }
+
+  /// Check if platform supports file system operations
+  static bool get supportsFileSystem {
+    return !kIsWeb;
+  }
+
+  /// Check if Flutter TTS is supported on this platform
+  static bool get isFlutterTTSSupported => true;
+
+  /// Check if current platform supports emoji flags
+  static bool get supportsEmojiFlags => true;
+
+  /// Get platform-appropriate flag representation
+  static String getFlag(String emojiFlag, String languageCode) {
+    if (supportsEmojiFlags) {
+      return emojiFlag;
     }
+    // For Windows, use language codes in brackets
+    return '[$languageCode]';
+  }
+
+  /// Get platform-appropriate flag widget font size
+  static double get flagFontSize => supportsEmojiFlags ? 16.0 : 12.0;
+
+  /// Get recommended TTS engine type
+  /// Desktop platforms prefer Edge TTS, Mobile/Web platforms use Flutter TTS
+  static TTSEngineType get recommendedEngine {
+    if (isDesktop && supportsProcessExecution) {
+      return TTSEngineType.edge;
+    }
+    return TTSEngineType.flutter;
+  }
+
+  /// Get platform-specific information
+  static Map<String, dynamic> getPlatformInfo() {
+    return {
+      'platform': platformName,
+      'isDesktop': isDesktop,
+      'isMobile': isMobile,
+      'isWeb': isWeb,
+      'supportsProcessExecution': supportsProcessExecution,
+      'supportsFileSystem': supportsFileSystem,
+      'isFlutterTTSSupported': isFlutterTTSSupported,
+    };
+  }
+
+  /// Get platform-specific TTS strategy
+  static TTSStrategy getTTSStrategy() {
+    if (isDesktop) {
+      return DesktopTTSStrategy();
+    } else if (isMobile) {
+      return MobileTTSStrategy();
+    } else if (isWeb) {
+      return WebTTSStrategy();
+    }
+    return MobileTTSStrategy(); // Default fallback
+  }
+
+  /// Get fallback engines in order of preference for current platform
+  static List<TTSEngineType> getFallbackEngines() {
+    final strategy = getTTSStrategy();
+    return strategy.getFallbackEngines();
   }
 
   /// 检查 Edge TTS 是否可用
@@ -48,7 +107,7 @@ class PlatformUtils {
 
     // For macOS, we know Edge TTS is available, so force return true as a workaround
     // for the Flutter Process.run environment issue
-    if (Platform.isMacOS) {
+    if (!kIsWeb && Platform.isMacOS) {
       // Still try a quick check but don't fail if it doesn't work
       try {
         final result = await Process.run('which', [
@@ -67,7 +126,7 @@ class PlatformUtils {
 
     // 策略1: 使用 which/where 命令查找 - 最可靠的方法
     try {
-      final whichCmd = Platform.isWindows ? 'where' : 'which';
+      final whichCmd = (!kIsWeb && Platform.isWindows) ? 'where' : 'which';
       final whichResult = await Process.run(whichCmd, [
         'edge-tts',
       ]).timeout(Duration(seconds: 3));
@@ -187,7 +246,7 @@ class PlatformUtils {
 
     // 使用 which/where 命令查找 - 这是最简单可靠的方法
     try {
-      final whichCmd = Platform.isWindows ? 'where' : 'which';
+      final whichCmd = (!kIsWeb && Platform.isWindows) ? 'where' : 'which';
       final result = await Process.run(whichCmd, [
         'edge-tts',
       ]).timeout(Duration(seconds: 3));
@@ -235,15 +294,11 @@ class PlatformUtils {
     }
 
     try {
-      return Platform.environment['PATH'];
+      return !kIsWeb ? Platform.environment['PATH'] : null;
     } catch (e) {
       return null;
     }
   }
-
-  /// 检查系统是否支持 Flutter TTS
-  /// 在所有支持的平台上都返回 true，因为 Flutter TTS 是内置的
-  static bool get isFlutterTTSSupported => true;
 
   /// 获取平台特定的临时目录路径
   static String get tempDirectory {
@@ -251,27 +306,7 @@ class PlatformUtils {
       // Web 平台使用浏览器存储，这里返回一个标识符
       return '/tmp/web';
     }
-    return Directory.systemTemp.path;
-  }
-
-  /// 检查平台是否支持文件系统操作
-  static bool get supportsFileSystem => !kIsWeb;
-
-  /// 检查平台是否支持进程执行
-  static bool get supportsProcessExecution => !kIsWeb;
-
-  /// 获取平台信息摘要
-  static Map<String, dynamic> getPlatformInfo() {
-    return {
-      'platform': platformName,
-      'isDesktop': isDesktop,
-      'isMobile': isMobile,
-      'isWeb': isWeb,
-      'recommendedEngine': recommendedEngine.name,
-      'supportsFileSystem': supportsFileSystem,
-      'supportsProcessExecution': supportsProcessExecution,
-      'flutterTTSSupported': isFlutterTTSSupported,
-    };
+    return !kIsWeb ? Directory.systemTemp.path : '/tmp/web';
   }
 
   /// 获取当前平台的完整诊断信息
@@ -290,5 +325,121 @@ class PlatformUtils {
       info['systemPath'] = null;
     }
     return info;
+  }
+}
+
+/// Abstract TTS strategy for platform-specific implementations
+abstract class TTSStrategy {
+  /// Get the preferred engine for this platform
+  TTSEngineType get preferredEngine;
+
+  /// Get fallback engines in order of preference
+  List<TTSEngineType> getFallbackEngines();
+
+  /// Check if engine is supported on this platform
+  bool isEngineSupported(TTSEngineType engine);
+
+  /// Get platform-specific engine configuration
+  Map<String, dynamic> getEngineConfig(TTSEngineType engine);
+}
+
+/// Desktop TTS strategy - prefers Edge TTS with Flutter TTS fallback
+class DesktopTTSStrategy implements TTSStrategy {
+  @override
+  TTSEngineType get preferredEngine => TTSEngineType.edge;
+
+  @override
+  List<TTSEngineType> getFallbackEngines() {
+    return [TTSEngineType.edge, TTSEngineType.flutter];
+  }
+
+  @override
+  bool isEngineSupported(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return true; // Edge TTS can be installed on desktop
+      case TTSEngineType.flutter:
+        return true; // Flutter TTS works on desktop
+    }
+  }
+
+  @override
+  Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return {'quality': 'high', 'format': 'mp3', 'timeout': 30000};
+      case TTSEngineType.flutter:
+        return {'quality': 'standard', 'useSystemVoices': true};
+    }
+  }
+}
+
+/// Mobile TTS strategy - uses Flutter TTS exclusively
+class MobileTTSStrategy implements TTSStrategy {
+  @override
+  TTSEngineType get preferredEngine => TTSEngineType.flutter;
+
+  @override
+  List<TTSEngineType> getFallbackEngines() {
+    return [TTSEngineType.flutter]; // Only Flutter TTS on mobile
+  }
+
+  @override
+  bool isEngineSupported(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return false; // Edge TTS not available on mobile
+      case TTSEngineType.flutter:
+        return true; // Flutter TTS is native on mobile
+    }
+  }
+
+  @override
+  Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return {}; // Not supported
+      case TTSEngineType.flutter:
+        return {
+          'quality': 'standard',
+          'useSystemVoices': true,
+          'optimizeForMobile': true,
+        };
+    }
+  }
+}
+
+/// Web TTS strategy - uses Flutter TTS with web optimizations
+class WebTTSStrategy implements TTSStrategy {
+  @override
+  TTSEngineType get preferredEngine => TTSEngineType.flutter;
+
+  @override
+  List<TTSEngineType> getFallbackEngines() {
+    return [TTSEngineType.flutter]; // Only Flutter TTS on web
+  }
+
+  @override
+  bool isEngineSupported(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return false; // Edge TTS not available on web
+      case TTSEngineType.flutter:
+        return true; // Flutter TTS uses Web Speech API
+    }
+  }
+
+  @override
+  Map<String, dynamic> getEngineConfig(TTSEngineType engine) {
+    switch (engine) {
+      case TTSEngineType.edge:
+        return {}; // Not supported
+      case TTSEngineType.flutter:
+        return {
+          'quality': 'standard',
+          'useWebSpeechAPI': true,
+          'optimizeForWeb': true,
+        };
+    }
   }
 }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show Process;
 import '../utils/platform_utils.dart';
 import '../utils/tts_logger.dart';
 import '../models/tts_error.dart';
@@ -7,7 +7,6 @@ import '../exceptions/tts_exceptions.dart';
 import '../engines/edge_tts_processor.dart';
 import '../engines/flutter_tts_processor.dart';
 import '../engines/base_tts_processor.dart';
-import 'platform_detector.dart';
 
 /// TTS Engine Factory for platform-specific engine selection
 /// Follows Flutter naming conventions and provides unified engine creation
@@ -17,14 +16,12 @@ class TTSEngineFactory {
 
   TTSEngineFactory._();
 
-  late final PlatformDetector _platformDetector = PlatformDetector();
-
   /// Create TTS processor for current platform automatically
   Future<TTSProcessor> createForPlatform() async {
     TTSLogger.debug('Creating TTS processor for current platform');
 
     try {
-      final strategy = _platformDetector.getTTSStrategy();
+      final strategy = PlatformUtils.getTTSStrategy();
       final fallbackEngines = strategy.getFallbackEngines();
 
       TTSLogger.debug('Platform strategy: ${strategy.runtimeType}');
@@ -61,7 +58,7 @@ class TTSEngineFactory {
 
       throw TTSError(
         'No TTS engines available for this platform. '
-        'Platform: ${_platformDetector.platformName}, '
+        'Platform: ${PlatformUtils.platformName}, '
         'Tried engines: ${fallbackEngines.map((e) => e.name).join(', ')}',
         code: TTSErrorCodes.initializationFailed,
       );
@@ -132,18 +129,18 @@ class TTSEngineFactory {
   /// Get platform information and engine availability
   Future<Map<String, dynamic>> getPlatformInfo() async {
     final availableEngines = await getAvailableEngines();
-    final platformInfo = _platformDetector.getPlatformInfo();
+    final platformInfo = PlatformUtils.getPlatformInfo();
 
     return {
       ...platformInfo,
-      'recommendedEngine': _platformDetector.getRecommendedEngine().name,
+      'recommendedEngine': PlatformUtils.recommendedEngine.name,
       'availableEngines': availableEngines.map((e) => e.name).toList(),
     };
   }
 
   /// Check Edge TTS availability
   Future<bool> _isEdgeTTSAvailable() async {
-    if (!_platformDetector.supportsProcessExecution) {
+    if (!PlatformUtils.supportsProcessExecution) {
       TTSLogger.debug(
         'Edge TTS not supported: platform does not support process execution',
       );
@@ -200,6 +197,6 @@ class TTSEngineFactory {
 
   /// Check Flutter TTS availability
   bool _isFlutterTTSAvailable() {
-    return _platformDetector.isFlutterTTSSupported;
+    return PlatformUtils.isFlutterTTSSupported;
   }
 }
