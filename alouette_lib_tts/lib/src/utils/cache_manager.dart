@@ -232,7 +232,10 @@ class CacheManager {
       expiresAt: expiresAt,
     );
 
-    TTSLogger.debug('Cached audio data');
+    TTSLogger.debug(
+      'Cached audio data - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", '
+      'Voice: $voiceName, Size: ${audioData.length} bytes, Expires: ${expiresAt.toString()}',
+    );
     _enforceSize();
   }
 
@@ -246,12 +249,18 @@ class CacheManager {
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _audioCache.remove(key);
-        TTSLogger.debug('Removed expired audio cache');
+        TTSLogger.debug(
+          'Removed expired audio cache - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceName',
+        );
       }
       return null;
     }
 
-    TTSLogger.debug('Retrieved cached audio data');
+    TTSLogger.debug(
+      '✅ Using cached audio - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", '
+      'Voice: $voiceName, Size: ${entry.audioData.length} bytes, '
+      'Created: ${entry.createdAt.toString()}, Expires: ${entry.expiresAt.toString()}',
+    );
     return entry.audioData;
   }
 

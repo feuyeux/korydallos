@@ -104,16 +104,20 @@ abstract class BaseTTSProcessor implements TTSProcessor {
     final String voiceKey = (cacheKeySuffix != null && cacheKeySuffix.isNotEmpty)
         ? '$voiceName$cacheKeySuffix'
         : voiceName;
+    
+    TTSLogger.debug(
+      'Attempting synthesis - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceKey',
+    );
+    
     final cachedAudio = _cacheManager.getCachedAudio(text, voiceKey, format);
     if (cachedAudio != null) {
-      TTSLogger.debug('Using cached audio data for synthesis');
       return cachedAudio;
     }
 
     return await ErrorHandler.wrapAsync(
       () async {
         TTSLogger.debug(
-          'Starting text synthesis with $engineName for text: ${text.length} chars, voice: $voiceName, format: $format',
+          '🔄 Synthesizing new audio with $engineName - ${text.length} chars, voice: $voiceKey, format: $format',
         );
 
         final audioData = await synthesizer();
@@ -122,12 +126,9 @@ abstract class BaseTTSProcessor implements TTSProcessor {
         // Don't cache minimal placeholder data from direct playback mode
         if (audioData.length > 10) {
           _cacheManager.cacheAudio(text, voiceKey, format, audioData);
-          TTSLogger.debug(
-            'Text synthesis completed and cached - ${audioData.length} bytes generated',
-          );
         } else {
           TTSLogger.debug(
-            'Text synthesis completed (direct playback mode) - ${audioData.length} bytes, not cached',
+            'Synthesis completed (direct playback mode) - ${audioData.length} bytes, not cached',
           );
         }
 
