@@ -4,6 +4,7 @@ import '../../constants/language_constants.dart';
 
 import '../atoms/atomic_elements.dart';
 import '../atoms/atomic_input.dart';
+import '../atoms/language_flag_icon.dart';
 
 /// Language Selector Molecule
 ///
@@ -141,7 +142,11 @@ class LanguageChip extends StatelessWidget {
     return FilterChip(
       selected: isSelected,
       onSelected: (_) => onTap(),
-      avatar: Text(language.flag, style: TextStyle(fontSize: PlatformUtils.flagFontSize * 0.875)), // 14.0 equivalent
+      avatar: LanguageFlagIcon(
+        language: language,
+        size: PlatformUtils.flagFontSize * 0.875,
+        borderRadius: 4,
+      ), // 14.0 equivalent
       label: Text(
         language.name,
         style: TextStyle(

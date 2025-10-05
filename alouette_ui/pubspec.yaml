@@ -23,6 +23,8 @@ dependencies:
   path_provider: ^2.1.5
   # Meta annotations for better code analysis
   meta: ^1.16.0
+  # Flag assets for platforms without emoji support
+  country_icons: ^3.0.0
 
 dev_dependencies:
   flutter_test:

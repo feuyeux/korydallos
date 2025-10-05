@@ -42,8 +42,25 @@ class PlatformUtils {
   /// Check if Flutter TTS is supported on this platform
   static bool get isFlutterTTSSupported => true;
 
-  /// Check if current platform supports emoji flags
-  static bool get supportsEmojiFlags => true;
+  /// Check if current platform natively supports regional indicator emoji flags.
+  ///
+  /// Returns `false` for Windows desktop (lacks emoji glyphs in default fonts),
+  /// `true` for all other platforms (web, macOS, iOS, Android, Linux).
+  ///
+  /// This determines the rendering strategy in LanguageFlagIcon:
+  /// - `true`: Use emoji with EmojiFlagStyle font fallbacks
+  /// - `false`: Use PNG assets from country_icons package
+  static bool get supportsEmojiFlags {
+    // Web browsers handle emoji fallback automatically
+    if (kIsWeb) return true;
+
+    // Windows lacks regional indicator glyphs in Segoe UI (default font)
+    // Even with Segoe UI Emoji, coverage is incomplete - use PNG assets
+    if (Platform.isWindows) return false;
+
+    // macOS, iOS, Android, Linux have comprehensive emoji support
+    return true;
+  }
 
   /// Get platform-appropriate flag representation
   static String getFlag(String emojiFlag, String languageCode) {

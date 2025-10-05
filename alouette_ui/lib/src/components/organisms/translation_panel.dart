@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
+import '../../components/atoms/language_flag_icon.dart';
 
 /// Translation Panel Organism
 ///
@@ -58,32 +59,32 @@ class _TranslationPanelState extends State<TranslationPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-            // Text input - smaller
-            _buildTextInput(),
-            const SizedBox(height: 4), // 统一间距为4px
-            // Language chips - 6 per row with equal width
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 70, // 减少最大高度
-                minHeight: 35, // 减少最小高度
-              ),
-              child: SingleChildScrollView(child: _buildLanguageGrid()),
+          // Text input - smaller
+          _buildTextInput(),
+          const SizedBox(height: 4), // 统一间距为4px
+          // Language chips - 6 per row with equal width
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: 70, // 减少最大高度
+              minHeight: 35, // 减少最小高度
             ),
+            child: SingleChildScrollView(child: _buildLanguageGrid()),
+          ),
+          const SizedBox(height: 4), // 统一间距为4px
+          // Action buttons
+          _buildActionBar(),
+          // Error display
+          if (widget.errorMessage != null) ...[
             const SizedBox(height: 4), // 统一间距为4px
-            // Action buttons
-            _buildActionBar(),
-            // Error display
-            if (widget.errorMessage != null) ...[
-              const SizedBox(height: 4), // 统一间距为4px
-              _buildErrorDisplay(),
-            ],
+            _buildErrorDisplay(),
+          ],
 
-            // Results
-            if (widget.translationResults != null &&
-                widget.translationResults!.isNotEmpty) ...[
-              const SizedBox(height: 4), // 统一间距为4px
-              _buildResults(),
-            ],
+          // Results
+          if (widget.translationResults != null &&
+              widget.translationResults!.isNotEmpty) ...[
+            const SizedBox(height: 4), // 统一间距为4px
+            _buildResults(),
+          ],
         ],
       ),
     );
@@ -238,11 +239,10 @@ class _TranslationPanelState extends State<TranslationPanel> {
         children: [
           Row(
             children: [
-              Text(
-                language.flag,
-                style: TextStyle(
-                  fontSize: PlatformUtils.flagFontSize * 1.125,
-                ),
+              LanguageFlagIcon(
+                language: language,
+                size: PlatformUtils.flagFontSize * 1.125,
+                borderRadius: 4,
               ), // 18.0 equivalent
               const SizedBox(width: 8),
               Text(
@@ -363,10 +363,11 @@ class _TranslationPanelState extends State<TranslationPanel> {
                 onSelected: (selected) {
                   _handleLanguageTap(language);
                 },
-                avatar: Text(
-                  language.flag,
-                  style: const TextStyle(fontSize: 16), // 增大国旗字号
-                ),
+                avatar: LanguageFlagIcon(
+                  language: language,
+                  size: 16,
+                  borderRadius: 4,
+                ), // 增大国旗字号
                 label: SizedBox(
                   width: double
                       .infinity, // Force label to take full available width

@@ -11,6 +11,9 @@ export 'atomic_elements.dart';
 // Form components
 export 'atomic_input.dart';
 
+// Flag rendering
+export 'language_flag_icon.dart' show LanguageFlagIcon;
+
 // Re-export commonly used classes for convenience
 export 'atomic_elements.dart'
     show

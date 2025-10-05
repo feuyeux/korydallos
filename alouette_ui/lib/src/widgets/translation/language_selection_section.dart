@@ -3,6 +3,7 @@ import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 import '../../constants/ui_constants.dart';
 import '../custom_button.dart';
+import '../../components/atoms/language_flag_icon.dart';
 
 /// 语言选择区域组件
 /// 封装语言选择的头部、按钮和筛选逻辑
@@ -92,13 +93,26 @@ class LanguageSelectionSection extends StatelessWidget {
           children: LanguageConstants.supportedLanguages.map((language) {
             final isSelected = selectedLanguages.contains(language.code);
             return FilterChip(
-              label: Container(
+              label: SizedBox(
                 width: 100,
-                alignment: Alignment.center,
-                child: Text(
-                  '${language.flag} ${language.name}',
-                  style: TextStyle(fontSize: PlatformUtils.flagFontSize * 0.625), // 10.0 equivalent
-                  overflow: TextOverflow.ellipsis,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LanguageFlagIcon(
+                      language: language,
+                      size: PlatformUtils.flagFontSize * 0.625,
+                      borderRadius: 3,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        language.name,
+                        style: const TextStyle(fontSize: 10),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               selected: isSelected,
