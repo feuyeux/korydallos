@@ -61,6 +61,7 @@ export 'src/widgets/custom_dropdown.dart';
 export 'src/widgets/custom_text_field.dart';
 export 'src/widgets/translation_input_widget.dart';
 export 'src/widgets/translation_result_widget.dart';
+export 'src/widgets/platform_info_widget.dart';
 
 // Removed: export 'src/widgets/tts_control_widget.dart' - Use components/organisms/tts_control_panel.dart instead
 // Removed: export 'src/widgets/tts_input_widget.dart' - Use refactored TTSInputSection instead

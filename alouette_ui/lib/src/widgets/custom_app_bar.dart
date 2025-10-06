@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens/dimension_tokens.dart';
+import 'platform_info_widget.dart';
 
 const _logoAssetPath = 'packages/alouette_ui/assets/icons/alouette_rounded.png';
 
@@ -16,6 +17,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onTitleTap;
   final PreferredSizeWidget? bottom;
   final Widget? statusWidget; // 新增：状态组件
+  final bool showPlatformInfo; // 新增：是否显示平台信息
 
   const CustomAppBar({
     super.key,
@@ -30,6 +32,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onTitleTap,
     this.bottom,
     this.statusWidget, // 新增参数
+    this.showPlatformInfo = true, // 新增参数，默认显示
   });
 
   @override
@@ -75,7 +78,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor ?? (isDark ? const Color(0xFF1F2937) : Colors.white),
       elevation: elevation,
       scrolledUnderElevation: elevation > 0 ? elevation + 1 : 1,
-      actions: actions,
+      actions: [
+        ...?actions,
+        if (showPlatformInfo) ...[
+          const SizedBox(width: 8),
+          const PlatformInfoWidget(),
+          const SizedBox(width: 16),
+        ],
+      ],
       leading: leading,
       shadowColor: Colors.black.withValues(alpha: 0.1),
       bottom: bottom,
