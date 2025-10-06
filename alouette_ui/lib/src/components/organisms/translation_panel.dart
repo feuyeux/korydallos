@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
-import '../../components/atoms/language_flag_icon.dart';
+import '../atoms/language_flag_icon.dart';
 
 /// Translation Panel Organism
 ///
@@ -54,39 +53,30 @@ class _TranslationPanelState extends State<TranslationPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Text input - smaller
-          _buildTextInput(),
-          const SizedBox(height: 4), // 统一间距为4px
-          // Language chips - 6 per row with equal width
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 70, // 减少最大高度
-              minHeight: 35, // 减少最小高度
-            ),
-            child: SingleChildScrollView(child: _buildLanguageGrid()),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Text input - smaller
+        _buildTextInput(),
+        const SizedBox(height: 4), // 统一间距为4px
+        // Language chips - responsive grid layout
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: PlatformUtils.isMobile ? 110 : 75,
+            minHeight: PlatformUtils.isMobile ? 110 : 75,
           ),
+          child: SingleChildScrollView(child: _buildLanguageGrid()),
+        ),
+        const SizedBox(height: 4), // 统一间距为4px
+        // Action buttons
+        _buildActionBar(),
+        // Error display
+        if (widget.errorMessage != null) ...[
           const SizedBox(height: 4), // 统一间距为4px
-          // Action buttons
-          _buildActionBar(),
-          // Error display
-          if (widget.errorMessage != null) ...[
-            const SizedBox(height: 4), // 统一间距为4px
-            _buildErrorDisplay(),
-          ],
-
-          // Results
-          if (widget.translationResults != null &&
-              widget.translationResults!.isNotEmpty) ...[
-            const SizedBox(height: 4), // 统一间距为4px
-            _buildResults(),
-          ],
+          _buildErrorDisplay(),
         ],
-      ),
+      ],
     );
   }
 
@@ -200,74 +190,6 @@ class _TranslationPanelState extends State<TranslationPanel> {
     );
   }
 
-  Widget _buildResults() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Translation Results',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4), // Reduced from 8 to 4
-        ...widget.translationResults!.entries.map(
-          (entry) => _buildResultItem(entry),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultItem(MapEntry<String, String> entry) {
-    final language = LanguageConstants.supportedLanguages.firstWhere(
-      (lang) => lang.code == entry.key,
-      orElse: () => LanguageOption(
-        code: entry.key,
-        name: entry.key,
-        nativeName: entry.key,
-        flag: '🌐',
-      ),
-    );
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4), // Reduced from 8 to 4
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              LanguageFlagIcon(
-                language: language,
-                size: PlatformUtils.flagFontSize * 1.125,
-                borderRadius: 4,
-              ), // 18.0 equivalent
-              const SizedBox(width: 8),
-              Text(
-                language.name,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.copy, size: 18),
-                onPressed: () {
-                  _copyToClipboard(entry.value);
-                },
-                tooltip: 'Copy translation',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6), // Reduced from 8 to 6
-          Text(entry.value, style: const TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
-  }
-
   void _handleLanguageTap(LanguageOption language) {
     final currentSelection = List<LanguageOption>.from(
       widget.selectedLanguages,
@@ -330,12 +252,14 @@ class _TranslationPanelState extends State<TranslationPanel> {
     final languages = LanguageConstants.supportedLanguages;
     final rows = <Widget>[];
 
-    // Split languages into rows of 6
-    for (int i = 0; i < languages.length; i += 6) {
-      final rowLanguages = languages.skip(i).take(6).toList();
+    // Mobile: 4 per row (3 rows), Desktop: 6 per row (2 rows)
+    final itemsPerRow = PlatformUtils.isMobile ? 4 : 6;
+    
+    for (int i = 0; i < languages.length; i += itemsPerRow) {
+      final rowLanguages = languages.skip(i).take(itemsPerRow).toList();
       rows.add(_buildLanguageRow(rowLanguages));
-      if (i + 6 < languages.length) {
-        rows.add(const SizedBox(height: 2)); // 减少行间距从6到2
+      if (i + itemsPerRow < languages.length) {
+        rows.add(const SizedBox(height: 3));
       }
     }
 
@@ -354,10 +278,10 @@ class _TranslationPanelState extends State<TranslationPanel> {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 1,
-            ), // Minimal horizontal padding
+            ),
             child: SizedBox(
-              height: 28, // 减少高度从38到28
-              width: double.infinity, // Ensure full width usage
+              height: 32,
+              width: double.infinity,
               child: FilterChip(
                 selected: isSelected,
                 onSelected: (selected) {
@@ -366,24 +290,25 @@ class _TranslationPanelState extends State<TranslationPanel> {
                 avatar: LanguageFlagIcon(
                   language: language,
                   size: 16,
-                  borderRadius: 4,
-                ), // 增大国旗字号
+                  borderRadius: 3,
+                ),
                 label: SizedBox(
-                  width: double
-                      .infinity, // Force label to take full available width
+                  width: double.infinity,
                   child: Text(
-                    language.name,
-                    style: const TextStyle(
-                      fontSize: 13, // 增大语种文字字号
-                      fontWeight: FontWeight.w500, // 增加字重
+                    PlatformUtils.isMobile ? language.shortCode : language.name,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected 
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
-                    textAlign: TextAlign.center, // Center the text
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                showCheckmark: false, // 隐藏勾选标记
+                showCheckmark: false,
                 side: BorderSide(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
@@ -393,9 +318,9 @@ class _TranslationPanelState extends State<TranslationPanel> {
                   width: 1,
                 ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 2,
-                ), // 增加内边距
+                  horizontal: 8,
+                  vertical: 4,
+                ),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
@@ -404,17 +329,5 @@ class _TranslationPanelState extends State<TranslationPanel> {
         );
       }).toList(),
     );
-  }
-
-  void _copyToClipboard(String text) {
-    try {
-      Clipboard.setData(ClipboardData(text: text));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Translation copied to clipboard')),
-      );
-    } catch (e) {
-      // Handle error silently
-    }
   }
 }

@@ -18,6 +18,11 @@ class PlatformUtils {
   /// Check if current platform is web
   static bool get isWeb => kIsWeb;
 
+  /// Check if current platform should use narrow screen layout
+  /// Returns true for mobile devices (iOS/Android), false for desktop/web
+  /// This is used to determine UI layout (e.g., showing language short codes vs full names)
+  static bool get isNarrowScreen => isMobile;
+
   /// Get the current platform name
   static String get platformName {
     if (kIsWeb) return 'web';

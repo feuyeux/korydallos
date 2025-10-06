@@ -15,6 +15,16 @@ class LanguageOption {
   /// Get platform-appropriate flag representation
   String get flag => _emojiFlag;
 
+  /// Get short 2-character language code (e.g., 'ZH', 'EN', 'JA')
+  String get shortCode {
+    // Extract language code (first part before '-') and convert to uppercase
+    final parts = code.split('-');
+    if (parts.isNotEmpty) {
+      return parts[0].toUpperCase();
+    }
+    return code.substring(0, 2).toUpperCase();
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

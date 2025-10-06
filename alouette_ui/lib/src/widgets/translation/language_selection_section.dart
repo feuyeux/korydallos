@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 import '../../constants/ui_constants.dart';
 import '../custom_button.dart';
@@ -93,35 +92,30 @@ class LanguageSelectionSection extends StatelessWidget {
           children: LanguageConstants.supportedLanguages.map((language) {
             final isSelected = selectedLanguages.contains(language.code);
             return FilterChip(
-              label: SizedBox(
-                width: 100,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LanguageFlagIcon(
-                      language: language,
-                      size: PlatformUtils.flagFontSize * 0.625,
-                      borderRadius: 3,
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        language.name,
-                        style: const TextStyle(fontSize: 10),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+              avatar: LanguageFlagIcon(
+                language: language,
+                size: 12,
+                borderRadius: 3,
+              ),
+              label: Text(
+                language.shortCode,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Colors.black,
                 ),
               ),
               selected: isSelected,
               onSelected: (selected) =>
                   onLanguageToggle(language.code, selected),
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               selectedColor: Theme.of(context).colorScheme.primaryContainer,
               backgroundColor: Colors.grey.shade100,
-              showCheckmark: false, // 隐藏勾选标记
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
             );
           }).toList(),
         ),

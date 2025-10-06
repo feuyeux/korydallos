@@ -68,24 +68,45 @@ class ConfigStatusWidget extends StatelessWidget {
         color: Colors.green.shade50,
         child: Padding(
           padding: const EdgeInsets.all(6.0),
-          child: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green.shade600, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  llmConfig.selectedModel.isNotEmpty
-                      ? 'Connected to ${llmConfig.provider} - Model: ${llmConfig.selectedModel}'
-                      : 'Connected to ${llmConfig.provider}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.green.shade800,
-                    fontSize: 13, // Slightly smaller font
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Determine display format based on available width
+              final isNarrow = constraints.maxWidth < 400;
+              
+              String displayText;
+              if (llmConfig.selectedModel.isNotEmpty) {
+                if (isNarrow) {
+                  // Compact format for narrow screens (mobile)
+                  // Capitalize first letter of provider
+                  final provider = llmConfig.provider[0].toUpperCase() + 
+                                 llmConfig.provider.substring(1);
+                  displayText = '$provider: ${llmConfig.selectedModel}';
+                } else {
+                  // Full format for wider screens
+                  displayText = 'Connected to ${llmConfig.provider} - Model: ${llmConfig.selectedModel}';
+                }
+              } else {
+                displayText = 'Connected to ${llmConfig.provider}';
+              }
+              
+              return Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      displayText,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green.shade800,
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis, // Handle long text
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       );

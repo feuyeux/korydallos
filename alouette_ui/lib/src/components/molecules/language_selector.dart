@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:alouette_lib_tts/alouette_tts.dart';
 import '../../constants/language_constants.dart';
 
 import '../atoms/atomic_elements.dart';
@@ -144,24 +143,22 @@ class LanguageChip extends StatelessWidget {
       onSelected: (_) => onTap(),
       avatar: LanguageFlagIcon(
         language: language,
-        size: PlatformUtils.flagFontSize * 0.875,
-        borderRadius: 4,
-      ), // 14.0 equivalent
+        size: 14,
+        borderRadius: 3,
+      ),
       label: Text(
-        language.name,
+        language.shortCode,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+          color: isSelected 
+              ? colorScheme.onPrimaryContainer
+              : Colors.black,
         ),
       ),
       backgroundColor: colorScheme.surface,
       selectedColor: colorScheme.primaryContainer,
-      showCheckmark: false, // 隐藏勾选标记
-      labelStyle: TextStyle(
-        color: isSelected
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onSurface,
-      ),
+      showCheckmark: false,
       side: BorderSide(
         color: isSelected
             ? colorScheme.primary

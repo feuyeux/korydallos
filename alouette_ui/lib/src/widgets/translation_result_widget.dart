@@ -28,6 +28,7 @@ class TranslationResultWidget extends StatefulWidget {
 class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   final Map<String, bool> _playingStates = {};
   tts_lib.AudioPlayer? _audioPlayer;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   void dispose() {
     widget.translationService.removeListener(_onTranslationChanged);
     _audioPlayer?.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -56,49 +58,47 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     final translation = widget.translationService.currentTranslation;
 
     if (translation == null) {
-      return SizedBox(
-        width: double.infinity,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: SpacingTokens.l),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.translate,
-                  size: widget.isCompactMode ? 32 : 48,
-                  color: Colors.grey.shade400,
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: SpacingTokens.l),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.translate,
+                size: widget.isCompactMode ? 32 : 48,
+                color: Colors.grey.shade400,
+              ),
+              SizedBox(height: widget.isCompactMode ? 8 : 16),
+              Text(
+                'Translation results will appear here',
+                style: TextStyle(
+                  fontSize: widget.isCompactMode ? 12 : 14,
+                  color: Colors.grey.shade600,
                 ),
-                SizedBox(height: widget.isCompactMode ? 8 : 16),
+              ),
+              if (!widget.isCompactMode) ...[
+                const SizedBox(height: 8),
                 Text(
-                  'Translation results will appear here',
-                  style: TextStyle(
-                    fontSize: widget.isCompactMode ? 12 : 14,
-                    color: Colors.grey.shade600,
-                  ),
+                  'Enter text and select languages to get started',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                 ),
-                if (!widget.isCompactMode) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter text and select languages to get started',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
       );
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: SpacingTokens.s),
-        child: widget.isCompactMode
-            ? _buildCompactLayout(translation)
-            : _buildStandardLayout(translation),
-      ),
+    // 紧凑模式：直接返回可滚动布局，不添加额外的 Padding
+    if (widget.isCompactMode) {
+      return _buildCompactLayout(translation);
+    }
+
+    // 标准模式：添加 padding
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: SpacingTokens.s),
+      child: _buildStandardLayout(translation),
     );
   }
 
@@ -157,9 +157,28 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
             // _buildActionButtons(context, translation), // Removed
           ],
         ),
+        const SizedBox(height: 8),
 
-        // Translations - 使用 Expanded 确保剩余空间被占用
-        Expanded(child: _buildTranslations(context, translation)),
+        // Translations - 使用 Expanded 和 ListView 确保可滚动
+        Expanded(
+          child: Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: EdgeInsets.zero,
+              itemCount: translation.languages.length,
+              itemBuilder: (context, index) {
+                final language = translation.languages[index];
+                final translatedText = translation.translations[language] ?? '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildTranslationItem(context, language, translatedText),
+                );
+              },
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -186,6 +205,43 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   */
 
   Widget _buildMetadata(BuildContext context, TranslationResult translation) {
+    // 根据设备类型动态调整模型名称显示
+    String getShortModelName(String fullName, {required bool isCompact}) {
+      // 移除常见的后缀如 :latest
+      String name = fullName.replaceFirst(':latest', '');
+      
+      if (isCompact) {
+        // 移动设备：激进简化，限制在20个字符
+        if (name.length > 20) {
+          // 例: "qwen2.5-coder:7b-instruct" -> "qwen2.5-coder:7b"
+          name = name.split('-').take(2).join('-');
+          if (name.length > 20) {
+            // 如果还是太长，只保留主要部分
+            name = name.split(':').first;
+          }
+        }
+      } else {
+        // 桌面/Web：保留更多信息，限制在40个字符
+        if (name.length > 40) {
+          name = name.substring(0, 37) + '...';
+        }
+      }
+      
+      return name;
+    }
+
+    final shortModel = getShortModelName(
+      translation.config.selectedModel,
+      isCompact: widget.isCompactMode,
+    );
+    final shortProvider = translation.config.provider.toLowerCase();
+    final timestamp = _formatTimestamp(translation.timestamp);
+
+    // 移动设备使用紧凑格式，桌面使用完整格式
+    final displayText = widget.isCompactMode
+        ? '$shortProvider $shortModel • $timestamp'
+        : 'Model: $shortModel | Provider: $shortProvider | Generated: $timestamp';
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -203,13 +259,13 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Model: ${translation.config.selectedModel} | '
-              'Provider: ${translation.config.provider} | '
-              'Generated: ${_formatTimestamp(translation.timestamp)}',
+              displayText,
               style: TextStyle(
                 fontSize: TypographyTokens.bodyMediumStyle.fontSize!,
                 color: Colors.grey.shade700,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -262,20 +318,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     BuildContext context,
     TranslationResult translation,
   ) {
-    if (widget.isCompactMode) {
-      // 极简紧凑模式，直接显示列表
-      return ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: translation.languages.length,
-        itemBuilder: (context, index) {
-          final language = translation.languages[index];
-          final translatedText = translation.translations[language] ?? '';
-          return _buildTranslationItem(context, language, translatedText);
-        },
-      );
-    }
-
-    // 标准模式保持原来的结构
+    // 标准模式：显示完整信息，带固定高度滚动
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -296,10 +339,12 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         ),
         const SizedBox(height: 4), // Reduced from 8 to 4
         SizedBox(
-          height: 300, // 可根据实际需求调整高度
+          height: 400, // 增加高度从 300 到 400，给翻译结果更多空间
           child: Scrollbar(
+            controller: _scrollController,
             thumbVisibility: true,
             child: ListView.builder(
+              controller: _scrollController,
               itemCount: translation.languages.length,
               itemBuilder: (context, index) {
                 final language = translation.languages[index];
@@ -452,11 +497,10 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           .toList();
 
       if (availableVoices.isNotEmpty) {
-        // Prefer exact match for language code, fallback to first available
-        final matchingVoice = availableVoices.firstWhere(
-          (voice) => voice.locale.toLowerCase() == languageCode.toLowerCase(),
-          orElse: () => availableVoices.first,
-        );
+        // 使用智能语音选择策略，选择最高质量的人声
+        final matchingVoice = _selectBestVoice(availableVoices, languageCode);
+
+        debugPrint('🎤 Selected voice for $language: ${matchingVoice.name} (${matchingVoice.locale})');
 
         // Synthesize text to audio data
         final audioData = await widget.ttsService!.synthesizeText(
@@ -627,6 +671,165 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       debugPrint('❌ Error getting language code for $languageKey: $e');
       return null;
     }
+  }
+
+  /// 选择最佳语音 - 针对每种语言选择最高质量的人声
+  /// 同时支持 Flutter TTS (iOS/Android) 和 Edge TTS (Desktop)
+  tts_lib.VoiceModel _selectBestVoice(
+    List<tts_lib.VoiceModel> voices,
+    String languageCode,
+  ) {
+    if (voices.isEmpty) {
+      throw Exception('No voices available');
+    }
+
+    // 检查是否是 Edge TTS（通过语音名称模式识别）
+    final isEdgeTTS = voices.any((v) => 
+      v.name.contains('-') && 
+      (v.name.contains('Neural') || v.name.toLowerCase().contains('neural'))
+    );
+
+    if (isEdgeTTS) {
+      return _selectBestEdgeVoice(voices, languageCode);
+    } else {
+      return _selectBestFlutterVoice(voices, languageCode);
+    }
+  }
+
+  /// 选择最佳 Edge TTS 语音（桌面平台）
+  /// Edge TTS 提供高质量的神经网络语音
+  tts_lib.VoiceModel _selectBestEdgeVoice(
+    List<tts_lib.VoiceModel> voices,
+    String languageCode,
+  ) {
+    // Edge TTS 首选神经网络语音（Neural）
+    final preferredEdgeVoices = {
+      'en-us': ['en-US-AriaNeural', 'en-US-JennyNeural', 'en-US-GuyNeural'],
+      'en-gb': ['en-GB-SoniaNeural', 'en-GB-RyanNeural'],
+      'zh-cn': ['zh-CN-XiaoxiaoNeural', 'zh-CN-YunxiNeural', 'zh-CN-YunjianNeural'],
+      'zh-tw': ['zh-TW-HsiaoChenNeural', 'zh-TW-YunJheNeural'],
+      'ja-jp': ['ja-JP-NanamiNeural', 'ja-JP-KeitaNeural'],
+      'ko-kr': ['ko-KR-SunHiNeural', 'ko-KR-InJoonNeural'],
+      'fr-fr': ['fr-FR-DeniseNeural', 'fr-FR-HenriNeural'],
+      'de-de': ['de-DE-KatjaNeural', 'de-DE-ConradNeural'],
+      'es-es': ['es-ES-ElviraNeural', 'es-ES-AlvaroNeural'],
+      'it-it': ['it-IT-ElsaNeural', 'it-IT-DiegoNeural'],
+      'ru-ru': ['ru-RU-SvetlanaNeural', 'ru-RU-DmitryNeural'],
+      'ar-sa': ['ar-SA-ZariyahNeural', 'ar-SA-HamedNeural'],
+      'pt-br': ['pt-BR-FranciscaNeural', 'pt-BR-AntonioNeural'],
+    };
+
+    final langKey = languageCode.toLowerCase();
+    final preferredNames = preferredEdgeVoices[langKey] ?? [];
+
+    // 第一轮：精确匹配首选神经网络语音
+    for (final preferredName in preferredNames) {
+      final exactMatch = voices.firstWhere(
+        (v) => v.name == preferredName,
+        orElse: () => voices.first,
+      );
+      if (exactMatch.name == preferredName) {
+        debugPrint('✅ Found preferred Edge TTS voice: ${exactMatch.name}');
+        return exactMatch;
+      }
+    }
+
+    // 第二轮：选择该语言的任意神经网络语音
+    final neuralVoices = voices.where(
+      (v) => v.locale.toLowerCase().startsWith(langKey.split('-')[0]) && 
+             (v.name.contains('Neural') || v.isNeural),
+    ).toList();
+
+    if (neuralVoices.isNotEmpty) {
+      // 优先女声（通常更清晰自然）
+      final femaleNeural = neuralVoices.firstWhere(
+        (v) => v.gender.toString().toLowerCase().contains('female'),
+        orElse: () => neuralVoices.first,
+      );
+      debugPrint('✅ Selected Edge TTS neural voice: ${femaleNeural.name}');
+      return femaleNeural;
+    }
+
+    // 第三轮：任何匹配语言的语音
+    final langMatches = voices.where(
+      (v) => v.locale.toLowerCase().startsWith(langKey.split('-')[0]),
+    ).toList();
+
+    if (langMatches.isNotEmpty) {
+      debugPrint('⚠️ Using Edge TTS fallback voice: ${langMatches.first.name}');
+      return langMatches.first;
+    }
+
+    debugPrint('⚠️ Using first available voice: ${voices.first.name}');
+    return voices.first;
+  }
+
+  /// 选择最佳 Flutter TTS 语音（iOS/Android/移动平台）
+  /// 优先选择系统增强版和高质量人声
+  tts_lib.VoiceModel _selectBestFlutterVoice(
+    List<tts_lib.VoiceModel> voices,
+    String languageCode,
+  ) {
+    // iOS/Android 系统语音首选列表
+    final preferredFlutterVoices = {
+      'en-us': ['Samantha', 'Ava (Enhanced)', 'Ava', 'Nicky', 'Susan'],
+      'en-gb': ['Kate', 'Serena', 'Daniel'],
+      'zh-cn': ['Tingting', 'Sinji'],
+      'zh-tw': ['Meijia', 'Sinji'],
+      'ja-jp': ['Kyoko', 'O-Ren'],
+      'ko-kr': ['Yuna', 'Sora'],
+      'fr-fr': ['Thomas', 'Amélie'],
+      'de-de': ['Anna', 'Helena'],
+      'es-es': ['Monica', 'Paulina'],
+      'it-it': ['Alice', 'Luca'],
+      'ru-ru': ['Milena', 'Yuri'],
+      'ar-sa': ['Maged', 'Laila'],
+      'pt-br': ['Luciana', 'Joana'],
+    };
+
+    final langKey = languageCode.toLowerCase();
+    final preferredNames = preferredFlutterVoices[langKey] ?? [];
+
+    // 第一轮：精确匹配首选系统语音
+    for (final preferredName in preferredNames) {
+      final exactMatch = voices.firstWhere(
+        (v) => v.name.toLowerCase() == preferredName.toLowerCase(),
+        orElse: () => voices.first,
+      );
+      if (exactMatch.name.toLowerCase() == preferredName.toLowerCase()) {
+        debugPrint('✅ Found preferred Flutter TTS voice: ${exactMatch.name}');
+        return exactMatch;
+      }
+    }
+
+    // 第二轮：选择精确匹配语言代码的语音
+    final exactLocaleMatches = voices.where(
+      (v) => v.locale.toLowerCase() == langKey,
+    ).toList();
+
+    if (exactLocaleMatches.isNotEmpty) {
+      // 优先增强版
+      final enhanced = exactLocaleMatches.firstWhere(
+        (v) => v.name.toLowerCase().contains('enhanced'),
+        orElse: () => exactLocaleMatches.first,
+      );
+      if (enhanced.name.toLowerCase().contains('enhanced')) {
+        debugPrint('✅ Found enhanced Flutter TTS voice: ${enhanced.name}');
+        return enhanced;
+      }
+
+      // 优先女声
+      final female = exactLocaleMatches.firstWhere(
+        (v) => v.gender.toString().toLowerCase().contains('female'),
+        orElse: () => exactLocaleMatches.first,
+      );
+      debugPrint('✅ Selected Flutter TTS voice: ${female.name}');
+      return female;
+    }
+
+    // 第三轮：语言匹配的第一个语音
+    debugPrint('⚠️ Using Flutter TTS fallback voice: ${voices.first.name}');
+    return voices.first;
   }
 
   void _copyTranslation(

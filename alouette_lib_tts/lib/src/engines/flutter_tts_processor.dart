@@ -281,13 +281,13 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         TTSLogger.debug(
           'Web TTS optimized params: rate=$optimizedRate, pitch=$optimizedPitch, volume=$optimizedVolume',
         );
-      } else if (!kIsWeb && Platform.isMacOS) {
-        // macOS: 0.5 is their "normal" rate, so convert: 1.0 -> 0.5
+      } else if (!kIsWeb && (Platform.isMacOS || Platform.isIOS)) {
+        // macOS & iOS: 0.5 is their "normal" rate, so convert: 1.0 -> 0.5
         await _tts.setSpeechRate(rate * 0.5);
         await _tts.setVolume(volume);
         await _tts.setPitch(pitch);  // 1.0 is normal for pitch
       } else {
-        // Other platforms: 1.0 is normal for all parameters
+        // Other platforms (Android, etc.): 1.0 is normal for all parameters
         await _tts.setSpeechRate(rate);
         await _tts.setVolume(volume);
         await _tts.setPitch(pitch);
