@@ -27,19 +27,59 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
 
-    // Configure Flutter TTS
-    await _tts.awaitSpeakCompletion(true);
-
-    // Set audio session on supported platforms
     try {
-      if (!kIsWeb) {
-        await _tts.setSharedInstance(true);
-      }
-    } catch (e) {
-      // setSharedInstance not supported on this platform
-    }
+      // Configure Flutter TTS
+      await _tts.awaitSpeakCompletion(true);
 
-    _initialized = true;
+      // Set audio session on supported platforms
+      try {
+        if (!kIsWeb) {
+          await _tts.setSharedInstance(true);
+        }
+      } catch (e) {
+        // setSharedInstance not supported on this platform
+      }
+
+      // Set iOS/Android specific audio settings
+      try {
+        if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+          // Enable audio ducking for iOS
+          if (Platform.isIOS) {
+            await _tts.setIosAudioCategory(
+              IosTextToSpeechAudioCategory.playback,
+              [
+                IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+                IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+                IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+              ],
+              IosTextToSpeechAudioMode.voicePrompt,
+            );
+          }
+          
+          // Set volume to maximum for better audibility
+          await _tts.setVolume(1.0);
+          
+          // Set normal speech rate
+          await _tts.setSpeechRate(0.5);
+          
+          // Set normal pitch
+          await _tts.setPitch(1.0);
+        }
+      } catch (e) {
+        TTSLogger.debug('TTS: Could not set audio settings: $e');
+        // Non-fatal, continue
+      }
+
+      _initialized = true;
+      TTSLogger.debug('TTS: Flutter TTS initialized successfully');
+    } catch (e) {
+      TTSLogger.error('TTS: Failed to initialize Flutter TTS: $e');
+      throw TTSError(
+        'Failed to initialize Flutter TTS: $e',
+        code: TTSErrorCodes.initializationFailed,
+        originalError: e,
+      );
+    }
   }
 
   @override
@@ -210,8 +250,16 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       // 直接播放
       TTSLogger.debug('TTS: Starting direct speech playback');
       
-      // Set up completion tracking
+      // Set up completion and error tracking
       bool speechCompleted = false;
+      bool speechStarted = false;
+      String? speechError;
+      
+      _tts.setStartHandler(() {
+        speechStarted = true;
+        TTSLogger.debug('TTS: Speech started');
+      });
+      
       _tts.setCompletionHandler(() {
         speechCompleted = true;
         TTSLogger.debug('TTS: Speech completion detected');
@@ -219,12 +267,45 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       
       // Set up error handling
       _tts.setErrorHandler((msg) {
+        speechError = msg;
         TTSLogger.error('TTS: Speech error: $msg');
       });
       
       // Speak the text
       final result = await _tts.speak(text);
       TTSLogger.debug('TTS: Speak method returned: $result');
+      
+      // Check for immediate errors
+      if (result == 0) {
+        // result == 0 usually indicates an error
+        final errorMsg = speechError ?? 'TTS speak returned 0 (error)';
+        TTSLogger.error('TTS: Speak failed immediately - $errorMsg');
+        throw TTSError(
+          'Speech synthesis failed: $errorMsg',
+          code: TTSErrorCodes.speakFailed,
+        );
+      }
+      
+      // Wait for speech to start or error
+      int startWaitTime = 0;
+      const startCheckInterval = 50;
+      const maxStartWait = 1000; // 1 second max wait for start
+      
+      while (!speechStarted && speechError == null && startWaitTime < maxStartWait) {
+        await Future.delayed(Duration(milliseconds: startCheckInterval));
+        startWaitTime += startCheckInterval;
+      }
+      
+      if (speechError != null) {
+        throw TTSError(
+          'Speech synthesis error: $speechError',
+          code: TTSErrorCodes.speakFailed,
+        );
+      }
+      
+      if (!speechStarted) {
+        TTSLogger.warning('TTS: Speech did not start within timeout, but continuing...');
+      }
       
       // Wait for completion or timeout
       final estimatedDuration = _estimateSpeechDuration(text);
@@ -233,18 +314,27 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       int waitedTime = 0;
       const checkInterval = 100;
       
-      while (!speechCompleted && waitedTime < maxWaitTime) {
+      while (!speechCompleted && speechError == null && waitedTime < maxWaitTime) {
         await Future.delayed(Duration(milliseconds: checkInterval));
         waitedTime += checkInterval;
+      }
+      
+      if (speechError != null) {
+        throw TTSError(
+          'Speech synthesis error: $speechError',
+          code: TTSErrorCodes.speakFailed,
+        );
       }
       
       if (speechCompleted) {
         TTSLogger.debug('TTS: Direct speech playback completed successfully');
       } else {
-        TTSLogger.debug('TTS: Direct speech playback timed out, assuming completed');
+        TTSLogger.debug('TTS: Direct speech playback timed out after ${waitedTime}ms, assuming completed');
       }
       
     } catch (e) {
+      if (e is TTSError) rethrow;
+      
       TTSLogger.error('TTS: Direct speech playback failed: $e');
       throw TTSError(
         'Direct speech playback failed: $e',
@@ -388,11 +478,36 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         );
       }
 
-      // Set voice
-      await _tts.setVoice({
-        "name": targetVoice.id,
-        "locale": targetVoice.languageCode,
-      });
+      // Set language first (required for Android TTS)
+      try {
+        await _tts.setLanguage(targetVoice.languageCode);
+        TTSLogger.debug('TTS: Set language to ${targetVoice.languageCode}');
+        
+        // Check if language is available (Android specific)
+        if (!kIsWeb && Platform.isAndroid) {
+          final isLanguageAvailable = await _tts.isLanguageAvailable(targetVoice.languageCode);
+          TTSLogger.debug('TTS: Language ${targetVoice.languageCode} available: $isLanguageAvailable');
+          
+          if (!isLanguageAvailable) {
+            TTSLogger.warning('TTS: Language ${targetVoice.languageCode} not available on Android TTS');
+            // Try to set anyway, might work
+          }
+        }
+      } catch (e) {
+        TTSLogger.debug('TTS: Warning - could not set language: $e');
+      }
+
+      // Then set voice (optional on some platforms)
+      try {
+        await _tts.setVoice({
+          "name": targetVoice.id,
+          "locale": targetVoice.languageCode,
+        });
+        TTSLogger.debug('TTS: Set voice to ${targetVoice.id}');
+      } catch (e) {
+        // Voice setting might fail on some platforms, but language is already set
+        TTSLogger.debug('TTS: Warning - could not set voice (using language only): $e');
+      }
     } catch (e) {
       if (e is TTSError) rethrow;
 

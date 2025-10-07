@@ -71,6 +71,19 @@ try {
             Write-ColorOutput "[PLATFORM] Starting in Edge browser..." "Cyan"
             flutter run -d edge --debug
         }
+        "android" {
+            Write-ColorOutput "[PLATFORM] Checking Android devices..." "Cyan"
+            $androidDevices = flutter devices 2>$null | Select-String -Pattern "android" -CaseSensitive:$false
+            
+            if (!$androidDevices) {
+                Write-ColorOutput "[WARNING] No Android devices found" "Yellow"
+                Write-ColorOutput "[INFO] Please start an Android emulator or connect a device" "Yellow"
+                Write-ColorOutput "[TIP] You can use Android Studio's AVD Manager or 'emulator -avd <name>'" "Yellow"
+            }
+            
+            Write-ColorOutput "[PLATFORM] Starting Android app..." "Cyan"
+            flutter run -d android --debug
+        }
         default { 
             Write-ColorOutput "[PLATFORM] Starting on platform: $Platform..." "Cyan"
             flutter run -d $Platform --debug

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import '../services/core/service_locator.dart';
+import '../services/core/configuration_manager.dart';
 import '../dialogs/llm_config_dialog.dart';
 import 'custom_button.dart';
 
@@ -191,6 +192,39 @@ class _TranslationStatusWidgetState extends State<TranslationStatusWidget> {
     final logger = ServiceLocator.logger;
 
     try {
+      // Strategy 0: Check if we have a saved configuration in persistent storage
+      final configManager = ConfigurationManager.instance;
+      final appConfig = await configManager.getConfiguration();
+      
+      if (appConfig.translationConfig != null && 
+          appConfig.translationConfig!.selectedModel.isNotEmpty) {
+        final savedConfig = appConfig.translationConfig!;
+        logger.debug('ConfigStatusWidget: Found saved configuration', tag: 'ConfigStatus', details: {
+          'provider': savedConfig.provider,
+          'serverUrl': savedConfig.serverUrl,
+          'model': savedConfig.selectedModel,
+        });
+        
+        // Test the saved configuration
+        final status = await _translationService.testConnection(savedConfig);
+        logger.info('ConfigStatusWidget: Saved config test result', tag: 'ConfigStatus', details: {
+          'success': status.success,
+          'modelCount': status.modelCount,
+        });
+        
+        if (!mounted) return;
+        if (status.success) {
+          setState(() {
+            _isConfigured = true;
+            _currentConfig = savedConfig;
+            _isChecking = false;
+          });
+          return;
+        } else {
+          logger.warning('ConfigStatusWidget: Saved config test failed, trying other options', tag: 'ConfigStatus');
+        }
+      }
+      
       // Strategy 1: Check if service already has auto-detected config
       final existingConfig = _translationService.autoDetectedConfig;
       
@@ -309,6 +343,32 @@ class _TranslationStatusWidgetState extends State<TranslationStatusWidget> {
     );
 
     if (result != null && mounted) {
+      // Save the new configuration to persistent storage
+      try {
+        final configManager = ConfigurationManager.instance;
+        final success = await configManager.updateTranslationConfig(result);
+        
+        final logger = ServiceLocator.logger;
+        if (success) {
+          logger.info('ConfigStatusWidget: Saved LLM configuration', tag: 'ConfigStatus', details: {
+            'provider': result.provider,
+            'serverUrl': result.serverUrl,
+            'model': result.selectedModel,
+          });
+          
+          // Update the current config in memory
+          setState(() {
+            _currentConfig = result;
+            _isConfigured = true;
+          });
+        } else {
+          logger.error('ConfigStatusWidget: Failed to save configuration', tag: 'ConfigStatus');
+        }
+      } catch (e, stackTrace) {
+        final logger = ServiceLocator.logger;
+        logger.error('ConfigStatusWidget: Error saving configuration', tag: 'ConfigStatus', error: e, stackTrace: stackTrace);
+      }
+      
       // Recheck configuration after dialog closes
       _checkConfiguration();
     }

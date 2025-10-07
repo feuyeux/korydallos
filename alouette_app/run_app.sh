@@ -47,6 +47,7 @@ CLEAN=true
 PLATFORM="macos"
 DEVICE_ID=""
 IS_IOS=false
+IS_ANDROID=false
 
 for arg in "$@"; do
     case $arg in
@@ -58,12 +59,18 @@ for arg in "$@"; do
             PLATFORM=$arg
             if [ "$arg" = "ios" ]; then
                 IS_IOS=true
+            elif [ "$arg" = "android" ]; then
+                IS_ANDROID=true
             fi
             shift
             ;;
         --device=*)
             DEVICE_ID="${arg#*=}"
-            IS_IOS=true
+            if [ "$PLATFORM" = "ios" ]; then
+                IS_IOS=true
+            elif [ "$PLATFORM" = "android" ]; then
+                IS_ANDROID=true
+            fi
             shift
             ;;
         *)
@@ -76,6 +83,73 @@ if [ "$CLEAN" = true ]; then
     echo -e "${BLUE}🧹 Clean build enabled (use --no-clean to skip)${NC}"
 else
     echo -e "${BLUE}⚡ Fast build mode (no cleaning)${NC}"
+fi
+
+# Android 设备/模拟器选择
+if [ "$PLATFORM" = "android" ]; then
+    if [ -z "$DEVICE_ID" ]; then
+        echo -e "${BLUE}📱 Checking available Android devices/emulators...${NC}"
+        
+        # 获取可用的 Android 设备和模拟器列表
+        ANDROID_DEVICES=$(flutter devices 2>/dev/null | grep -i "android" || true)
+        
+        if [ -z "$ANDROID_DEVICES" ]; then
+            echo -e "${BLUE}⚠️  No Android devices or emulators found${NC}"
+            echo -e "${BLUE}💡 Attempting to start Android emulator...${NC}"
+            
+            # 尝试启动默认模拟器
+            emulator -avd $(emulator -list-avds | head -n 1) &>/dev/null &
+            EMULATOR_PID=$!
+            
+            # 等待模拟器启动 (最多等待 60 秒)
+            echo -e "${BLUE}⏳ Waiting for emulator to boot...${NC}"
+            for i in {1..60}; do
+                sleep 1
+                ANDROID_DEVICES=$(flutter devices 2>/dev/null | grep -i "android" || true)
+                if [ ! -z "$ANDROID_DEVICES" ]; then
+                    echo -e "${GREEN}✅ Emulator ready!${NC}"
+                    break
+                fi
+                printf "."
+            done
+            echo ""
+            
+            if [ -z "$ANDROID_DEVICES" ]; then
+                echo "❌ Error: Emulator did not start in time"
+                echo "Please start an Android emulator manually and try again"
+                echo "Or connect a physical Android device with USB debugging enabled"
+                exit 1
+            fi
+        fi
+        
+        echo -e "${GREEN}Available Android devices:${NC}"
+        echo "$ANDROID_DEVICES"
+        echo ""
+        
+        # 提取第一个 Android 设备的 ID（优先选择 emulator）
+        # Flutter devices 输出格式: "设备名 (类型) • 设备ID • 架构 • 详细信息"
+        # 使用 sed 提取第一个 • 和第二个 • 之间的内容（设备ID）
+        DEVICE_ID=$(echo "$ANDROID_DEVICES" | grep -i "emulator" | head -n 1 | sed -n 's/.*• \([^ ]*\) •.*/\1/p' || true)
+        
+        # 如果没有 emulator，尝试获取物理设备
+        if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(echo "$ANDROID_DEVICES" | grep -i "android" | head -n 1 | sed -n 's/.*• \([^ ]*\) •.*/\1/p' || true)
+        fi
+        
+        if [ -z "$DEVICE_ID" ]; then
+            echo "❌ Error: Could not extract device ID from Android devices list"
+            echo "Debug info:"
+            echo "ANDROID_DEVICES output:"
+            echo "$ANDROID_DEVICES"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}📱 Selected Android device: $DEVICE_ID${NC}"
+        PLATFORM="$DEVICE_ID"
+    else
+        echo -e "${GREEN}📱 Using specified device: $DEVICE_ID${NC}"
+        PLATFORM="$DEVICE_ID"
+    fi
 fi
 
 # iOS 设备/模拟器选择
@@ -149,6 +223,14 @@ if [ "$CLEAN" = true ]; then
         if [ -d "ios/Pods" ]; then
             echo -e "${BLUE}🧹 Cleaning iOS Pods...${NC}"
             rm -rf ios/Pods ios/Podfile.lock
+        fi
+    fi
+    
+    # Android 特殊清理
+    if [ "$IS_ANDROID" = true ]; then
+        if [ -d "android/build" ]; then
+            echo -e "${BLUE}🧹 Cleaning Android build...${NC}"
+            rm -rf android/build android/app/build
         fi
     fi
     
