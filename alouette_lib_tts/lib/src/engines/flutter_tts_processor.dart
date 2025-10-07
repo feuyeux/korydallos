@@ -59,8 +59,15 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           // Set volume to maximum for better audibility
           await _tts.setVolume(1.0);
           
-          // Set normal speech rate
-          await _tts.setSpeechRate(0.5);
+          // Set speech rate based on platform
+          if (Platform.isAndroid) {
+            // Android: Use 0.6 as default (normal speed)
+            await _tts.setSpeechRate(0.6);
+            TTSLogger.debug('TTS: Initialized with Android default rate=0.6');
+          } else {
+            // iOS: 0.5 is normal rate
+            await _tts.setSpeechRate(0.5);
+          }
           
           // Set normal pitch
           await _tts.setPitch(1.0);
@@ -376,8 +383,18 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         await _tts.setSpeechRate(rate * 0.5);
         await _tts.setVolume(volume);
         await _tts.setPitch(pitch);  // 1.0 is normal for pitch
+      } else if (!kIsWeb && Platform.isAndroid) {
+        // Android: Apply 0.6x scaling to fix overly fast speech rate
+        // User sets rate=1.0 -> actual setSpeechRate(0.6)
+        final androidRate = rate * 0.6;
+        await _tts.setSpeechRate(androidRate);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);
+        TTSLogger.debug(
+          'Android TTS rate adjustment: requested=$rate -> actual=$androidRate',
+        );
       } else {
-        // Other platforms (Android, etc.): 1.0 is normal for all parameters
+        // Other platforms: 1.0 is normal for all parameters
         await _tts.setSpeechRate(rate);
         await _tts.setVolume(volume);
         await _tts.setPitch(pitch);

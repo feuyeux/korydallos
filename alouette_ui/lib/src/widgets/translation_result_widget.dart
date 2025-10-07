@@ -475,7 +475,9 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   Future<void> _playTTS(String language, String text) async {
     if (widget.ttsService == null) return;
 
+    // Reset all playing states (TTSService will handle stopping previous playback internally)
     setState(() {
+      _playingStates.updateAll((key, value) => false);
       _playingStates[language] = true;
     });
 
@@ -625,6 +627,8 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       }
     }
   }
+
+
 
   /// Get language code from language key (which may be code or name)
   String? _getLanguageCode(String languageKey) {

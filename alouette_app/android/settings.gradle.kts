@@ -25,22 +25,4 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
 }
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
-        
-        // Flutter SDK local repository - must be included
-        val storageUrl = System.getenv("FLUTTER_STORAGE_BASE_URL") ?: "https://storage.googleapis.com"
-        maven {
-            url = uri("$storageUrl/download.flutter.io")
-        }
-        
-        google()
-        mavenCentral()
-    }
-}
-
 include(":app")

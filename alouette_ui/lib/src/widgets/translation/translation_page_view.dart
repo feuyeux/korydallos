@@ -82,6 +82,24 @@ class _TranslationPageViewState extends State<TranslationPageView> {
         }
         _isConfigurationLoaded = true;
       });
+      
+      // 立即检查自动检测的配置
+      final autoConfig = _translationService.autoDetectedConfig;
+      if (autoConfig != null && autoConfig.selectedModel.isNotEmpty) {
+        logger.info('TranslationPageView: Auto-detected config available', tag: 'Translation', details: {
+          'provider': autoConfig.provider,
+          'serverUrl': autoConfig.serverUrl,
+          'model': autoConfig.selectedModel,
+        });
+        
+        // 如果没有手动配置，使用自动检测的配置
+        if (_manualConfig.selectedModel.isEmpty) {
+          setState(() {
+            _manualConfig = autoConfig;
+          });
+          await _persistConfiguration(autoConfig);
+        }
+      }
     } catch (e) {
       final logger = ServiceLocator.logger;
       logger.error('TranslationPageView: Failed to load configuration', tag: 'Translation', error: e);
@@ -95,7 +113,17 @@ class _TranslationPageViewState extends State<TranslationPageView> {
 
   void _onTranslationServiceChanged() {
     if (!mounted) return;
+    
     final autoConfig = _translationService.autoDetectedConfig;
+    final logger = ServiceLocator.logger;
+    
+    logger.debug('TranslationPageView: Service changed', tag: 'Translation', details: {
+      'hasAutoConfig': autoConfig != null,
+      'autoModel': autoConfig?.selectedModel ?? 'none',
+      'manualModel': _manualConfig.selectedModel,
+      'isConfigured': _isConfigured,
+    });
+    
     if (autoConfig != null &&
         autoConfig.selectedModel.isNotEmpty &&
         autoConfig != _manualConfig) {
@@ -128,34 +156,10 @@ class _TranslationPageViewState extends State<TranslationPageView> {
   List<String> get _languages => _selectedLanguages.toList(growable: false);
 
   bool get _isConfigured {
-    // If configuration hasn't loaded yet, assume not configured
-    if (!_isConfigurationLoaded) {
-      return false;
-    }
-    
-    // Check manual config first (from saved configuration)
-    if (_manualConfig.selectedModel.isNotEmpty) {
-      final logger = ServiceLocator.logger;
-      logger.debug('TranslationPageView: Manual config is valid', tag: 'Translation', details: {
-        'provider': _manualConfig.provider,
-        'serverUrl': _manualConfig.serverUrl,
-        'model': _manualConfig.selectedModel,
-      });
-      return true;
-    }
-    
-    // Fall back to auto-detected config
-    final autoConfig = _translationService.autoDetectedConfig;
-    final isConfigured = autoConfig != null && autoConfig.selectedModel.isNotEmpty;
-    
-    final logger = ServiceLocator.logger;
-    logger.debug('TranslationPageView: Using auto-detected config', tag: 'Translation', details: {
-      'hasAutoConfig': autoConfig != null,
-      'model': autoConfig?.selectedModel ?? 'none',
-      'isConfigured': isConfigured,
-    });
-    
-    return isConfigured;
+    // Priority: manual config > auto config > loading state (prevents button flicker)
+    if (_manualConfig.selectedModel.isNotEmpty) return true;
+    if (_translationService.autoDetectedConfig?.selectedModel.isNotEmpty == true) return true;
+    return !_isConfigurationLoaded;
   }
 
   void _onLanguagesChanged(List<String> languages) {
