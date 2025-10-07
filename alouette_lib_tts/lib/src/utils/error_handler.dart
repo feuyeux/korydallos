@@ -1,6 +1,6 @@
 import '../models/tts_error.dart';
 import '../exceptions/tts_exceptions.dart';
-import 'tts_logger.dart';
+import 'logger_config.dart';
 
 /// 统一的错误处理工具类
 /// 避免在各个组件中重复编写相同的错误处理逻辑
@@ -103,7 +103,7 @@ class ErrorHandler {
     dynamic error,
     String processorType,
   ) {
-    TTSLogger.error('Failed to initialize $processorType processor', error);
+    ttsLogger.e('[TTS] Failed to initialize $processorType processor', error: error);
 
     if (error is TTSError) {
       return TTSError(
@@ -122,7 +122,7 @@ class ErrorHandler {
 
   /// 处理语音列表获取错误的统一方法
   static TTSError handleVoiceListError(dynamic error, String processorType) {
-    TTSLogger.error('Failed to get voices from $processorType', error);
+    ttsLogger.e('[TTS] Failed to get voices from $processorType', error: error);
 
     if (error is TTSError) {
       return error; // 直接返回已经包装好的错误
@@ -158,11 +158,7 @@ class ErrorHandler {
     String text,
     String voiceName,
   ) {
-    TTSLogger.error('Text synthesis failed with $processorType', {
-      'error': error.toString(),
-      'textLength': text.length,
-      'voiceName': voiceName,
-    });
+    ttsLogger.e('[TTS] Text synthesis failed with $processorType - textLength: ${text.length}, voiceName: $voiceName', error: error);
 
     if (error is TTSError) {
       return error;
@@ -201,11 +197,7 @@ class ErrorHandler {
     String operation,
     String? filePath,
   ) {
-    TTSLogger.error('File operation failed', {
-      'operation': operation,
-      'filePath': filePath,
-      'error': error.toString(),
-    });
+    ttsLogger.e('[TTS] File operation failed - operation: $operation, filePath: $filePath', error: error);
 
     if (error is TTSError) {
       return error;
@@ -239,10 +231,10 @@ class ErrorHandler {
   }) async {
     try {
       final result = await operation();
-      TTSLogger.debug('Operation completed successfully: $context');
+      ttsLogger.d('[TTS] Operation completed successfully: $context');
       return result;
     } catch (e) {
-      TTSLogger.error('Operation failed: $context', e);
+      ttsLogger.e('[TTS] Operation failed: $context', error: e);
 
       if (e is TTSError) {
         rethrow;
@@ -261,10 +253,10 @@ class ErrorHandler {
   }) {
     try {
       final result = operation();
-      TTSLogger.debug('Operation completed successfully: $context');
+      ttsLogger.d('[TTS] Operation completed successfully: $context');
       return result;
     } catch (e) {
-      TTSLogger.error('Operation failed: $context', e);
+      ttsLogger.e('[TTS] Operation failed: $context', error: e);
 
       if (e is TTSError) {
         rethrow;

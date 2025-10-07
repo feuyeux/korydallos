@@ -1,6 +1,6 @@
 import 'dart:io' show Process;
 import '../utils/platform_utils.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 import '../models/tts_error.dart';
 import '../enums/tts_engine_type.dart';
 import '../exceptions/tts_exceptions.dart';
@@ -18,31 +18,27 @@ class TTSEngineFactory {
 
   /// Create TTS processor for current platform automatically
   Future<TTSProcessor> createForPlatform() async {
-    TTSLogger.debug('Creating TTS processor for current platform');
+    ttsLogger.d('[TTS] Creating TTS processor for current platform');
 
     try {
       final strategy = PlatformUtils.getTTSStrategy();
       final fallbackEngines = strategy.getFallbackEngines();
 
-      TTSLogger.debug('Platform strategy: ${strategy.runtimeType}');
-      TTSLogger.debug(
-        'Fallback engines: ${fallbackEngines.map((e) => e.name).join(', ')}',
-      );
+      ttsLogger.d('[TTS] Platform strategy: ${strategy.runtimeType}');
+      ttsLogger.d('[TTS] Fallback engines: ${fallbackEngines.map((e) => e.name).join(', ')}');
 
       // Try engines in order of preference
       for (final engine in fallbackEngines) {
         try {
           if (strategy.isEngineSupported(engine) &&
               await isEngineAvailable(engine)) {
-            TTSLogger.debug('Using engine: ${engine.name}');
+            ttsLogger.d('[TTS] Using engine: ${engine.name}');
             return await createForEngine(engine);
           } else {
-            TTSLogger.debug(
-              'Engine ${engine.name} not available, trying next...',
-            );
+            ttsLogger.d('[TTS] Engine ${engine.name} not available, trying next...');
           }
         } catch (e) {
-          TTSLogger.warning('Failed to create ${engine.name} engine: $e');
+          ttsLogger.w('[TTS] Failed to create ${engine.name} engine', error: e);
           continue; // Try next engine
         }
       }
@@ -50,9 +46,7 @@ class TTSEngineFactory {
       // If no engines from strategy work, try any available engine
       final availableEngines = await getAvailableEngines();
       if (availableEngines.isNotEmpty) {
-        TTSLogger.warning(
-          'Using fallback engine: ${availableEngines.first.name}',
-        );
+        ttsLogger.w('[TTS] Using fallback engine: ${availableEngines.first.name}');
         return await createForEngine(availableEngines.first);
       }
 
@@ -63,14 +57,14 @@ class TTSEngineFactory {
         code: TTSErrorCodes.initializationFailed,
       );
     } catch (e) {
-      TTSLogger.error('Failed to create processor for platform', e);
+      ttsLogger.e('[TTS] Failed to create processor for platform', error: e);
       rethrow;
     }
   }
 
   /// Create TTS processor for specific engine type
   Future<TTSProcessor> createForEngine(TTSEngineType engineType) async {
-    TTSLogger.debug('Creating TTS processor for engine: ${engineType.name}');
+    ttsLogger.d('[TTS] Creating TTS processor for engine: ${engineType.name}');
 
     // Check availability first
     final available = await isEngineAvailable(engineType);
@@ -117,9 +111,7 @@ class TTSEngineFactory {
           availableEngines.add(engineType);
         }
       } catch (e) {
-        TTSLogger.warning(
-          'Failed to check availability for ${engineType.name}: $e',
-        );
+        ttsLogger.w('[TTS] Failed to check availability for ${engineType.name}', error: e);
       }
     }
 
@@ -141,23 +133,21 @@ class TTSEngineFactory {
   /// Check Edge TTS availability
   Future<bool> _isEdgeTTSAvailable() async {
     if (!PlatformUtils.supportsProcessExecution) {
-      TTSLogger.debug(
-        'Edge TTS not supported: platform does not support process execution',
-      );
+      ttsLogger.d('[TTS] Edge TTS not supported: platform does not support process execution');
       return false;
     }
 
     try {
-      TTSLogger.debug('Checking Edge TTS availability...');
+      ttsLogger.d('[TTS] Checking Edge TTS availability...');
       final available = await PlatformUtils.isEdgeTTSAvailableWithTimeout(
         timeout: const Duration(seconds: 12),
       );
-      TTSLogger.debug('Edge TTS availability check result: $available');
+      ttsLogger.d('[TTS] Edge TTS availability check result: $available');
 
       if (!available) {
         // Get diagnostic information
         final edgePath = await PlatformUtils.getEdgeTTSPath();
-        TTSLogger.debug('Edge TTS path check result: $edgePath');
+        ttsLogger.d('[TTS] Edge TTS path check result: $edgePath');
 
         // Try version command for more info
         try {
@@ -175,22 +165,22 @@ class TTSEngineFactory {
             },
             includeParentEnvironment: true,
           ).timeout(const Duration(seconds: 5));
-          TTSLogger.debug('edge-tts --version exit code: ${result.exitCode}');
-          TTSLogger.debug('edge-tts --version stdout: ${result.stdout}');
-          TTSLogger.debug('edge-tts --version stderr: ${result.stderr}');
+          ttsLogger.d('[TTS] edge-tts --version exit code: ${result.exitCode}');
+          ttsLogger.d('[TTS] edge-tts --version stdout: ${result.stdout}');
+          ttsLogger.d('[TTS] edge-tts --version stderr: ${result.stderr}');
           final stderrStr = result.stderr.toString();
           if (!available && stderrStr.contains('usage:')) {
-            TTSLogger.debug('edge-tts CLI present (usage output detected); treating as available');
+            ttsLogger.d('[TTS] edge-tts CLI present (usage output detected); treating as available');
             return true;
           }
         } catch (e) {
-          TTSLogger.debug('edge-tts --version command failed: $e');
+          ttsLogger.d('[TTS] edge-tts --version command failed', error: e);
         }
       }
 
       return available;
     } catch (e) {
-      TTSLogger.warning('Edge TTS availability check failed: $e');
+      ttsLogger.w('[TTS] Edge TTS availability check failed', error: e);
       return false;
     }
   }

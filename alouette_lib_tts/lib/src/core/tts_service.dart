@@ -5,7 +5,7 @@ import '../models/tts_request.dart';
 import '../models/tts_error.dart';
 import '../enums/tts_engine_type.dart';
 import '../exceptions/tts_exceptions.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 import '../utils/error_handler.dart';
 import 'package:flutter/foundation.dart';
 
@@ -58,9 +58,7 @@ class TTSService implements TTSServiceInterface {
         final strategy = PlatformUtils.getTTSStrategy();
 
         if (!strategy.isEngineSupported(preferredEngine)) {
-          TTSLogger.warning(
-            'Preferred engine ${preferredEngine.name} is not supported on ${PlatformUtils.platformName}',
-          );
+          ttsLogger.w('[TTS] Preferred engine ${preferredEngine.name} is not supported on ${PlatformUtils.platformName}');
 
           if (!autoFallback) {
             throw TTSError(
@@ -77,24 +75,16 @@ class TTSService implements TTSServiceInterface {
           try {
             _processor = await _engineFactory.createForEngine(preferredEngine);
             _currentEngine = preferredEngine;
-            TTSLogger.engine(
-              'Initialized',
-              preferredEngine.name,
-              'Using preferred engine',
-            );
+            ttsLogger.i('[TTS] Engine initialized: ${preferredEngine.name} - Using preferred engine');
           } catch (e) {
-            TTSLogger.warning(
-              'Preferred engine ${preferredEngine.name} failed: $e',
-            );
+            ttsLogger.w('[TTS] Preferred engine ${preferredEngine.name} failed', error: e);
 
             if (!autoFallback) {
               rethrow; // Don't fallback if not allowed
             }
 
             // Fallback using platform strategy
-            TTSLogger.warning(
-              'Preferred engine ${preferredEngine.name} failed, using platform fallback strategy',
-            );
+            ttsLogger.w('[TTS] Preferred engine ${preferredEngine.name} failed, using platform fallback strategy');
             _processor = await _engineFactory.createForPlatform();
             _currentEngine = _getActualEngineFromProcessor();
           }
@@ -106,11 +96,7 @@ class TTSService implements TTSServiceInterface {
       }
 
       _initialized = true;
-      TTSLogger.initialization(
-        'TTS service',
-        'completed',
-        'Using ${_currentEngine?.name} engine on ${PlatformUtils.platformName}',
-      );
+      ttsLogger.i('[TTS] Service initialization completed - Using ${_currentEngine?.name} engine on ${PlatformUtils.platformName}');
     } catch (e) {
       throw ErrorHandler.handleInitializationError(e, 'TTS service');
     }
@@ -137,9 +123,7 @@ class TTSService implements TTSServiceInterface {
       }
 
       // Use platform fallback strategy
-      TTSLogger.warning(
-        'Engine ${engineType.name} not supported on ${PlatformUtils.platformName}, using platform fallback',
-      );
+      ttsLogger.w('[TTS] Engine ${engineType.name} not supported on ${PlatformUtils.platformName}, using platform fallback');
       final fallbackEngines = strategy.getFallbackEngines();
 
       for (final fallbackEngine in fallbackEngines) {
@@ -165,19 +149,15 @@ class TTSService implements TTSServiceInterface {
       // Create new processor
       _processor = await _engineFactory.createForEngine(engineType);
       _currentEngine = engineType;
-      TTSLogger.engine(
-        'Switched',
-        engineType.name,
-        'Engine switch completed successfully on ${PlatformUtils.platformName}',
-      );
+      ttsLogger.i('[TTS] Engine switched: ${engineType.name} - Engine switch completed successfully on ${PlatformUtils.platformName}');
 
       // Dispose old processor
       if (disposeOld && oldProcessor != null) {
         try {
           oldProcessor.dispose();
-          TTSLogger.debug('Old processor disposed successfully');
+          ttsLogger.d('[TTS] Old processor disposed successfully');
         } catch (e) {
-          TTSLogger.warning('Failed to dispose old processor: $e');
+          ttsLogger.w('[TTS] Failed to dispose old processor', error: e);
         }
       }
     } catch (e) {
@@ -260,6 +240,13 @@ class TTSService implements TTSServiceInterface {
     }
   }
 
+
+
+  /// Check if specific engine is available
+  Future<bool> isEngineAvailable(TTSEngineType engineType) async {
+    return await _engineFactory.isEngineAvailable(engineType);
+  }
+
   /// Get platform and engine information
   Future<Map<String, dynamic>> getPlatformInfo() async {
     final platformInfo = await _engineFactory.getPlatformInfo();
@@ -282,15 +269,31 @@ class TTSService implements TTSServiceInterface {
     };
   }
 
-  /// Check if specific engine is available
-  Future<bool> isEngineAvailable(TTSEngineType engineType) async {
-    return await _engineFactory.isEngineAvailable(engineType);
+  /// Clear audio cache for all items
+  void clearAudioCache() {
+    _processor?.cacheManager.clearAudioCache();
+    ttsLogger.d('[CACHE] Cleared all audio caches');
   }
 
-  /// Get all available engines
-  Future<List<TTSEngineType>> getAvailableEngines() async {
-    return await _engineFactory.getAvailableEngines();
+  /// Clear audio cache for a specific text and voice
+  void clearAudioCacheItem(String text, String voiceName, {String format = 'mp3'}) {
+    _processor?.cacheManager.clearAudioCacheItem(text, voiceName, format);
+    ttsLogger.d('[CACHE] Cleared audio cache for specific item');
   }
+
+  /// Reinitialize service with new settings
+  Future<void> reinitialize({
+    TTSEngineType? preferredEngine,
+    bool autoFallback = true,
+  }) async {
+    dispose();
+    await initialize(
+      preferredEngine: preferredEngine,
+      autoFallback: autoFallback,
+    );
+  }
+
+
 
   /// Speak text directly with audio playback
   /// All parameters are now encapsulated in TTSRequest for consistency
@@ -336,7 +339,7 @@ class TTSService implements TTSServiceInterface {
         selectedVoice = bestVoice.id;
       }
 
-      TTSLogger.debug('Speaking text with voice: $selectedVoice');
+      ttsLogger.d('[TTS] Speaking text with voice: $selectedVoice');
 
       // Create TTS request with all parameters
       final request = TTSRequest(
@@ -355,14 +358,12 @@ class TTSService implements TTSServiceInterface {
 
       // Check if this is minimal audio data (direct playback mode)
       if (audioData.length <= 10) {
-        TTSLogger.debug(
-          'Using direct playback mode - audio should have played already',
-        );
+        ttsLogger.d('[TTS] Using direct playback mode - audio should have played already');
         return; // Direct playback has already occurred
       }
 
       await audioPlayer.playBytes(audioData);
-      TTSLogger.debug('Audio playback completed');
+      ttsLogger.d('[TTS] Audio playback completed');
     } catch (e) {
       throw TTSError(
         'Failed to speak text using ${_currentEngine?.name} engine: $e',
@@ -372,60 +373,32 @@ class TTSService implements TTSServiceInterface {
     }
   }
 
-  /// Get platform-specific configuration for an engine
-  Map<String, dynamic> getEngineConfig(TTSEngineType engineType) {
-    final strategy = PlatformUtils.getTTSStrategy();
-    return strategy.getEngineConfig(engineType);
-  }
 
-  /// Get recommended engine for current platform
-  TTSEngineType getRecommendedEngine() {
-    return PlatformUtils.recommendedEngine;
-  }
 
-  /// Get fallback engines for current platform
-  List<TTSEngineType> getFallbackEngines() {
-    return PlatformUtils.getFallbackEngines();
-  }
 
-  /// Clear audio cache for all items
-  void clearAudioCache() {
-    _processor?.cacheManager.clearAudioCache();
-    TTSLogger.debug('Cleared all audio caches');
-  }
 
-  /// Clear audio cache for a specific text and voice
-  void clearAudioCacheItem(String text, String voiceName, {String format = 'mp3'}) {
-    _processor?.cacheManager.clearAudioCacheItem(text, voiceName, format);
-    TTSLogger.debug('Cleared audio cache for specific item');
-  }
 
-  /// Reinitialize service with new settings
-  Future<void> reinitialize({
-    TTSEngineType? preferredEngine,
-    bool autoFallback = true,
-  }) async {
-    dispose();
-    await initialize(
-      preferredEngine: preferredEngine,
-      autoFallback: autoFallback,
-    );
-  }
+
+
+
+
+
+
 
   /// Dispose service and release resources
   void dispose() {
-    TTSLogger.debug('Disposing TTS service');
+    ttsLogger.d('[TTS] Disposing TTS service');
     try {
       _processor?.dispose();
       _audioPlayer?.dispose();
     } catch (e) {
-      TTSLogger.warning('Error during disposal: $e');
+      ttsLogger.w('[TTS] Error during disposal', error: e);
     } finally {
       _processor = null;
       _audioPlayer = null;
       _currentEngine = null;
       _initialized = false;
-      TTSLogger.debug('TTS service disposed successfully');
+      ttsLogger.d('[TTS] TTS service disposed successfully');
     }
   }
 

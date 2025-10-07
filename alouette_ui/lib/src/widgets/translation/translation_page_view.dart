@@ -83,17 +83,17 @@ class _TranslationPageViewState extends State<TranslationPageView> {
         _isConfigurationLoaded = true;
       });
       
-      // 立即检查自动检测的配置
-      final autoConfig = _translationService.autoDetectedConfig;
-      if (autoConfig != null && autoConfig.selectedModel.isNotEmpty) {
-        logger.info('TranslationPageView: Auto-detected config available', tag: 'Translation', details: {
-          'provider': autoConfig.provider,
-          'serverUrl': autoConfig.serverUrl,
-          'model': autoConfig.selectedModel,
-        });
-        
-        // 如果没有手动配置，使用自动检测的配置
-        if (_manualConfig.selectedModel.isEmpty) {
+      // If no manual config is set, try to auto-detect
+      if (_manualConfig.selectedModel.isEmpty) {
+        logger.info('TranslationPageView: No manual config, attempting auto-detection', tag: 'Translation');
+        final autoConfig = await _translationService.autoConfigureLLM(enableRetry: false);
+        if (autoConfig != null && autoConfig.selectedModel.isNotEmpty) {
+          logger.info('TranslationPageView: Auto-detected config available', tag: 'Translation', details: {
+            'provider': autoConfig.provider,
+            'serverUrl': autoConfig.serverUrl,
+            'model': autoConfig.selectedModel,
+          });
+          
           setState(() {
             _manualConfig = autoConfig;
           });
@@ -114,26 +114,15 @@ class _TranslationPageViewState extends State<TranslationPageView> {
   void _onTranslationServiceChanged() {
     if (!mounted) return;
     
-    final autoConfig = _translationService.autoDetectedConfig;
     final logger = ServiceLocator.logger;
     
     logger.debug('TranslationPageView: Service changed', tag: 'Translation', details: {
-      'hasAutoConfig': autoConfig != null,
-      'autoModel': autoConfig?.selectedModel ?? 'none',
       'manualModel': _manualConfig.selectedModel,
       'isConfigured': _isConfigured,
     });
     
-    if (autoConfig != null &&
-        autoConfig.selectedModel.isNotEmpty &&
-        autoConfig != _manualConfig) {
-      setState(() {
-        _manualConfig = autoConfig;
-      });
-      unawaited(_persistConfiguration(autoConfig));
-    } else {
-      setState(() {}); // Trigger rebuild for other state updates.
-    }
+    // Just trigger rebuild for state updates
+    setState(() {});
   }
 
   Future<void> _persistConfiguration(LLMConfig config) async {
@@ -156,9 +145,8 @@ class _TranslationPageViewState extends State<TranslationPageView> {
   List<String> get _languages => _selectedLanguages.toList(growable: false);
 
   bool get _isConfigured {
-    // Priority: manual config > auto config > loading state (prevents button flicker)
+    // Check if we have a valid manual config or still loading
     if (_manualConfig.selectedModel.isNotEmpty) return true;
-    if (_translationService.autoDetectedConfig?.selectedModel.isNotEmpty == true) return true;
     return !_isConfigurationLoaded;
   }
 
@@ -203,7 +191,7 @@ class _TranslationPageViewState extends State<TranslationPageView> {
     try {
       final configToUse = _manualConfig.selectedModel.isNotEmpty
           ? _manualConfig
-          : _translationService.autoDetectedConfig;
+          : null;
 
       final result = await _translationService.translateWithAutoConfig(
         input,
@@ -290,7 +278,6 @@ Future<LLMConfig?> showTranslationConfigDialog(
 
   LLMConfig initialConfig =
       fallbackConfig ??
-      translationService.autoDetectedConfig ??
       const LLMConfig(
         provider: 'ollama',
         serverUrl: 'http://localhost:11434',
@@ -302,7 +289,6 @@ Future<LLMConfig?> showTranslationConfigDialog(
     await configurationManager.initialize();
     final appConfig = await configurationManager.getConfiguration();
     initialConfig =
-        translationService.autoDetectedConfig ??
         appConfig.translationConfig ??
         initialConfig;
   } catch (_) {
@@ -325,9 +311,6 @@ Future<LLMConfig?> showTranslationConfigDialog(
     } catch (_) {
       // Persist failure is non-fatal.
     }
-
-    // Clear cached auto-config so the service re-evaluates with the new config.
-    translationService.clearAutoConfig();
   }
 
   return result;

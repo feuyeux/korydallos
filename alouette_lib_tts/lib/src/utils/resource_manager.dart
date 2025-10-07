@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'tts_logger.dart';
+import 'logger_config.dart';
 import 'file_utils.dart';
 
 /// 资源管理器 - 统一管理临时文件、进程等资源
@@ -29,7 +29,7 @@ class ResourceManager {
     );
 
     _tempFiles.add(tempFile);
-    TTSLogger.debug('Created temporary file: ${tempFile.path}');
+    ttsLogger.d('[TTS] Created temporary file: ${tempFile.path}');
 
     // 如果设置了自动清理延迟，则安排清理任务
     if (autoCleanupDelay != null) {
@@ -47,7 +47,7 @@ class ResourceManager {
     final tempDir = await FileUtils.createTempDirectory(prefix: prefix);
 
     _tempDirectories.add(tempDir);
-    TTSLogger.debug('Created temporary directory: ${tempDir.path}');
+    ttsLogger.d('[TTS] Created temporary directory: ${tempDir.path}');
 
     // 如果设置了自动清理延迟，则安排清理任务
     if (autoCleanupDelay != null) {
@@ -60,7 +60,7 @@ class ResourceManager {
   /// 追踪进程
   void trackProcess(Process process) {
     _processes.add(process);
-    TTSLogger.debug('Tracking process: ${process.pid}');
+    ttsLogger.d('[TTS] Tracking process: ${process.pid}');
   }
 
   /// 清理特定的临时文件
@@ -74,11 +74,9 @@ class ResourceManager {
       // 取消相关的自动清理任务
       _cancelAutoCleanup(file.path);
 
-      TTSLogger.debug('Cleaned up temporary file: ${file.path}');
+      ttsLogger.d('[TTS] Cleaned up temporary file: ${file.path}');
     } catch (e) {
-      TTSLogger.warning(
-        'Failed to cleanup temporary file: ${file.path}, error: $e',
-      );
+      ttsLogger.w('[TTS] Failed to cleanup temporary file: ${file.path}', error: e);
     }
   }
 
@@ -96,11 +94,9 @@ class ResourceManager {
       // 取消相关的自动清理任务
       _cancelAutoCleanup(directory.path);
 
-      TTSLogger.debug('Cleaned up temporary directory: ${directory.path}');
+      ttsLogger.d('[TTS] Cleaned up temporary directory: ${directory.path}');
     } catch (e) {
-      TTSLogger.warning(
-        'Failed to cleanup temporary directory: ${directory.path}, error: $e',
-      );
+      ttsLogger.w('[TTS] Failed to cleanup temporary directory: ${directory.path}', error: e);
     }
   }
 
@@ -111,9 +107,9 @@ class ResourceManager {
         process.kill(ProcessSignal.sigkill);
       }
       _processes.remove(process);
-      TTSLogger.debug('Cleaned up process: ${process.pid}');
+      ttsLogger.d('[TTS] Cleaned up process: ${process.pid}');
     } catch (e) {
-      TTSLogger.warning('Failed to cleanup process: ${process.pid}, error: $e');
+      ttsLogger.w('[TTS] Failed to cleanup process: ${process.pid}', error: e);
     }
   }
 
@@ -132,9 +128,7 @@ class ResourceManager {
     _tempFiles.clear();
 
     if (errors.isNotEmpty) {
-      TTSLogger.warning(
-        'Some temporary files failed to cleanup: ${errors.join(', ')}',
-      );
+      ttsLogger.w('[TTS] Some temporary files failed to cleanup: ${errors.join(', ')}');
     }
   }
 
@@ -153,9 +147,7 @@ class ResourceManager {
     _tempDirectories.clear();
 
     if (errors.isNotEmpty) {
-      TTSLogger.warning(
-        'Some temporary directories failed to cleanup: ${errors.join(', ')}',
-      );
+      ttsLogger.w('[TTS] Some temporary directories failed to cleanup: ${errors.join(', ')}');
     }
   }
 
@@ -174,15 +166,13 @@ class ResourceManager {
     _processes.clear();
 
     if (errors.isNotEmpty) {
-      TTSLogger.warning(
-        'Some processes failed to cleanup: ${errors.join(', ')}',
-      );
+      ttsLogger.w('[TTS] Some processes failed to cleanup: ${errors.join(', ')}');
     }
   }
 
   /// 清理所有资源
   Future<void> cleanupAll() async {
-    TTSLogger.debug('Starting cleanup of all resources');
+    ttsLogger.d('[TTS] Starting cleanup of all resources');
 
     // 取消所有自动清理任务
     for (final timer in _cleanupTimers.values) {
@@ -195,7 +185,7 @@ class ResourceManager {
 
     cleanupAllProcesses();
 
-    TTSLogger.debug('Completed cleanup of all resources');
+    ttsLogger.d('[TTS] Completed cleanup of all resources');
   }
 
   /// 获取资源统计信息
@@ -223,14 +213,12 @@ class ResourceManager {
           await cleanupDirectory(entity);
         }
       } catch (e) {
-        TTSLogger.warning('Auto cleanup failed for $path: $e');
+        ttsLogger.w('[TTS] Auto cleanup failed for $path', error: e);
       }
       _cleanupTimers.remove(path);
     });
 
-    TTSLogger.debug(
-      'Scheduled auto cleanup for $path after ${delay.inMilliseconds}ms',
-    );
+    ttsLogger.d('[TTS] Scheduled auto cleanup for $path after ${delay.inMilliseconds}ms');
   }
 
   /// 取消自动清理任务
@@ -238,7 +226,7 @@ class ResourceManager {
     final timer = _cleanupTimers.remove(path);
     if (timer != null) {
       timer.cancel();
-      TTSLogger.debug('Cancelled auto cleanup for $path');
+      ttsLogger.d('[TTS] Cancelled auto cleanup for $path');
     }
   }
 }

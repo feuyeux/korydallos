@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger.dart';
 import '../../models/app_configuration.dart';
 
 /// Simple configuration service for Alouette applications
@@ -37,7 +37,7 @@ class ConfigurationService {
     try {
       return AppConfiguration.fromJson(json.decode(configJson));
     } catch (e) {
-      debugPrint('Failed to load configuration: $e');
+      logger.e('[CONFIG] Failed to load configuration', error: e);
       return AppConfiguration();
     }
   }
@@ -62,7 +62,7 @@ class ConfigurationService {
       await saveConfiguration(config);
       return true;
     } catch (e) {
-      debugPrint('Failed to update configuration: $e');
+      logger.e('[CONFIG] Failed to update configuration', error: e);
       return false;
     }
   }
@@ -82,7 +82,7 @@ class ConfigurationService {
       await saveConfiguration(config);
       return true;
     } catch (e) {
-      debugPrint('Failed to import configuration: $e');
+      logger.e('[CONFIG] Failed to import configuration', error: e);
       return false;
     }
   }

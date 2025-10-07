@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:audioplayers/audioplayers.dart' as ap;
 import '../models/tts_error.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 import '../utils/resource_manager.dart';
 
 /// 播放状态枚举
@@ -47,7 +47,7 @@ class AudioPlayer {
   ///
   /// [filePath] 音频文件路径
   Future<void> play(String filePath) async {
-    TTSLogger.debug('Starting audio playback for: $filePath');
+    ttsLogger.d('[TTS] Starting audio playback for: $filePath');
 
     if (!File(filePath).existsSync()) {
       _state = PlaybackState.error;
@@ -69,11 +69,11 @@ class AudioPlayer {
       );
 
       _state = PlaybackState.idle;
-      TTSLogger.debug('Audio playback completed successfully');
+      ttsLogger.d('[TTS] Audio playback completed successfully');
     } catch (e) {
       _state = PlaybackState.error;
       await _cleanup();
-      TTSLogger.error('Audio playback failed', e);
+      ttsLogger.e('[TTS] Audio playback failed', error: e);
 
       if (e is TTSError) {
         rethrow;
@@ -91,17 +91,13 @@ class AudioPlayer {
   /// [audioData] 音频数据字节数组
   /// [format] 音频格式，默认为 'mp3'
   Future<void> playBytes(Uint8List audioData, {String format = 'mp3'}) async {
-    TTSLogger.debug(
-      'Playing audio bytes: ${audioData.length} bytes for format $format',
-    );
+    ttsLogger.d('[TTS] Playing audio bytes: ${audioData.length} bytes for format $format');
 
     // Check if this is minimal audio data (direct playback indicator)
     // In direct playback mode, the TTS engine plays directly and returns
     // a minimal placeholder (≤10 bytes) to indicate completion
     if (audioData.length <= 10) {
-      TTSLogger.debug(
-        'Skipping playback of minimal audio data - direct playback already occurred',
-      );
+      ttsLogger.d('[TTS] Skipping playback of minimal audio data - direct playback already occurred');
       return;
     }
 
@@ -124,14 +120,14 @@ class AudioPlayer {
 
   /// 停止当前播放
   Future<void> stop() async {
-    TTSLogger.debug('Stopping audio playback');
+    ttsLogger.d('[TTS] Stopping audio playback');
     await _audioPlayer.stop();
     _state = PlaybackState.stopped;
   }
 
   /// 释放资源和清理临时文件
   Future<void> dispose() async {
-    TTSLogger.debug('Disposing audio player');
+    ttsLogger.d('[TTS] Disposing audio player');
     await stop();
     await _audioPlayer.dispose();
     await _cleanup();
@@ -151,13 +147,11 @@ class AudioPlayer {
     try {
       if (await file.exists()) {
         await file.delete();
-        TTSLogger.debug('Temporary file cleaned up: ${file.path}');
+        ttsLogger.d('[TTS] Temporary file cleaned up: ${file.path}');
       }
       _tempFiles.remove(file);
     } catch (e) {
-      TTSLogger.warning(
-        'Failed to cleanup temporary file: ${file.path}, error: $e',
-      );
+      ttsLogger.w('[TTS] Failed to cleanup temporary file: ${file.path}', error: e);
     }
   }
 }

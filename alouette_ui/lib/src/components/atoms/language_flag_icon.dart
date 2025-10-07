@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
 
 import '../../constants/language_constants.dart';
+import '../../core/logger.dart';
 import '../../utils/emoji_flag_style.dart';
 
 /// Cross-platform atom for rendering country flags based on language codes.
@@ -138,8 +139,8 @@ class LanguageFlagIcon extends StatelessWidget {
         fit: BoxFit.cover,
         filterQuality: FilterQuality.high,
         errorBuilder: (_, __, ___) {
-          debugPrint(
-            'LanguageFlagIcon: missing asset "$assetPath" for code ${language.code}',
+          logger.d(
+            '[UI] LanguageFlagIcon: missing asset "$assetPath" for code ${language.code}',
           );
           return onMissing();
         },

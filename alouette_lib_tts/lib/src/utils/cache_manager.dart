@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import '../models/voice_model.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 
 /// 缓存条目基类
 abstract class CacheEntry {
@@ -146,7 +146,7 @@ class CacheManager {
   /// 更新缓存配置
   void updateConfig(CacheConfig config) {
     _config = config;
-    TTSLogger.debug('Cache configuration updated');
+    ttsLogger.d('[CACHE] Cache configuration updated');
     _enforceSize();
   }
 
@@ -168,7 +168,7 @@ class CacheManager {
       expiresAt: expiresAt,
     );
 
-    TTSLogger.debug('Cached ${voices.length} voices for $engineType');
+    ttsLogger.d('[CACHE] Cached ${voices.length} voices for $engineType');
     _enforceSize();
   }
 
@@ -182,14 +182,12 @@ class CacheManager {
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _voiceCache.remove(key);
-        TTSLogger.debug('Removed expired voice cache for $engineType');
+        ttsLogger.d('[CACHE] Removed expired voice cache for $engineType');
       }
       return null;
     }
 
-    TTSLogger.debug(
-      'Retrieved ${entry.voices.length} cached voices for $engineType',
-    );
+    ttsLogger.d('[CACHE] Retrieved ${entry.voices.length} cached voices for $engineType');
     return entry.voices;
   }
 
@@ -198,10 +196,10 @@ class CacheManager {
     if (engineType != null) {
       final key = _generateVoiceCacheKey(engineType);
       _voiceCache.remove(key);
-      TTSLogger.debug('Cleared voice cache for $engineType');
+      ttsLogger.d('[CACHE] Cleared voice cache for $engineType');
     } else {
       _voiceCache.clear();
-      TTSLogger.debug('Cleared all voice caches');
+      ttsLogger.d('[CACHE] Cleared all voice caches');
     }
   }
 
@@ -232,10 +230,7 @@ class CacheManager {
       expiresAt: expiresAt,
     );
 
-    TTSLogger.debug(
-      'Cached audio data - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", '
-      'Voice: $voiceName, Size: ${audioData.length} bytes, Expires: ${expiresAt.toString()}',
-    );
+    ttsLogger.d('[CACHE] Cached audio data - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceName, Size: ${audioData.length} bytes');
     _enforceSize();
   }
 
@@ -249,25 +244,19 @@ class CacheManager {
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _audioCache.remove(key);
-        TTSLogger.debug(
-          'Removed expired audio cache - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceName',
-        );
+        ttsLogger.d('[CACHE] Removed expired audio cache - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceName');
       }
       return null;
     }
 
-    TTSLogger.debug(
-      '✅ Using cached audio - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", '
-      'Voice: $voiceName, Size: ${entry.audioData.length} bytes, '
-      'Created: ${entry.createdAt.toString()}, Expires: ${entry.expiresAt.toString()}',
-    );
+    ttsLogger.d('[CACHE] Using cached audio - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceName, Size: ${entry.audioData.length} bytes');
     return entry.audioData;
   }
 
   /// 清除音频缓存
   void clearAudioCache() {
     _audioCache.clear();
-    TTSLogger.debug('Cleared all audio caches');
+    ttsLogger.d('[CACHE] Cleared all audio caches');
   }
 
   /// 清除特定的音频缓存项
@@ -278,9 +267,7 @@ class CacheManager {
     final removed = _audioCache.remove(key);
     
     if (removed != null) {
-      TTSLogger.debug(
-        'Cleared specific audio cache: text=${text.substring(0, text.length > 20 ? 20 : text.length)}..., voice=$voiceName',
-      );
+      ttsLogger.d('[CACHE] Cleared specific audio cache: text=${text.substring(0, text.length > 20 ? 20 : text.length)}..., voice=$voiceName');
     }
   }
 
@@ -313,7 +300,7 @@ class CacheManager {
       expiresAt: expiresAt,
     );
 
-    TTSLogger.debug('Cached configuration for $configPath');
+    ttsLogger.d('[CACHE] Cached configuration for $configPath');
     _enforceSize();
   }
 
@@ -327,12 +314,12 @@ class CacheManager {
     if (entry == null || entry.isExpired) {
       if (entry != null) {
         _configCache.remove(key);
-        TTSLogger.debug('Removed expired config cache for $configPath');
+        ttsLogger.d('[CACHE] Removed expired config cache for $configPath');
       }
       return null;
     }
 
-    TTSLogger.debug('Retrieved cached configuration for $configPath');
+    ttsLogger.d('[CACHE] Retrieved cached configuration for $configPath');
     return Map.from(entry.config);
   }
 
@@ -341,10 +328,10 @@ class CacheManager {
     if (configPath != null) {
       final key = _generateConfigCacheKey(configPath);
       _configCache.remove(key);
-      TTSLogger.debug('Cleared config cache for $configPath');
+      ttsLogger.d('[CACHE] Cleared config cache for $configPath');
     } else {
       _configCache.clear();
-      TTSLogger.debug('Cleared all config caches');
+      ttsLogger.d('[CACHE] Cleared all config caches');
     }
   }
 
@@ -359,7 +346,7 @@ class CacheManager {
     _voiceCache.clear();
     _audioCache.clear();
     _configCache.clear();
-    TTSLogger.info('Cleared all caches');
+    ttsLogger.i('[CACHE] Cleared all caches');
   }
 
   /// 清除过期的缓存条目
@@ -394,7 +381,7 @@ class CacheManager {
     });
 
     if (removedCount > 0) {
-      TTSLogger.debug('Removed $removedCount expired cache entries');
+      ttsLogger.d('[CACHE] Removed $removedCount expired cache entries');
     }
   }
 
@@ -495,9 +482,7 @@ class CacheManager {
     }
 
     if (removedCount > 0) {
-      TTSLogger.debug(
-        'Evicted $removedCount cache entries to enforce size limits',
-      );
+      ttsLogger.d('[CACHE] Evicted $removedCount cache entries to enforce size limits');
     }
   }
 

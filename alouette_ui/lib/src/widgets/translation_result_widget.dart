@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:alouette_lib_trans/alouette_lib_trans.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart' as tts_lib;
 import '../constants/language_constants.dart';
+import '../core/logger.dart';
 import '../tokens/dimension_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
@@ -502,7 +503,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         // 使用智能语音选择策略，选择最高质量的人声
         final matchingVoice = _selectBestVoice(availableVoices, languageCode);
 
-        debugPrint('🎤 Selected voice for $language: ${matchingVoice.name} (${matchingVoice.locale})');
+        logger.d('[TTS] Selected voice for $language: ${matchingVoice.name} (${matchingVoice.locale})');
 
         // Synthesize text to audio data
         final audioData = await widget.ttsService!.synthesizeText(
@@ -514,17 +515,17 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         // In direct playback mode (Web/macOS), the TTS engine plays directly
         // and returns a minimal placeholder (≤10 bytes)
         if (audioData.length <= 10) {
-          debugPrint('TTS: Direct playback mode - audio already played for $language');
+          logger.d('[TTS] Direct playback mode - audio already played for $language');
           // Wait a bit to ensure playback completes
           await Future.delayed(const Duration(milliseconds: 500));
         } else {
           // Play the audio file for desktop/mobile platforms
           try {
             await _audioPlayer!.playBytes(audioData);
-            debugPrint('TTS: File playback completed for $language');
+            logger.d('[TTS] File playback completed for $language');
           } catch (playbackError) {
             // If playback fails, clear cache and rethrow
-            debugPrint('❌ Playback failed for $language, clearing cache: $playbackError');
+            logger.e('[TTS] Playback failed for $language, clearing cache', error: playbackError);
             // Clear cache for this specific text+voice combination to allow retry
             widget.ttsService!.clearAudioCacheItem(
               text,
@@ -536,7 +537,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         }
 
       } else {
-        debugPrint('TTS: No voices available for language code: $languageCode');
+        logger.w('[TTS] No voices available for language code: $languageCode');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -548,14 +549,14 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         }
       }
     } on tts_lib.TTSError catch (e) {
-      debugPrint('TTS Error for $language: ${e.message}');
+      logger.e('[TTS] Error for $language: ${e.message}');
 
       // Clear cache on synthesis errors to allow retry
       if (e.code == tts_lib.TTSErrorCodes.synthesisError ||
           e.code == tts_lib.TTSErrorCodes.voiceNotFound ||
           e.code == tts_lib.TTSErrorCodes.platformNotSupported) {
         widget.ttsService?.clearAudioCacheItem(text, '', format: 'mp3');
-        debugPrint('🗑️ Cleared cache due to TTS error');
+        logger.d('[CACHE] Cleared cache due to TTS error');
       }
 
       if (mounted) {
@@ -579,7 +580,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         );
       }
     } catch (error) {
-      debugPrint('❌ Unexpected error playing $language TTS: $error');
+      logger.e('[TTS] Unexpected error playing $language TTS', error: error);
       // Only show error if it's not related to minimal audio data playback
       if (mounted && !error.toString().contains('minimal') && !error.toString().contains('Direct playback')) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -613,11 +614,11 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
           await widget.ttsService!.stop();
         } catch (e) {
           // Some TTS engines may not support stopping, ignore errors
-          debugPrint('TTS stop not supported: $e');
+          logger.d('[TTS] Stop not supported', error: e);
         }
       }
     } catch (e) {
-      debugPrint('Error stopping TTS: $e');
+      logger.e('[TTS] Error stopping TTS', error: e);
     } finally {
       // Update UI state
       if (mounted) {
@@ -633,21 +634,21 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
   /// Get language code from language key (which may be code or name)
   String? _getLanguageCode(String languageKey) {
     try {
-      debugPrint('🔍 Processing language key: $languageKey');
+      logger.d('[TTS] Processing language key: $languageKey');
 
       // First check if it's already a language code format (e.g., zh-CN, en-US, ru-RU)
       if (languageKey.contains('-')) {
         final parts = languageKey.split('-');
         if (parts.length == 2 && parts[0].length == 2) {
-          debugPrint('✅ Language key $languageKey is already a language code');
+          logger.d('[TTS] Language key $languageKey is already a language code');
           return languageKey.toLowerCase();
         }
       }
 
       // If not a language code format, try to find from language name mapping
       final map = LanguageConstants.translationLanguageNames;
-      debugPrint(
-        '📋 Available language mappings: ${map.entries.take(3).map((e) => '${e.key}: ${e.value}').join(', ')}...',
+      logger.d(
+        '[TTS] Available language mappings: ${map.entries.take(3).map((e) => '${e.key}: ${e.value}').join(', ')}...',
       );
 
       final entry = map.entries.firstWhere(
@@ -656,7 +657,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       );
 
       if (entry.key.isEmpty) {
-        debugPrint('❌ No language code found for: $languageKey');
+        logger.w('[TTS] No language code found for: $languageKey');
         return null;
       }
 
@@ -664,15 +665,15 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
       final parts = entry.key.replaceAll('_', '-').split('-');
       final lang = parts[0].toLowerCase();
       if (parts.length == 1) {
-        debugPrint('✅ Language code for $languageKey: $lang');
+        logger.d('[TTS] Language code for $languageKey: $lang');
         return lang;
       }
       final region = parts[1].toUpperCase();
       final result = '$lang-$region';
-      debugPrint('✅ Language code for $languageKey: $result');
+      logger.d('[TTS] Language code for $languageKey: $result');
       return result;
     } catch (e) {
-      debugPrint('❌ Error getting language code for $languageKey: $e');
+      logger.e('[TTS] Error getting language code for $languageKey', error: e);
       return null;
     }
   }
@@ -733,7 +734,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         orElse: () => voices.first,
       );
       if (exactMatch.name == preferredName) {
-        debugPrint('✅ Found preferred Edge TTS voice: ${exactMatch.name}');
+        logger.d('[TTS] Found preferred Edge TTS voice: ${exactMatch.name}');
         return exactMatch;
       }
     }
@@ -750,7 +751,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         (v) => v.gender.toString().toLowerCase().contains('female'),
         orElse: () => neuralVoices.first,
       );
-      debugPrint('✅ Selected Edge TTS neural voice: ${femaleNeural.name}');
+      logger.d('[TTS] Selected Edge TTS neural voice: ${femaleNeural.name}');
       return femaleNeural;
     }
 
@@ -760,11 +761,11 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
     ).toList();
 
     if (langMatches.isNotEmpty) {
-      debugPrint('⚠️ Using Edge TTS fallback voice: ${langMatches.first.name}');
+      logger.w('[TTS] Using Edge TTS fallback voice: ${langMatches.first.name}');
       return langMatches.first;
     }
 
-    debugPrint('⚠️ Using first available voice: ${voices.first.name}');
+    logger.w('[TTS] Using first available voice: ${voices.first.name}');
     return voices.first;
   }
 
@@ -801,7 +802,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         orElse: () => voices.first,
       );
       if (exactMatch.name.toLowerCase() == preferredName.toLowerCase()) {
-        debugPrint('✅ Found preferred Flutter TTS voice: ${exactMatch.name}');
+        logger.d('[TTS] Found preferred Flutter TTS voice: ${exactMatch.name}');
         return exactMatch;
       }
     }
@@ -818,7 +819,7 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         orElse: () => exactLocaleMatches.first,
       );
       if (enhanced.name.toLowerCase().contains('enhanced')) {
-        debugPrint('✅ Found enhanced Flutter TTS voice: ${enhanced.name}');
+        logger.d('[TTS] Found enhanced Flutter TTS voice: ${enhanced.name}');
         return enhanced;
       }
 
@@ -827,12 +828,12 @@ class _TranslationResultWidgetState extends State<TranslationResultWidget> {
         (v) => v.gender.toString().toLowerCase().contains('female'),
         orElse: () => exactLocaleMatches.first,
       );
-      debugPrint('✅ Selected Flutter TTS voice: ${female.name}');
+      logger.d('[TTS] Selected Flutter TTS voice: ${female.name}');
       return female;
     }
 
     // 第三轮：语言匹配的第一个语音
-    debugPrint('⚠️ Using Flutter TTS fallback voice: ${voices.first.name}');
+    logger.w('[TTS] Using Flutter TTS fallback voice: ${voices.first.name}');
     return voices.first;
   }
 

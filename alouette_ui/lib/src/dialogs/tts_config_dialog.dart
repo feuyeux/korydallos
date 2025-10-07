@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:alouette_lib_tts/alouette_tts.dart';
+import '../core/logger.dart';
 import '../tokens/dimension_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import '../widgets/custom_button.dart';
@@ -133,7 +134,7 @@ class _TTSConfigDialogState extends State<TTSConfigDialog> {
       }
     } catch (e) {
       // Some implementations may not support stopping
-      debugPrint('TTS stop not supported: $e');
+      logger.d('[TTS] Stop not supported', error: e);
     }
   }
 

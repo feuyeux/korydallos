@@ -17,6 +17,8 @@ dependencies:
   alouette_ui:
     path: ../alouette_ui
   country_icons: ^3.0.0
+  # Standard logging library
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:

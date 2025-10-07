@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import '../models/llm_config.dart';
-import '../models/translation_request.dart';
 import '../models/translation_result.dart';
 import '../models/connection_status.dart';
 import '../providers/base_translation_provider.dart';
@@ -25,18 +24,7 @@ class TranslationService extends ChangeNotifier {
   bool _isAutoConfiguring = false;
   LLMConfig? _autoDetectedConfig;
 
-  /// Notifier for translation state changes
-  final ValueNotifier<bool> isTranslatingNotifier = ValueNotifier<bool>(false);
 
-  /// Notifier for connection testing state
-  final ValueNotifier<bool> isTestingConnectionNotifier = ValueNotifier<bool>(
-    false,
-  );
-
-  /// Notifier for auto-configuration state
-  final ValueNotifier<bool> isAutoConfiguringNotifier = ValueNotifier<bool>(
-    false,
-  );
 
   final Map<String, TranslationProvider> _providers;
 
@@ -64,8 +52,7 @@ class TranslationService extends ChangeNotifier {
   /// Check if auto-configuration is in progress
   bool get isAutoConfiguring => _isAutoConfiguring;
 
-  /// Get the auto-detected configuration
-  LLMConfig? get autoDetectedConfig => _autoDetectedConfig;
+
 
   /// Translate text to multiple target languages with enhanced error handling
   Future<TranslationResult> translateText(
@@ -88,7 +75,6 @@ class TranslationService extends ChangeNotifier {
     }
 
     _isTranslating = true;
-    isTranslatingNotifier.value = true;
     notifyListeners();
 
     try {
@@ -187,7 +173,6 @@ class TranslationService extends ChangeNotifier {
       throw handledException;
     } finally {
       _isTranslating = false;
-      isTranslatingNotifier.value = false;
       notifyListeners();
     }
   }
@@ -204,7 +189,6 @@ class TranslationService extends ChangeNotifier {
     }
 
     _isTestingConnection = true;
-    isTestingConnectionNotifier.value = true;
     notifyListeners();
 
     try {
@@ -250,7 +234,6 @@ class TranslationService extends ChangeNotifier {
       return _connectionStatus!;
     } finally {
       _isTestingConnection = false;
-      isTestingConnectionNotifier.value = false;
       notifyListeners();
     }
   }
@@ -274,32 +257,14 @@ class TranslationService extends ChangeNotifier {
     }
   }
 
-  /// Create a translation request from the given parameters
-  TranslationRequest createRequest(
-    String text,
-    List<String> targetLanguages,
-    LLMConfig config, {
-    Map<String, dynamic>? additionalParams,
-  }) {
-    return TranslationRequest(
-      text: text,
-      targetLanguages: targetLanguages,
-      provider: config.provider,
-      serverUrl: config.serverUrl,
-      modelName: config.selectedModel,
-      additionalParams: additionalParams,
-    );
-  }
+
 
   /// Get the translation provider for the given provider name
   TranslationProvider? _getProvider(String providerName) {
     return _providers[providerName.toLowerCase()];
   }
 
-  /// Register a custom translation provider
-  void registerProvider(String name, TranslationProvider provider) {
-    _providers[name.toLowerCase()] = provider;
-  }
+
 
   /// Get all available provider names
   List<String> get availableProviders => _providers.keys.toList();
@@ -315,79 +280,15 @@ class TranslationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear connection status and cached models
-  void clearConnection() {
-    _availableModels.clear();
-    _connectionStatus = null;
-    notifyListeners();
-  }
 
-  /// Get the current translation state
-  Map<String, dynamic> getTranslationState() {
-    return {
-      'isTranslating': _isTranslating,
-      'hasTranslation': _currentTranslation != null,
-      'currentTranslation': _currentTranslation?.toJson(),
-    };
-  }
 
-  /// Format translation result for display
-  Map<String, dynamic>? formatForDisplay([TranslationResult? translation]) {
-    final trans = translation ?? _currentTranslation;
-    if (trans == null) return null;
 
-    return {
-      'original': trans.original,
-      'translations': trans.translations,
-      'languages': trans.languages,
-      'timestamp': trans.timestamp.toLocal().toString(),
-      'model': trans.config.selectedModel,
-      'provider': trans.config.provider,
-      'isComplete': trans.isComplete,
-      'availableLanguages': trans.availableLanguages,
-    };
-  }
 
-  /// Get translation statistics
-  Map<String, dynamic> getTranslationStats([TranslationResult? translation]) {
-    final trans = translation ?? _currentTranslation;
-    if (trans == null) {
-      return {
-        'totalTranslations': 0,
-        'completedTranslations': 0,
-        'completionRate': 0.0,
-      };
-    }
 
-    final completed = trans.availableLanguages.length;
-    final total = trans.languages.length;
 
-    return {
-      'totalTranslations': total,
-      'completedTranslations': completed,
-      'completionRate': total > 0 ? completed / total : 0.0,
-      'originalLength': trans.original.length,
-      'averageTranslationLength': completed > 0
-          ? trans.translations.values
-                    .where((t) => t.isNotEmpty)
-                    .map((t) => t.length)
-                    .reduce((a, b) => a + b) /
-                completed
-          : 0.0,
-    };
-  }
 
-  /// Get connection summary for display
-  Map<String, dynamic> getConnectionSummary() {
-    return {
-      'isConnected': _connectionStatus?.success ?? false,
-      'lastConnectionTime': _connectionStatus?.timestamp.toIso8601String(),
-      'modelCount': _availableModels.length,
-      'availableModels': _availableModels,
-      'lastMessage': _connectionStatus?.message,
-      'responseTime': _connectionStatus?.responseTimeMs,
-    };
-  }
+
+
 
   /// Validate LLM configuration using the model's validation
   Map<String, dynamic> validateConfig(LLMConfig config) {
@@ -549,7 +450,6 @@ class TranslationService extends ChangeNotifier {
     }
 
     _isAutoConfiguring = true;
-    isAutoConfiguringNotifier.value = true;
     notifyListeners();
 
     try {
@@ -598,7 +498,6 @@ class TranslationService extends ChangeNotifier {
       return null;
     } finally {
       _isAutoConfiguring = false;
-      isAutoConfiguringNotifier.value = false;
       notifyListeners();
     }
   }
@@ -701,21 +600,9 @@ class TranslationService extends ChangeNotifier {
     );
   }
 
-  /// Clear auto-detected configuration
-  void clearAutoConfig() {
-    _autoDetectedConfig = null;
-    notifyListeners();
-  }
 
-  /// Get auto-configuration summary
-  Map<String, dynamic> getAutoConfigSummary() {
-    return {
-      'isAutoConfiguring': _isAutoConfiguring,
-      'hasAutoConfig': _autoDetectedConfig != null,
-      'autoDetectedProvider': _autoDetectedConfig?.provider,
-      'autoDetectedModel': _autoDetectedConfig?.selectedModel,
-    };
-  }
+
+
 
   /// Unified API method for applications to perform translation with auto-configuration
   /// This provides a single entry point that handles configuration and translation
@@ -756,8 +643,7 @@ class TranslationService extends ChangeNotifier {
         validateConfig(_autoDetectedConfig!)['isValid'] as bool;
   }
 
-  /// Get the current working configuration
-  LLMConfig? get currentConfig => _autoDetectedConfig;
+
 
   /// Initialize the service with auto-configuration
   /// Uses shorter timeout and fewer retries to avoid blocking app startup
@@ -851,41 +737,7 @@ class TranslationService extends ChangeNotifier {
     );
   }
 
-  /// Create HTTP-specific exceptions based on status codes
-  AlouetteTranslationError createHttpException(
-    int statusCode,
-    String body,
-    String providerName,
-  ) {
-    switch (statusCode) {
-      case 401:
-        return LLMAuthenticationException(
-          '$providerName API authentication failed',
-        );
-      case 404:
-        return LLMModelNotFoundException(
-          '$providerName model not found',
-          'unknown',
-        );
-      case 429:
-        return RateLimitException('$providerName rate limit exceeded');
-      case 500:
-        return TranslationException(
-          '$providerName server error: $body',
-          code: 'SERVER_ERROR',
-        );
-      case 503:
-        return TranslationException(
-          '$providerName service unavailable: $body',
-          code: 'SERVICE_UNAVAILABLE',
-        );
-      default:
-        return TranslationException(
-          '$providerName API request failed: HTTP $statusCode: $body',
-          code: 'HTTP_ERROR',
-        );
-    }
-  }
+
 
   /// Validate translation request before processing
   void _validateTranslationRequest(

@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-
+import '../../core/logger.dart';
 import '../../models/app_configuration.dart';
 
 /// Configuration migration utilities
@@ -25,8 +24,8 @@ class ConfigurationMigration {
     Map<String, dynamic> oldConfig,
     String fromVersion,
   ) async {
-    debugPrint(
-      'Starting configuration migration from $fromVersion to $currentVersion',
+    logger.i(
+      '[CONFIG] Starting configuration migration from $fromVersion to $currentVersion',
     );
 
     try {
@@ -54,8 +53,8 @@ class ConfigurationMigration {
       final validation = config.validate();
 
       if (!(validation['isValid'] as bool)) {
-        debugPrint(
-          'Migration resulted in invalid configuration: ${validation['errors']}',
+        logger.w(
+          '[CONFIG] Migration resulted in invalid configuration: ${validation['errors']}',
         );
         // Apply fixes for common migration issues
         migratedConfig = _applyMigrationFixes(
@@ -64,10 +63,10 @@ class ConfigurationMigration {
         );
       }
 
-      debugPrint('Configuration migration completed successfully');
+      logger.i('[CONFIG] Configuration migration completed successfully');
       return AppConfiguration.fromJson(migratedConfig);
     } catch (e) {
-      debugPrint('Configuration migration failed: $e');
+      logger.e('[CONFIG] Configuration migration failed', error: e);
       // Return a safe default configuration
       return _createSafeMigratedConfiguration(oldConfig);
     }

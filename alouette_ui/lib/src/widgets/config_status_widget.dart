@@ -225,19 +225,11 @@ class _TranslationStatusWidgetState extends State<TranslationStatusWidget> {
         }
       }
       
-      // Strategy 1: Check if service already has auto-detected config
-      final existingConfig = _translationService.autoDetectedConfig;
-      
-      logger.debug('ConfigStatusWidget: Checking configuration', tag: 'ConfigStatus', details: {
-        'hasExistingConfig': existingConfig != null,
-        'provider': existingConfig?.provider ?? 'none',
-        'model': existingConfig?.selectedModel ?? 'none',
-      });
-      
-      if (existingConfig != null && existingConfig.selectedModel.isNotEmpty) {
+      // Strategy 1: Check if we already have a working config in memory
+      if (_currentConfig != null && _currentConfig!.selectedModel.isNotEmpty) {
         // We have a complete config, test it
         logger.debug('ConfigStatusWidget: Testing existing config', tag: 'ConfigStatus');
-        final status = await _translationService.testConnection(existingConfig);
+        final status = await _translationService.testConnection(_currentConfig!);
         logger.info('ConfigStatusWidget: Existing config test result', tag: 'ConfigStatus', details: {
           'success': status.success,
           'modelCount': status.modelCount,
@@ -245,7 +237,6 @@ class _TranslationStatusWidgetState extends State<TranslationStatusWidget> {
         if (!mounted) return;
         setState(() {
           _isConfigured = status.success;
-          _currentConfig = existingConfig;
           _isChecking = false;
         });
         return;

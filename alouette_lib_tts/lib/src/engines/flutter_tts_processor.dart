@@ -10,7 +10,7 @@ import '../enums/voice_gender.dart';
 import '../enums/voice_quality.dart';
 import '../exceptions/tts_exceptions.dart';
 import '../utils/resource_manager.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 
 /// Flutter TTS processor implementation following Flutter naming conventions
 /// Provides Flutter TTS functionality using system TTS engines
@@ -63,7 +63,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           if (Platform.isAndroid) {
             // Android: Use 0.6 as default (normal speed)
             await _tts.setSpeechRate(0.6);
-            TTSLogger.debug('TTS: Initialized with Android default rate=0.6');
+            ttsLogger.d('[TTS] Initialized with Android default rate=0.6');
           } else {
             // iOS: 0.5 is normal rate
             await _tts.setSpeechRate(0.5);
@@ -73,14 +73,14 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           await _tts.setPitch(1.0);
         }
       } catch (e) {
-        TTSLogger.debug('TTS: Could not set audio settings: $e');
+        ttsLogger.d('[TTS] Could not set audio settings', error: e);
         // Non-fatal, continue
       }
 
       _initialized = true;
-      TTSLogger.debug('TTS: Flutter TTS initialized successfully');
+      ttsLogger.d('[TTS] Flutter TTS initialized successfully');
     } catch (e) {
-      TTSLogger.error('TTS: Failed to initialize Flutter TTS: $e');
+      ttsLogger.e('[TTS] Failed to initialize Flutter TTS', error: e);
       throw TTSError(
         'Failed to initialize Flutter TTS: $e',
         code: TTSErrorCodes.initializationFailed,
@@ -107,7 +107,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         }
         
         if (i < retries - 1) {
-          TTSLogger.debug('No voices available yet, retrying in 500ms (attempt ${i + 1}/$retries)');
+          ttsLogger.d('[TTS] No voices available yet, retrying in 500ms (attempt ${i + 1}/$retries)');
           await Future.delayed(const Duration(milliseconds: 500));
         }
       }
@@ -208,9 +208,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
   /// 直接播放语音合成（不生成文件）
   /// 适用于 Web 平台和不支持文件合成的平台
   Future<Uint8List> _synthesizeDirectPlay(String text, String voiceName) async {
-    TTSLogger.debug(
-      'TTS: Using direct playback mode for text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."',
-    );
+    ttsLogger.d('[TTS] Using direct playback mode for text: "${text.substring(0, text.length > 50 ? 50 : text.length)}..."');
 
     // On Web platform, check voice availability first
     if (kIsWeb) {
@@ -255,7 +253,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
 
     try {
       // 直接播放
-      TTSLogger.debug('TTS: Starting direct speech playback');
+      ttsLogger.d('[TTS] Starting direct speech playback');
       
       // Set up completion and error tracking
       bool speechCompleted = false;
@@ -264,29 +262,29 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       
       _tts.setStartHandler(() {
         speechStarted = true;
-        TTSLogger.debug('TTS: Speech started');
+        ttsLogger.d('[TTS] Speech started');
       });
       
       _tts.setCompletionHandler(() {
         speechCompleted = true;
-        TTSLogger.debug('TTS: Speech completion detected');
+        ttsLogger.d('[TTS] Speech completion detected');
       });
       
       // Set up error handling
       _tts.setErrorHandler((msg) {
         speechError = msg;
-        TTSLogger.error('TTS: Speech error: $msg');
+        ttsLogger.e('[TTS] Speech error: $msg');
       });
       
       // Speak the text
       final result = await _tts.speak(text);
-      TTSLogger.debug('TTS: Speak method returned: $result');
+      ttsLogger.d('[TTS] Speak method returned: $result');
       
       // Check for immediate errors
       if (result == 0) {
         // result == 0 usually indicates an error
         final errorMsg = speechError ?? 'TTS speak returned 0 (error)';
-        TTSLogger.error('TTS: Speak failed immediately - $errorMsg');
+        ttsLogger.e('[TTS] Speak failed immediately - $errorMsg');
         throw TTSError(
           'Speech synthesis failed: $errorMsg',
           code: TTSErrorCodes.speakFailed,
@@ -311,7 +309,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       }
       
       if (!speechStarted) {
-        TTSLogger.warning('TTS: Speech did not start within timeout, but continuing...');
+        ttsLogger.w('[TTS] Speech did not start within timeout, but continuing...');
       }
       
       // Wait for completion or timeout
@@ -334,15 +332,15 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       }
       
       if (speechCompleted) {
-        TTSLogger.debug('TTS: Direct speech playback completed successfully');
+        ttsLogger.d('[TTS] Direct speech playback completed successfully');
       } else {
-        TTSLogger.debug('TTS: Direct speech playback timed out after ${waitedTime}ms, assuming completed');
+        ttsLogger.d('[TTS] Direct speech playback timed out after ${waitedTime}ms, assuming completed');
       }
       
     } catch (e) {
       if (e is TTSError) rethrow;
       
-      TTSLogger.error('TTS: Direct speech playback failed: $e');
+      ttsLogger.e('[TTS] Direct speech playback failed', error: e);
       throw TTSError(
         'Direct speech playback failed: $e',
         code: TTSErrorCodes.speakFailed,
@@ -375,9 +373,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         await _tts.setVolume(optimizedVolume);
         await _tts.setPitch(optimizedPitch);
         
-        TTSLogger.debug(
-          'Web TTS optimized params: rate=$optimizedRate, pitch=$optimizedPitch, volume=$optimizedVolume',
-        );
+        ttsLogger.d('[TTS] Web TTS optimized params: rate=$optimizedRate, pitch=$optimizedPitch, volume=$optimizedVolume');
       } else if (!kIsWeb && (Platform.isMacOS || Platform.isIOS)) {
         // macOS & iOS: 0.5 is their "normal" rate, so convert: 1.0 -> 0.5
         await _tts.setSpeechRate(rate * 0.5);
@@ -390,9 +386,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         await _tts.setSpeechRate(androidRate);
         await _tts.setVolume(volume);
         await _tts.setPitch(pitch);
-        TTSLogger.debug(
-          'Android TTS rate adjustment: requested=$rate -> actual=$androidRate',
-        );
+        ttsLogger.d('[TTS] Android TTS rate adjustment: requested=$rate -> actual=$androidRate');
       } else {
         // Other platforms: 1.0 is normal for all parameters
         await _tts.setSpeechRate(rate);
@@ -400,7 +394,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
         await _tts.setPitch(pitch);
       }
     } catch (e) {
-      TTSLogger.debug('TTS: Warning - could not set speech parameters: $e');
+      ttsLogger.d('[TTS] Warning - could not set speech parameters', error: e);
       // Continue anyway, these are optional settings
     }
   }
@@ -498,20 +492,20 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
       // Set language first (required for Android TTS)
       try {
         await _tts.setLanguage(targetVoice.languageCode);
-        TTSLogger.debug('TTS: Set language to ${targetVoice.languageCode}');
+        ttsLogger.d('[TTS] Set language to ${targetVoice.languageCode}');
         
         // Check if language is available (Android specific)
         if (!kIsWeb && Platform.isAndroid) {
           final isLanguageAvailable = await _tts.isLanguageAvailable(targetVoice.languageCode);
-          TTSLogger.debug('TTS: Language ${targetVoice.languageCode} available: $isLanguageAvailable');
+          ttsLogger.d('[TTS] Language ${targetVoice.languageCode} available: $isLanguageAvailable');
           
           if (!isLanguageAvailable) {
-            TTSLogger.warning('TTS: Language ${targetVoice.languageCode} not available on Android TTS');
+            ttsLogger.w('[TTS] Language ${targetVoice.languageCode} not available on Android TTS');
             // Try to set anyway, might work
           }
         }
       } catch (e) {
-        TTSLogger.debug('TTS: Warning - could not set language: $e');
+        ttsLogger.d('[TTS] Warning - could not set language', error: e);
       }
 
       // Then set voice (optional on some platforms)
@@ -520,10 +514,10 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
           "name": targetVoice.id,
           "locale": targetVoice.languageCode,
         });
-        TTSLogger.debug('TTS: Set voice to ${targetVoice.id}');
+        ttsLogger.d('[TTS] Set voice to ${targetVoice.id}');
       } catch (e) {
         // Voice setting might fail on some platforms, but language is already set
-        TTSLogger.debug('TTS: Warning - could not set voice (using language only): $e');
+        ttsLogger.d('[TTS] Warning - could not set voice (using language only)', error: e);
       }
     } catch (e) {
       if (e is TTSError) rethrow;
@@ -765,9 +759,7 @@ class FlutterTTSProcessor extends BaseTTSProcessor {
     }
 
     if (bestVoice != null) {
-      TTSLogger.debug(
-        'Selected best Web voice: ${bestVoice.name} (score: $bestScore) for locale: $targetLocale',
-      );
+      ttsLogger.d('[TTS] Selected best Web voice: ${bestVoice.name} (score: $bestScore) for locale: $targetLocale');
     }
 
     return bestVoice ?? matchingVoices.first;

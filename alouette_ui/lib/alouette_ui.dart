@@ -89,6 +89,7 @@ export 'src/utils/validation_utils.dart';
 export 'src/utils/error_handler.dart';
 export 'src/utils/ui_utils.dart';
 export 'src/utils/emoji_flag_style.dart';
+export 'src/utils/logger_config.dart';
 
 // Translation Components (new refactored widgets)
 export 'src/widgets/translation/translation_text_input.dart';

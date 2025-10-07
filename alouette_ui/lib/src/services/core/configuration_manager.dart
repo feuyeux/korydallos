@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
+import '../../core/logger.dart';
 import 'configuration_service.dart';
 import '../../models/app_configuration.dart';
 
@@ -37,7 +36,7 @@ class ConfigurationManager {
         _isInitialized = true;
         _initializationCompleter.complete();
       } catch (e) {
-        debugPrint('Failed to initialize ConfigurationManager: $e');
+        logger.e('[CONFIG] Failed to initialize ConfigurationManager', error: e);
         if (!_initializationCompleter.isCompleted) {
           _initializationCompleter.completeError(e);
         }

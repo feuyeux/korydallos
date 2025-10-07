@@ -1,6 +1,6 @@
 import '../models/tts_config.dart';
 import '../models/voice_model.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 
 /// 配置验证结果
 class ValidationResult {
@@ -335,7 +335,7 @@ class TTSConfigValidator {
 
   /// 验证完整配置
   ValidationResult validateConfig(TTSConfig config) {
-    TTSLogger.debug('Validating TTS configuration');
+    ttsLogger.d('[TTS] Validating TTS configuration');
 
     var result = ValidationResult.valid();
 
@@ -351,9 +351,7 @@ class TTSConfigValidator {
     // 配置一致性检查
     result = result.merge(_validateConsistency(config));
 
-    TTSLogger.debug(
-      'Configuration validation completed - valid: ${result.isValid}, errors: ${result.errors.length}, warnings: ${result.warnings.length}',
-    );
+    ttsLogger.d('[TTS] Configuration validation completed - valid: ${result.isValid}, errors: ${result.errors.length}, warnings: ${result.warnings.length}');
 
     return result;
   }

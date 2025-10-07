@@ -62,9 +62,6 @@ export 'src/models/tts_error.dart';
 // Exceptions (includes TTSError and TTSErrorCodes)
 export 'src/exceptions/tts_exceptions.dart';
 
-// Error Recovery
-export 'src/core/error_recovery_service.dart';
-
 // Enums
 export 'src/enums/voice_gender.dart';
 export 'src/enums/voice_quality.dart';
@@ -77,3 +74,4 @@ export 'src/utils/core_utils.dart';
 export 'src/utils/platform_utils.dart';
 export 'src/utils/file_utils.dart';
 export 'src/utils/tts_diagnostics.dart';
+export 'src/utils/logger_config.dart';

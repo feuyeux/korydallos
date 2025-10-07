@@ -228,91 +228,24 @@ class TTSConfigService extends ChangeNotifier {
     };
   }
 
-  /// Create backup of current configuration
-  Future<String> createBackup([String? configPath]) async {
-    try {
-      final path = configPath ?? _configManager.defaultConfigPath;
-      return await _configManager.createBackup(path);
-    } catch (e) {
-      throw TTSError(
-        'Failed to create configuration backup: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    }
-  }
 
-  /// Restore configuration from backup
-  Future<void> restoreFromBackup(
-    String backupPath, [
-    String? targetPath,
-  ]) async {
-    _setLoading(true);
 
-    try {
-      final target = targetPath ?? _configManager.defaultConfigPath;
-      await _configManager.restoreFromBackup(backupPath, target);
-      await loadConfig(target);
-    } catch (e) {
-      throw TTSError(
-        'Failed to restore configuration from backup: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    } finally {
-      _setLoading(false);
-    }
-  }
 
-  /// Merge with another configuration
-  void mergeWith(TTSConfig otherConfig) {
-    final merged = _configManager.mergeConfigs(_currentConfig, otherConfig);
-    updateConfig(merged);
-  }
 
-  /// Export configuration as JSON string
-  String exportAsJson() {
-    return _currentConfig.toJsonString();
-  }
 
-  /// Import configuration from JSON string
-  void importFromJson(String jsonString) {
-    try {
-      final config = TTSConfig.fromJsonString(jsonString);
-      updateConfig(config);
-    } catch (e) {
-      throw TTSError(
-        'Failed to import configuration from JSON: $e',
-        code: TTSErrorCodes.configurationError,
-        originalError: e,
-      );
-    }
-  }
 
-  /// Check if default configuration file exists
-  Future<bool> hasDefaultConfig() async {
-    return await _configManager.hasDefaultConfig();
-  }
+
+
+
+
+
 
   /// Get default configuration file path
   String get defaultConfigPath => _configManager.defaultConfigPath;
 
-  /// Generate configuration recommendations
-  List<String> getRecommendations() {
-    if (_validator != null) {
-      return _validator!.generateRecommendations(_currentConfig);
-    }
-    return [];
-  }
 
-  /// Perform quick validation (basic checks only)
-  bool quickValidate() {
-    if (_validator != null) {
-      final result = _validator!.quickValidate(_currentConfig);
-      return result.isValid;
-    }
-    return _currentConfig.validate().isEmpty;
-  }
+
+
 
   /// Set loading state
   void _setLoading(bool loading) {
@@ -330,23 +263,9 @@ class TTSConfigService extends ChangeNotifier {
     }
   }
 
-  /// Discard unsaved changes
-  void discardChanges() {
-    if (_isDirty) {
-      // Reload from last saved state
-      loadConfig().catchError((e) {
-        // If loading fails, reset to defaults
-        resetToDefaults();
-      });
-    }
-  }
 
-  /// Auto-save configuration if dirty
-  Future<void> autoSave() async {
-    if (_isDirty && isValid) {
-      await saveConfig();
-    }
-  }
+
+
 
   @override
   void dispose() {

@@ -23,12 +23,10 @@ export 'src/providers/lm_studio_provider.dart';
 // Exceptions
 export 'src/exceptions/translation_exceptions.dart';
 
-// Error Recovery
-export 'src/core/error_recovery_service.dart';
-
 // Utils
 export 'src/utils/translation_constants.dart';
 export 'src/utils/text_processor.dart';
+export 'src/utils/logger_config.dart';
 
 // Network
 export 'src/network/http_client_interface.dart';

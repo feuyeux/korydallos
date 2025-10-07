@@ -5,7 +5,7 @@ import '../models/tts_error.dart';
 import '../exceptions/tts_exceptions.dart';
 import '../utils/cache_manager.dart';
 import '../utils/error_handler.dart';
-import '../utils/tts_logger.dart';
+import '../utils/logger_config.dart';
 
 /// Base TTS processor interface following Flutter naming conventions
 /// Provides unified interface for all TTS engines
@@ -73,13 +73,13 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
     return await ErrorHandler.wrapAsync(
       () async {
-        TTSLogger.voice('Loading voices', 0, engineName);
+        ttsLogger.i('[TTS] Loading voices for $engineName');
         final voices = await fetcher();
 
         // Cache results
         _cacheManager.cacheVoices(engineName, voices);
 
-        TTSLogger.voice('Loaded voices', voices.length, engineName);
+        ttsLogger.i('[TTS] Loaded ${voices.length} voices for $engineName');
         return voices;
       },
       '$engineName voice list retrieval',
@@ -105,9 +105,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
         ? '$voiceName$cacheKeySuffix'
         : voiceName;
     
-    TTSLogger.debug(
-      'Attempting synthesis - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceKey',
-    );
+    ttsLogger.d('[TTS] Attempting synthesis - Text: "${text.substring(0, text.length > 30 ? 30 : text.length)}...", Voice: $voiceKey');
     
     final cachedAudio = _cacheManager.getCachedAudio(text, voiceKey, format);
     if (cachedAudio != null) {
@@ -116,9 +114,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
     return await ErrorHandler.wrapAsync(
       () async {
-        TTSLogger.debug(
-          '🔄 Synthesizing new audio with $engineName - ${text.length} chars, voice: $voiceKey, format: $format',
-        );
+        ttsLogger.d('[TTS] Synthesizing new audio with $engineName - ${text.length} chars, voice: $voiceKey, format: $format');
 
         final audioData = await synthesizer();
 
@@ -127,9 +123,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
         if (audioData.length > 10) {
           _cacheManager.cacheAudio(text, voiceKey, format, audioData);
         } else {
-          TTSLogger.debug(
-            'Synthesis completed (direct playback mode) - ${audioData.length} bytes, not cached',
-          );
+          ttsLogger.d('[TTS] Synthesis completed (direct playback mode) - ${audioData.length} bytes, not cached');
         }
 
         return audioData;
@@ -159,7 +153,7 @@ abstract class BaseTTSProcessor implements TTSProcessor {
 
   @override
   void dispose() {
-    TTSLogger.debug('Disposing $engineName processor');
+    ttsLogger.d('[TTS] Disposing $engineName processor');
     _disposed = true;
   }
 }

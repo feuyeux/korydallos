@@ -60,32 +60,9 @@ class LLMConfigService {
     }
   }
 
-  /// Create default configuration for a provider
-  static LLMConfig createDefaultConfig(String provider) {
-    final settings = getRecommendedSettings(provider);
-    return LLMConfig(
-      provider: provider,
-      serverUrl: settings['serverUrl'] as String,
-      selectedModel: '',
-    );
-  }
 
-  /// Check if a configuration is complete and ready to use
-  static bool isConfigurationComplete(LLMConfig config) {
-    final validation = validateConfig(config);
-    return validation['isValid'] as bool;
-  }
 
-  /// Get configuration summary for display
-  static Map<String, dynamic> getConfigSummary(LLMConfig config) {
-    final validation = validateConfig(config);
-    return {
-      'provider': config.provider,
-      'serverUrl': config.serverUrl,
-      'selectedModel': config.selectedModel,
-      'isValid': validation['isValid'],
-      'errors': validation['errors'],
-      'warnings': validation['warnings'],
-    };
-  }
+
+
+
 }

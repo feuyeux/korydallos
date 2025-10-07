@@ -14,6 +14,8 @@ dependencies:
   http: ^1.5.0
   # Meta annotations for better code analysis
   meta: ^1.16.0
+  # Standard logging library
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:

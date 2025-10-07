@@ -19,6 +19,8 @@ dependencies:
   path: ^1.9.1
   # Path provider for temporary file storage
   path_provider: ^2.1.5
+  # Standard logging library
+  logger: ^2.6.2
 
 platforms:
   android:

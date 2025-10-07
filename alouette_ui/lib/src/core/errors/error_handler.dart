@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../logger.dart';
 import 'alouette_error.dart';
 import '../../services/core/service_locator.dart';
 
@@ -25,8 +26,8 @@ class ErrorHandler {
           details: alouetteError.details,
         );
       } catch (e) {
-        // Fallback to debug print if logger is not available
-        debugPrint('Error: ${alouetteError.getTechnicalMessage()}');
+        // Fallback to logger if ServiceLocator logger is not available
+        logger.e('[ERROR] ${alouetteError.getTechnicalMessage()}');
       }
     }
 
