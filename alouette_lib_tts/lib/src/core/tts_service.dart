@@ -281,17 +281,7 @@ class TTSService implements TTSServiceInterface {
     ttsLogger.d('[CACHE] Cleared audio cache for specific item');
   }
 
-  /// Reinitialize service with new settings
-  Future<void> reinitialize({
-    TTSEngineType? preferredEngine,
-    bool autoFallback = true,
-  }) async {
-    dispose();
-    await initialize(
-      preferredEngine: preferredEngine,
-      autoFallback: autoFallback,
-    );
-  }
+
 
 
 

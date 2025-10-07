@@ -3,6 +3,7 @@ import '../models/llm_config.dart';
 import '../models/connection_status.dart';
 import '../exceptions/translation_exceptions.dart';
 import '../network/http_client_interface.dart';
+import '../utils/logger_config.dart';
 import 'base_translation_provider.dart';
 import 'dart:async';
 
@@ -33,6 +34,8 @@ class OllamaProvider extends TranslationProvider {
     if (config.selectedModel.contains('qwen')) {
       // For Qwen models, use explicit examples to prevent emoji responses
       final langSpec = getExplicitLanguageSpec(targetLanguage);
+      final scriptInstruction = _getScriptInstruction(targetLanguage);
+      
       systemPrompt =
           '''You are a professional translator. Your task is to translate text naturally into $langSpec, making sure the result reads like it was written by a native speaker.
 
@@ -43,6 +46,7 @@ CRITICAL RULES:
 4. Prioritize meaning over literal word-by-word mapping; drop or change connectors that feel unnatural
 5. If the input is a single word, translate it to a single word or short phrase
 6. Never respond with emojis like 😊 or 👍
+7. $scriptInstruction
 
 Examples:
 Input: "great" → Output: "훌륭한" (Korean) or "素晴らしい" (Japanese) or "很好" (Chinese)
@@ -92,6 +96,10 @@ Now translate this text to $langSpec:''';
 
         // Enhanced cleaning to extract only the actual translation
         String cleanedTranslation = rawTranslation.trim();
+        
+        // Log raw translation for debugging
+        transLogger.d('[OLLAMA] Raw translation for $targetLanguage: $rawTranslation');
+        
         // Specific cleaning for Qwen models
         if (config.selectedModel.contains('qwen')) {
           List<String> lines = cleanedTranslation.split('\n');
@@ -119,18 +127,47 @@ Now translate this text to $langSpec:''';
           }
         }
 
+        // Check for mixed scripts (indicates corrupted translation)
+        if (_hasMixedScripts(cleanedTranslation)) {
+          transLogger.w('[OLLAMA] Mixed scripts detected in translation: $cleanedTranslation');
+          transLogger.w('[OLLAMA] Target language: $targetLanguage');
+          
+          // Try to extract the largest contiguous script block
+          final extractedBlock = _extractLargestScriptBlock(cleanedTranslation);
+          
+          // Validate if extracted block matches target language script
+          if (_isValidScriptForLanguage(extractedBlock, targetLanguage)) {
+            cleanedTranslation = extractedBlock;
+            transLogger.i('[OLLAMA] Successfully extracted valid script block: $cleanedTranslation');
+          } else {
+            transLogger.e('[OLLAMA] Extracted block does not match target language script');
+            // Return error indicator that can be caught upstream for retry
+            throw TranslationException(
+              'Translation contains mixed scripts and cannot be cleaned for $targetLanguage',
+              code: 'MIXED_SCRIPTS_ERROR',
+              details: {
+                'rawTranslation': rawTranslation,
+                'targetLanguage': targetLanguage,
+                'extractedBlock': extractedBlock,
+              },
+            );
+          }
+        }
+
         // Remove special characters at the beginning and end
         cleanedTranslation = cleanedTranslation.replaceAll(
-          RegExp(r'^[^A-Za-zÀ-ÿ0-9]*'),
+          RegExp(r'^[^A-Za-zÀ-ÿ0-9\u0400-\u04FF\u0600-\u06FF\u0900-\u097F\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]*'),
           '',
         );
         cleanedTranslation = cleanedTranslation.replaceAll(
-          RegExp(r'[^A-Za-zÀ-ÿ0-9.!?]*$'),
+          RegExp(r'[^A-Za-zÀ-ÿ0-9.!?\u0400-\u04FF\u0600-\u06FF\u0900-\u097F\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]*$'),
           '',
         );
 
         // Final trim
         cleanedTranslation = cleanedTranslation.trim();
+
+        transLogger.d('[OLLAMA] Cleaned translation for $targetLanguage: $cleanedTranslation');
 
         // If cleaning removed everything, return raw translation
         if (cleanedTranslation.isEmpty) {
@@ -198,6 +235,168 @@ Now translate this text to $langSpec:''';
         responseTimeMs: responseTime,
         details: {'error': e.toString()},
       );
+    }
+  }
+
+  /// Check if text contains mixed scripts (e.g., Devanagari + Arabic + Cyrillic)
+  bool _hasMixedScripts(String text) {
+    final hasDevanagari = RegExp(r'[\u0900-\u097F]').hasMatch(text);
+    final hasArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+    final hasCyrillic = RegExp(r'[\u0400-\u04FF]').hasMatch(text);
+    final hasLatin = RegExp(r'[A-Za-z]').hasMatch(text);
+    final hasCJK = RegExp(r'[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]').hasMatch(text);
+    final hasKorean = RegExp(r'[\uAC00-\uD7AF]').hasMatch(text);
+    
+    // Count how many different scripts are present
+    int scriptCount = 0;
+    if (hasDevanagari) scriptCount++;
+    if (hasArabic) scriptCount++;
+    if (hasCyrillic) scriptCount++;
+    if (hasLatin) scriptCount++;
+    if (hasCJK) scriptCount++;
+    if (hasKorean) scriptCount++;
+    
+    // If more than 2 scripts, it's likely corrupted
+    return scriptCount > 2;
+  }
+
+  /// Extract the largest contiguous block of a single script
+  String _extractLargestScriptBlock(String text) {
+    // Define script patterns
+    final scripts = {
+      'devanagari': RegExp(r'[\u0900-\u097F\s]+'),
+      'arabic': RegExp(r'[\u0600-\u06FF\s]+'),
+      'cyrillic': RegExp(r'[\u0400-\u04FF\s]+'),
+      'latin': RegExp(r'[A-Za-zÀ-ÿ\s]+'),
+      'cjk': RegExp(r'[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\s]+'),
+      'korean': RegExp(r'[\uAC00-\uD7AF\s]+'),
+    };
+    
+    String longestBlock = '';
+    String longestScriptName = '';
+    
+    for (final entry in scripts.entries) {
+      final matches = entry.value.allMatches(text);
+      for (final match in matches) {
+        final block = match.group(0)?.trim() ?? '';
+        if (block.length > longestBlock.length) {
+          longestBlock = block;
+          longestScriptName = entry.key;
+        }
+      }
+    }
+    
+    if (longestBlock.isNotEmpty) {
+      transLogger.d('[OLLAMA] Extracted $longestScriptName script block: $longestBlock');
+    }
+    
+    return longestBlock.isNotEmpty ? longestBlock : text;
+  }
+
+  /// Get script-specific instruction for the target language
+  String _getScriptInstruction(String targetLanguage) {
+    final normalized = targetLanguage.toLowerCase().trim();
+    final lang = normalized.split('-').first.split('_').first;
+    
+    switch (lang) {
+      case 'hindi':
+      case 'hi':
+      case 'in':
+        return 'Use ONLY Devanagari script (देवनागरी लिपि). Do NOT mix with Arabic, Cyrillic, or any other scripts.';
+      
+      case 'arabic':
+      case 'ar':
+      case 'sa':
+        return 'Use ONLY Arabic script (الأبجدية العربية). Do NOT mix with other scripts.';
+      
+      case 'russian':
+      case 'ru':
+        return 'Use ONLY Cyrillic script (кириллица). Do NOT mix with other scripts.';
+      
+      case 'chinese':
+      case 'zh':
+      case 'cn':
+        return 'Use ONLY Chinese characters (汉字). Do NOT mix with other scripts.';
+      
+      case 'japanese':
+      case 'ja':
+      case 'jp':
+        return 'Use ONLY Japanese scripts (hiragana, katakana, kanji). Do NOT mix with other scripts.';
+      
+      case 'korean':
+      case 'ko':
+      case 'kr':
+        return 'Use ONLY Hangul script (한글). Do NOT mix with other scripts.';
+      
+      case 'greek':
+      case 'el':
+      case 'gr':
+        return 'Use ONLY Greek alphabet (ελληνικό αλφάβητο). Do NOT mix with other scripts.';
+      
+      default:
+        return 'Use ONLY the native script of the target language. Do NOT mix scripts.';
+    }
+  }
+
+  /// Validate if the extracted script matches the target language
+  bool _isValidScriptForLanguage(String text, String targetLanguage) {
+    final normalized = targetLanguage.toLowerCase().trim();
+    final lang = normalized.split('-').first.split('_').first;
+    
+    // Define expected scripts for each language
+    switch (lang) {
+      case 'hindi':
+      case 'hi':
+      case 'in':
+        return RegExp(r'[\u0900-\u097F]').hasMatch(text);
+      
+      case 'arabic':
+      case 'ar':
+      case 'sa':
+        return RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+      
+      case 'russian':
+      case 'ru':
+        return RegExp(r'[\u0400-\u04FF]').hasMatch(text);
+      
+      case 'chinese':
+      case 'zh':
+      case 'cn':
+        return RegExp(r'[\u4E00-\u9FFF]').hasMatch(text);
+      
+      case 'japanese':
+      case 'ja':
+      case 'jp':
+        return RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]').hasMatch(text);
+      
+      case 'korean':
+      case 'ko':
+      case 'kr':
+        return RegExp(r'[\uAC00-\uD7AF]').hasMatch(text);
+      
+      case 'greek':
+      case 'el':
+      case 'gr':
+        return RegExp(r'[\u0370-\u03FF]').hasMatch(text);
+      
+      // Latin-based languages
+      case 'english':
+      case 'en':
+      case 'french':
+      case 'fr':
+      case 'german':
+      case 'de':
+      case 'spanish':
+      case 'es':
+      case 'italian':
+      case 'it':
+      case 'portuguese':
+      case 'pt':
+        return RegExp(r'[A-Za-zÀ-ÿ]').hasMatch(text);
+      
+      default:
+        // For unknown languages, accept any non-empty text
+        return text.trim().isNotEmpty;
     }
   }
 

@@ -136,45 +136,7 @@ class VoiceModel {
     );
   }
 
-  /// Validate the voice model
-  Map<String, dynamic> validate() {
-    final errors = <String>[];
-    final warnings = <String>[];
 
-    // Required field validation
-    if (id.trim().isEmpty) {
-      errors.add('Voice ID cannot be empty');
-    }
-
-    if (displayName.trim().isEmpty) {
-      warnings.add('Display name is empty, using ID as display name');
-    }
-
-    if (languageCode.trim().isEmpty) {
-      errors.add('Language code cannot be empty');
-    }
-
-    // Language code format validation
-    if (languageCode.isNotEmpty &&
-        !RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(languageCode)) {
-      warnings.add(
-        'Language code "$languageCode" may not be in standard format (e.g., "en-US")',
-      );
-    }
-
-    // Gender validation
-    if (gender == VoiceGender.unknown) {
-      warnings.add('Voice gender is unknown');
-    }
-
-    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
-  }
-
-  /// Check if the voice model is valid (no validation errors)
-  bool get isValid => validate()['isValid'] as bool;
-
-  /// Get effective display name (fallback to ID if display name is empty)
-  String get effectiveDisplayName => displayName.isNotEmpty ? displayName : id;
 
   @override
   String toString() {

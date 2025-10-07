@@ -69,31 +69,7 @@ class TTSRequest {
     );
   }
 
-  /// Validate request parameters
-  List<String> validate() {
-    final errors = <String>[];
 
-    if (text.trim().isEmpty) {
-      errors.add('Text cannot be empty');
-    }
-
-    if (rate < 0.1 || rate > 3.0) {
-      errors.add('Rate must be between 0.1 and 3.0 (1.0 = normal)');
-    }
-
-    if (pitch < 0.5 || pitch > 2.0) {
-      errors.add('Pitch must be between 0.5 and 2.0 (1.0 = normal)');
-    }
-
-    if (volume < 0.0 || volume > 1.0) {
-      errors.add('Volume must be between 0.0 and 1.0');
-    }
-
-    return errors;
-  }
-
-  /// Check if request is valid
-  bool get isValid => validate().isEmpty;
 
   @override
   String toString() {

@@ -326,7 +326,6 @@ class LoggingService {
         break;
     }
 
-    // Also print details if available
     if (entry.details != null && entry.details!.isNotEmpty) {
       developer.log('Details: ${entry.details}', name: 'Alouette');
     }

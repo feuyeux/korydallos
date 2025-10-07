@@ -155,10 +155,7 @@ class TranslationResult {
         .toList();
   }
 
-  /// Check if all requested languages have translations
-  bool get isComplete {
-    return isSuccessful && languages.every((lang) => hasTranslation(lang));
-  }
+
 
   /// Validate the translation result
   Map<String, dynamic> validate() {
@@ -196,8 +193,7 @@ class TranslationResult {
     return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
   }
 
-  /// Check if the result is valid (no validation errors)
-  bool get isValid => validate()['isValid'] as bool;
+
 
   @override
   bool operator ==(Object other) {

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// TTS Configuration class
 ///
 /// Defines configuration parameters for TTS operations including
@@ -71,15 +69,7 @@ class TTSConfig {
     );
   }
 
-  /// Create TTSConfig from JSON string
-  factory TTSConfig.fromJsonString(String jsonString) {
-    try {
-      final Map<String, dynamic> json = jsonDecode(jsonString);
-      return TTSConfig.fromJson(json);
-    } catch (e) {
-      throw FormatException('Invalid JSON string: $e');
-    }
-  }
+
 
   /// Convert TTSConfig to JSON map
   Map<String, dynamic> toJson() {
@@ -98,13 +88,7 @@ class TTSConfig {
     };
   }
 
-  /// Convert TTSConfig to map (alias for toJson)
-  Map<String, dynamic> toMap() => toJson();
 
-  /// Convert TTSConfig to JSON string
-  String toJsonString() {
-    return jsonEncode(toJson());
-  }
 
   /// Create a copy of this config with updated values
   TTSConfig copyWith({

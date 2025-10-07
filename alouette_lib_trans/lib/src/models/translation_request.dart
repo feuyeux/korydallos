@@ -83,77 +83,7 @@ class TranslationRequest {
     );
   }
 
-  /// Validate the translation request
-  ///
-  /// Returns a map with validation results including errors and warnings
-  Map<String, dynamic> validate() {
-    final errors = <String>[];
-    final warnings = <String>[];
 
-    // Required field validation
-    if (text.trim().isEmpty) {
-      errors.add('Text to translate cannot be empty');
-    }
-
-    if (targetLanguages.isEmpty) {
-      errors.add('At least one target language must be specified');
-    }
-
-    if (provider.trim().isEmpty) {
-      errors.add('Provider is required');
-    }
-
-    if (serverUrl.trim().isEmpty) {
-      errors.add('Server URL is required');
-    }
-
-    if (modelName.trim().isEmpty) {
-      errors.add('Model name is required');
-    }
-
-    // URL format validation
-    if (serverUrl.isNotEmpty) {
-      try {
-        final uri = Uri.parse(serverUrl);
-        if (!uri.hasScheme || !uri.hasAuthority) {
-          errors.add('Invalid server URL format');
-        }
-      } catch (e) {
-        errors.add('Invalid server URL format: $e');
-      }
-    }
-
-    // Language code validation
-    for (final lang in targetLanguages) {
-      if (lang.trim().isEmpty) {
-        errors.add('Target language codes cannot be empty');
-        break;
-      }
-      if (!RegExp(r'^[a-z]{2}(-[A-Z]{2})?$').hasMatch(lang)) {
-        warnings.add(
-          'Language code "$lang" may not be in standard format (e.g., "en", "en-US")',
-        );
-      }
-    }
-
-    // Text length validation
-    if (text.length > 10000) {
-      warnings.add(
-        'Text is very long (${text.length} characters). Consider splitting into smaller chunks.',
-      );
-    }
-
-    // Duplicate language check
-    final uniqueLanguages = targetLanguages.toSet();
-    if (uniqueLanguages.length != targetLanguages.length) {
-      warnings.add('Duplicate target languages detected');
-    }
-
-    return {'isValid': errors.isEmpty, 'errors': errors, 'warnings': warnings};
-  }
-
-  /// Check if the request is valid (no validation errors)
-  bool get isValid => validate()['isValid'] as bool;
 
   @override
   bool operator ==(Object other) {
