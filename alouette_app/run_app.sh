@@ -805,48 +805,5 @@ if ! $FLUTTER_CMD run $FLUTTER_ARGS; then
         handle_flutter_failure
     fi
 else
-    echo -e "${RED}❌ Failed to launch Flutter app${NC}"
-    
-    # Ubuntu/Linux 特定的错误处理
-    if [[ "$OS_TYPE" == "ubuntu" || "$OS_TYPE" == "linux" ]]; then
-        echo -e "${BLUE}💡 Ubuntu troubleshooting tips:${NC}"
-        
-        if [ "$IS_LINUX" = true ]; then
-            echo -e "${GREEN}1. Check Flutter doctor: flutter doctor${NC}"
-            echo -e "${GREEN}2. Verify Linux desktop support: flutter config --list${NC}"
-            echo -e "${GREEN}3. Check system dependencies: sudo apt list --installed | grep -E '(gtk|ninja|pkg-config)'${NC}"
-            
-            # 检查是否是 GLIBC 兼容性问题
-            flutter_path=$(which flutter)
-            if [[ "$flutter_path" == *"/snap/"* ]] && [ -f /etc/os-release ]; then
-                . /etc/os-release
-                if [[ "$VERSION_ID" == "24.04" ]]; then
-                    echo -e "${YELLOW}⚠️  GLIBC compatibility issue detected (Ubuntu 24.04 + Flutter Snap)${NC}"
-                    echo -e "${GREEN}4. Install Flutter manually for better compatibility:${NC}"
-                    echo -e "${GREEN}   - Remove snap: sudo snap remove flutter${NC}"
-                    echo -e "${GREEN}   - Download from: https://docs.flutter.dev/get-started/install/linux${NC}"
-                    echo -e "${GREEN}   - Extract and add to PATH${NC}"
-                    echo -e "${GREEN}5. Alternative: Use Flutter from APT (if available)${NC}"
-                else
-                    echo -e "${GREEN}4. Try running with verbose output: flutter run -d linux -v${NC}"
-                fi
-            else
-                echo -e "${GREEN}4. Try running with verbose output: flutter run -d linux -v${NC}"
-            fi
-        elif [ "$IS_ANDROID" = true ]; then
-            echo -e "${GREEN}1. Check Android setup: flutter doctor${NC}"
-            echo -e "${GREEN}2. Verify device connection: adb devices${NC}"
-            echo -e "${GREEN}3. Check USB debugging is enabled on device${NC}"
-            echo -e "${GREEN}4. Verify udev rules: ls -la /etc/udev/rules.d/*android*${NC}"
-        elif [ "$PLATFORM" = "chrome" ]; then
-            echo -e "${GREEN}1. Check web support: flutter config --list${NC}"
-            echo -e "${GREEN}2. Verify browser installation: which google-chrome chromium-browser firefox${NC}"
-            echo -e "${GREEN}3. Enable web support: flutter config --enable-web${NC}"
-        fi
-    fi
-    
-    exit 1
-fi
-
     echo -e "${GREEN}✅ Flutter app launched successfully!${NC}"
 fi
