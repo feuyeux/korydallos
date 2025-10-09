@@ -104,8 +104,9 @@ class _TranslationPanelState extends State<TranslationPanel> {
   Widget _buildActionBar() {
     final hasText = _currentText.isNotEmpty;
     final hasLanguages = widget.selectedLanguages.isNotEmpty;
+    // 修改条件：即使没有配置也允许点击翻译按钮，让用户在翻译时配置
     final canTranslate =
-        hasText && hasLanguages && !widget.isTranslating && widget.isConfigured;
+        hasText && hasLanguages && !widget.isTranslating;
 
     return Row(
       children: [
@@ -146,7 +147,7 @@ class _TranslationPanelState extends State<TranslationPanel> {
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasLanguages ? null : Colors.grey,
+              backgroundColor: canTranslate ? null : Colors.grey,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               minimumSize: const Size(0, 36),
             ),
@@ -158,7 +159,11 @@ class _TranslationPanelState extends State<TranslationPanel> {
                   )
                 : const Icon(Icons.translate, size: 16),
             label: Text(
-              widget.isTranslating ? 'Translating...' : 'Translate',
+              widget.isTranslating 
+                  ? 'Translating...' 
+                  : widget.isConfigured 
+                      ? 'Translate' 
+                      : 'Translate (Setup Required)',
               style: const TextStyle(fontSize: 12),
             ),
           ),

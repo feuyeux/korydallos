@@ -1,5 +1,15 @@
-# Project-level configuration.
+# Ubuntu 24.04 compatibility fixes
 cmake_minimum_required(VERSION 3.13)
+
+# Force use of system compilers for Ubuntu 24.04 compatibility
+set(CMAKE_C_COMPILER "/usr/bin/gcc")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+
+# Set compiler and linker flags for Ubuntu 24.04
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--allow-multiple-definition -Wl,--as-needed")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--allow-multiple-definition -Wl,--as-needed")
 project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
