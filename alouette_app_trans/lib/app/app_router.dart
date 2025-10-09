@@ -3,8 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:alouette_ui/alouette_ui.dart';
-import '../features/home/pages/home_page.dart';
-import 'alouette_app.dart';
+import 'translation_app.dart';
 
 class AppRouter extends StatefulWidget {
   const AppRouter({super.key});
@@ -14,7 +13,7 @@ class AppRouter extends StatefulWidget {
 }
 
 class _AppRouterState extends State<AppRouter> {
-  static const platform = MethodChannel('com.example.alouette/menu');
+  static const platform = MethodChannel('com.example.alouette_trans/menu');
   bool _isAboutPageOpen = false;
 
   @override
@@ -42,7 +41,7 @@ class _AppRouterState extends State<AppRouter> {
           .push(
             MaterialPageRoute(
               builder: (context) => const AboutPage(
-                appName: 'Alouette',
+                appName: 'Alouette Trans',
                 copyright: 'Copyright © 2025 @feuyeux. All rights reserved.',
               ),
             ),
@@ -55,6 +54,6 @@ class _AppRouterState extends State<AppRouter> {
 
   @override
   Widget build(BuildContext context) {
-    return const HomePage();
+    return const TranslationHomeScreen();
   }
 }

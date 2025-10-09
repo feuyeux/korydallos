@@ -153,13 +153,15 @@ class _TTSHomePageState extends State<TTSHomePage> {
           ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: _showTTSSettings,
-              tooltip: 'TTS Settings',
-            ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showTTSSettings,
+            tooltip: 'TTS Settings',
+          ),
+          AboutHelper.createAboutButton(
+            context,
+            appName: 'Alouette TTS',
+            copyright: 'Copyright © 2025 @feuyeux. All rights reserved.',
           ),
         ],
       ),

@@ -17,6 +17,11 @@ class HomePage extends StatelessWidget {
             tooltip: 'Settings',
             onPressed: () => _openConfigDialog(context),
           ),
+          AboutHelper.createAboutButton(
+            context,
+            appName: 'Alouette',
+            copyright: 'Copyright © 2025 @feuyeux. All rights reserved.',
+          ),
         ],
       ),
       body: const TranslationPageView(enableTTS: true),
