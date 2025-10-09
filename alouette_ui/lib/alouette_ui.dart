@@ -98,4 +98,7 @@ export 'src/widgets/translation/translation_action_button.dart';
 export 'src/widgets/translation/translation_page_view.dart'
     show TranslationPageView, showTranslationConfigDialog;
 
+// Pages
+export 'src/pages/about_page.dart';
+
 // Note: widgets/configuration/ directory has been removed (redundant)

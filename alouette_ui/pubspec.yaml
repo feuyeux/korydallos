@@ -1,7 +1,7 @@
 name: alouette_ui
 description: Shared UI components, themes, and service management for Alouette applications
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: ">=3.8.1 <4.0.0"
@@ -27,6 +27,8 @@ dependencies:
   country_icons: ^3.0.0
   # Standard logging library
   logger: ^2.6.2
+  # Package info for getting app version
+  package_info_plus: ^8.1.2
 
 dev_dependencies:
   flutter_test:

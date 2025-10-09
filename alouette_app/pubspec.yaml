@@ -1,7 +1,7 @@
 name: alouette_app
 description: "Alouette App - Combined translation and text-to-speech Flutter application."
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: ">=3.8.1 <4.0.0"
