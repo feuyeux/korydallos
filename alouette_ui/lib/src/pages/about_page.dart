@@ -77,67 +77,78 @@ class _AboutPageState extends State<AboutPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
       appBar: AppBar(title: const Text('关于')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App Icon
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    color: colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: colorScheme.outline.withValues(alpha: 0.2),
+                      width: 1,
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/icons/alouette_rounded.png',
-                    fit: BoxFit.cover,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      'assets/icons/alouette_rounded.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-              // App Name
-              Text(
-                widget.appName,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Version Information
-              _buildInfoCard(context, [
-                _buildInfoRow('应用版本', _appVersion),
-                _buildInfoRow('Flutter版本', _flutterVersion),
-                _buildInfoRow('Dart版本', _dartVersion),
-                _buildInfoRow('OS版本', _osVersion),
-              ]),
-              const SizedBox(height: 32),
-
-              // Copyright
-              if (widget.copyright != null)
+                // App Name
                 Text(
-                  widget.copyright!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-                  textAlign: TextAlign.center,
+                  widget.appName,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
-            ],
+                const SizedBox(height: 40),
+
+                // Version Information
+                _buildInfoCard(context, [
+                  _buildInfoRow(context, '应用版本', _appVersion),
+                  _buildInfoRow(context, 'Flutter版本', _flutterVersion),
+                  _buildInfoRow(context, 'Dart版本', _dartVersion),
+                  _buildInfoRow(context, 'OS版本', _osVersion),
+                ]),
+                const SizedBox(height: 40),
+
+                // Copyright
+                if (widget.copyright != null)
+                  Text(
+                    widget.copyright!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -145,35 +156,50 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _buildInfoCard(BuildContext context, List<Widget> children) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 400),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade800, width: 1),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    return Card(
+      elevation: 2,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: children,
+        ),
       ),
-      child: Column(children: children),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.end,
             ),
           ),
         ],
